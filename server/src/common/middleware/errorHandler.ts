@@ -10,4 +10,10 @@ const addErrorToRequestLog: ErrorRequestHandler = (err, _req, res, next) => {
   next(err);
 };
 
+export const reqErrorHandler: ErrorRequestHandler = (err, _req, res, next) => {
+  const status = err.status || 500;
+  const message = err.message || "Something went wrong";
+  return res.status(status).json({ message });
+};
+
 export default () => [unexpectedRequest, addErrorToRequestLog];

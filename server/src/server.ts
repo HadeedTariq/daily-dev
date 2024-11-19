@@ -4,10 +4,19 @@ import helmet from "helmet";
 import { pino } from "pino";
 
 import { openAPIRouter } from "@/api-docs/openAPIRouter";
-import errorHandler from "@/common/middleware/errorHandler";
+import errorHandler, {
+  reqErrorHandler,
+} from "@/common/middleware/errorHandler";
 import requestLogger from "./common/middleware/requestLogger";
+import { authRouter } from "./routes/auth/auth.routes";
+import { connectToDb } from "./db/connect";
+import { createTable } from "./db/createTable";
 
 const logger = pino({ name: "server start" });
+export const db = connectToDb();
+// createTable(`
+
+// `);
 const app: Express = express();
 
 // Set the application to trust the reverse proxy
@@ -23,11 +32,12 @@ app.use(helmet());
 app.use(requestLogger);
 
 // Routes
-
+app.use("/auth", authRouter);
 // Swagger UI
 app.use(openAPIRouter);
 
 // Error handlers
 app.use(errorHandler());
+app.use(reqErrorHandler);
 
 export { app, logger };
