@@ -15,7 +15,6 @@ import { createTable } from "./db/createTable";
 const logger = pino({ name: "server start" });
 export const db = connectToDb();
 // createTable(`
-
 // `);
 const app: Express = express();
 

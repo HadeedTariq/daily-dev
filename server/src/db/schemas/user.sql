@@ -4,5 +4,6 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(100)  NOT NULL,
     email VARCHAR(100) UNIQUE  NOT NULL,
     profession VARCHAR(100) NOT NULL,
+    refreshToken VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
