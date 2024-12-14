@@ -1,25 +1,37 @@
 import { z } from "zod";
 
+// Register Validator
 export const registerValidator = z.object({
-  username: z.string().min(6, { message: "Must be 6 characters long" }),
-  email: z.string().email(),
-  weight: z.string().min(2, { message: "Weight must be < 30" }),
-  age: z.string().min(2, { message: "Must be 18 years old or above" }),
-  height: z.string().min(1, { message: "Height required" }),
-  gender: z.enum(["male", "female"]),
+  username: z
+    .string()
+    .max(100, { message: "Username must be 100 characters or fewer" }),
+  email: z
+    .string()
+    .email({ message: "Invalid email address" })
+    .max(100, { message: "Email must be 100 characters or fewer" }),
+  name: z
+    .string()
+    .max(100, { message: "Name must be 100 characters or fewer" }),
   password: z
     .string()
-    .min(8, "Password must be at least 8 characters long")
-    .max(20, "Password must be less than 20 characters long"),
+    .max(100, { message: "Name must be 100 characters or fewer" }),
+  profession: z
+    .string()
+    .max(100, { message: "Profession must be 100 characters or fewer" }),
 });
 
+// Login Validator
 export const loginValidator = z.object({
-  email: z.string().email(),
+  email: z
+    .string()
+    .email({ message: "Invalid email address" })
+    .max(100, { message: "Email must be 100 characters or fewer" }),
   password: z
     .string()
-    .min(8, "Password must be at least 8 characters long")
-    .max(20, "Password must be less than 20 characters long"),
+    .min(8, { message: "Password must be at least 8 characters long" })
+    .max(20, { message: "Password must be less than 20 characters long" }),
 });
 
+// Types
 export type RegisterValidator = z.infer<typeof registerValidator>;
 export type LoginValidator = z.infer<typeof loginValidator>;

@@ -9,11 +9,8 @@ const Register = () => {
   } = useRegisterForm();
 
   const createAccount = (user: RegisterValidator) => {
-    console.log(user);
-    user.age = user.age + " " + "years old";
-    user.height = user.height + " " + "ft";
-    user.weight = user.weight + " " + "kg";
-    console.log(user);
+    console.log("cc");
+
     registerAccount(user);
   };
   return (
@@ -31,13 +28,8 @@ const Register = () => {
           <main className="flex items-center justify-center px-8 py-8 sm:px-12 lg:col-span-7 lg:px-16 lg:py-12 xl:col-span-6">
             <div className="max-w-xl lg:max-w-3xl">
               <h1 className="mt-6 text-2xl font-bold text-gray-900 sm:text-3xl md:text-4xl">
-                Welcome to Fitness-Track
+                Welcome to Daily Dev
               </h1>
-
-              <p className="mt-4 leading-relaxed text-gray-500">
-                Our fitness tracking application is designed to help users
-                monitor and achieve their fitness goals efficiently
-              </p>
 
               <form
                 className="mt-8 grid grid-cols-6 gap-6"
@@ -62,16 +54,15 @@ const Register = () => {
                 <div className="col-span-6 sm:col-span-3">
                   <p className="block text-sm font-medium text-gray-700">
                     {" "}
-                    Age
+                    Name
                   </p>
                   <input
-                    {...register("age")}
-                    type="number"
+                    {...register("name")}
                     className="mt-1 w-full rounded-md border-gray-500 bg-white text-sm p-2 border-2  text-gray-700 shadow-sm"
                   />
-                  {formState.errors.age && (
+                  {formState.errors.name && (
                     <p className="text-red-500 text-[14px]">
-                      {formState.errors.age.message}
+                      {formState.errors.name.message}
                     </p>
                   )}
                 </div>
@@ -110,42 +101,23 @@ const Register = () => {
                     </p>
                   )}
                 </div>
-
                 <div className="col-span-6 sm:col-span-3">
                   <p className="block text-sm font-medium text-gray-700">
-                    Height
+                    {" "}
+                    Profession{" "}
                   </p>
 
                   <input
-                    type="number"
-                    step={"0.01"}
-                    placeholder="ft"
                     className="mt-1 w-full rounded-md border-gray-500 bg-white text-sm p-2 border-2  text-gray-700 shadow-sm"
-                    {...register("height")}
+                    {...register("profession")}
                   />
-                  {formState.errors.height && (
+                  {formState.errors.profession && (
                     <p className="text-red-500 text-[14px]">
-                      {formState.errors.height.message}
+                      {formState.errors.profession.message}
                     </p>
                   )}
                 </div>
-                <div className="col-span-6 sm:col-span-3">
-                  <p className="block text-sm font-medium text-gray-700">
-                    Weight
-                  </p>
 
-                  <input
-                    type="number"
-                    placeholder="kg"
-                    {...register("weight")}
-                    className="mt-1 w-full rounded-md border-gray-500 bg-white text-sm p-2 border-2  text-gray-700 shadow-sm"
-                  />
-                  {formState.errors.weight && (
-                    <p className="text-red-500 text-[14px]">
-                      {formState.errors.weight.message}
-                    </p>
-                  )}
-                </div>
                 <div className="col-span-6 sm:flex sm:items-center sm:gap-4">
                   <button
                     disabled={formState.disabled || isPending}

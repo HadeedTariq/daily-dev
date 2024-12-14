@@ -15,7 +15,7 @@ export const useRegisterForm = () => {
   const mutator = useMutation({
     mutationKey: ["verification"],
     mutationFn: async (user: RegisterValidator) => {
-      const { data } = await authApi.post("/verification", user);
+      await authApi.post("/verification", user);
     },
     onSuccess: () => {
       form.reset();
