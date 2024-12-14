@@ -1,5 +1,6 @@
 import { Route, Routes } from "react-router-dom";
 import Register from "./pages/auth/routes/Register";
+import RegisterConfirmation from "./pages/auth/routes/RegisterSuccessfull";
 
 function App() {
   return (
@@ -20,6 +21,10 @@ function App() {
     </Route> */}
       <Route path="/auth">
         <Route path="register" element={<Register />} />
+        <Route
+          path="register-confirmation"
+          element={<RegisterConfirmation />}
+        />
         {/* <Route path="login" element={<Login />} /> */}
       </Route>
     </Routes>

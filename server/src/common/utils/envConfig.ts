@@ -19,7 +19,8 @@ export const env = cleanEnv(process.env, {
   DATABASE_PORT: port({ devDefault: testOnly(3000) }),
   DATABASE_USER: str({ devDefault: testOnly("user") }),
   DATABASE_PASSWORD: str({ devDefault: testOnly("password") }),
-  PASSWORD_SALT: str({ devDefault: testOnly("password") }),
+  PASSWORD_SALT: str({ devDefault: testOnly("salt") }),
+  JWT_SECRET: str({ devDefault: testOnly("secret") }),
   NODE_MAILER_USER: str({ devDefault: testOnly("user") }),
   NODE_MAILER_PASSWORD: str({ devDefault: testOnly("password") }),
 });

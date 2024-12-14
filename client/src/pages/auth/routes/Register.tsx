@@ -9,7 +9,7 @@ const Register = () => {
   } = useRegisterForm();
 
   const createAccount = (user: RegisterValidator) => {
-    console.log("cc");
+    console.log(user);
 
     registerAccount(user);
   };

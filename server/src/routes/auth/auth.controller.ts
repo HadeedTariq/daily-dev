@@ -1,8 +1,8 @@
 import { db } from "@/server";
 import { NextFunction, Request, Response } from "express";
-import { sign } from "jsonwebtoken";
+import { sign, verify } from "jsonwebtoken";
 import { DatabaseError } from "pg";
-import { createCipheriv } from "crypto";
+import { createCipheriv, createDecipheriv } from "crypto";
 import { env } from "@/common/utils/envConfig";
 import nodeMailer from "nodemailer";
 import { hash } from "bcrypt";
@@ -27,6 +27,19 @@ class UserController {
         return next({ status: 404, message: "Invalid token" });
       }
 
+      const decryptedToken = this.decryptToken(token as string);
+
+      const user: any = verify(decryptedToken, env.JWT_SECRET);
+
+      if (user.email !== rows[0].email) {
+        return next({ status: 404, message: "Incorrect Token" });
+      }
+
+      await db.query(`update users set is_verified=$1 where email=$2`, [
+        true,
+        user.email,
+      ]);
+
       res.status(201).json({ message: "User registered successfully" });
     } catch (error) {
       if (error instanceof DatabaseError) {
@@ -39,20 +52,21 @@ class UserController {
   encryptToken = (token: string): string => {
     const key = Buffer.from("12345678901234567890123456789012"); // 32-byte key
     const algorithm = "aes-256-cbc";
-    const initVector = Buffer.from("1234567890abcdef", "hex"); // 16-byte IV
-    const cipher = createCipheriv(algorithm, key, initVector);
-    return cipher.update(token, "utf8", "hex") + cipher.final("hex");
-  };
-  decryptToken = (token: string): string => {
-    const key = Buffer.from("12345678901234567890123456789012"); // 32-byte key
-    const algorithm = "aes-256-cbc";
-    const initVector = Buffer.from("1234567890abcdef", "hex"); // 16-byte IV
+    const initVector = Buffer.from("1234567890abcdef"); // Direct raw string (16 bytes)
     const cipher = createCipheriv(algorithm, key, initVector);
     return cipher.update(token, "utf8", "hex") + cipher.final("hex");
   };
 
+  decryptToken = (token: string): string => {
+    const key = Buffer.from("12345678901234567890123456789012"); // 32-byte key
+    const algorithm = "aes-256-cbc";
+    const initVector = Buffer.from("1234567890abcdef"); // Direct raw string (16 bytes)
+    const decipher = createDecipheriv(algorithm, key, initVector);
+    return decipher.update(token, "hex", "utf8") + decipher.final("utf8");
+  };
+
   hashPassword = async (password: string): Promise<string> => {
-    const hashPassword = await hash(password, env.PASSWORD_SALT);
+    const hashPassword = await hash(password, 10);
     return hashPassword;
   };
 
@@ -61,10 +75,11 @@ class UserController {
       let transporter = nodeMailer.createTransport({
         service: "gmail",
         auth: {
-          user: env.NODE_MAILER_USER,
-          pass: env.NODE_MAILER_PASSWORD,
+          user: String(env.NODE_MAILER_USER),
+          pass: String(env.NODE_MAILER_PASSWORD),
         },
       });
+
       const info = await transporter.sendMail({
         from: "hadeedtariq12@gmail.com",
         to: email,
@@ -76,6 +91,8 @@ class UserController {
       });
       return { info };
     } catch (err) {
+      console.log(err);
+
       return { error: err };
     }
   };
@@ -85,14 +102,13 @@ class UserController {
     if (!username || !name || !profession || !email || !password) {
       return next({ message: "Please fill all the fields", status: 404 });
     }
-    const user = await db.query("select email from users where email=$1", [
+    const user = await db.query(`select email from users where email=$1`, [
       email,
     ]);
     if (user.rowCount && user.rowCount > 0) {
       return next({ message: "User already exist", status: 404 });
     }
     const expiresIn = "1d";
-    const secret = "qwerty";
     const dataStoredInToken = {
       name,
       username,
@@ -100,17 +116,19 @@ class UserController {
       email,
     };
 
-    const signedToken = sign(dataStoredInToken, secret, { expiresIn });
+    const signedToken = sign(dataStoredInToken, env.JWT_SECRET, { expiresIn });
     const token = this.encryptToken(signedToken);
 
     const magicLink = `${env.SERVER_DOMAIN}/auth/register?token=${token}`;
-    await db.query(
-      "INSERT INTO magicLinks (email,token) VALUES ($1,$2),[email,token]"
-    );
+
+    await db.query(`INSERT INTO  magicLinks (email,token) VALUES ($1,$2)`, [
+      email,
+      token,
+    ]);
 
     const hashPassword = this.hashPassword(password);
     await db.query(
-      "INSERT INTO users (email,name,username,profession,user_password) VALUES ($1,$2)",
+      "INSERT INTO users (email,name,username,profession,user_password) VALUES ($1,$2,$3,$4,$5)",
       [name, username, profession, email, hashPassword]
     );
     const { error } = await this.sendMail(email, magicLink);
