@@ -10,22 +10,19 @@ import errorHandler, {
 import requestLogger from "./common/middleware/requestLogger";
 import { authRouter } from "./routes/auth/auth.routes";
 import { connectToDb } from "./db/connect";
+import cookieParser from "cookie-parser";
 import { createTable } from "./db/createTable";
 
 const logger = pino({ name: "server start" });
 export const db = connectToDb();
 // createTable(`
-//   DROP TABLE IF EXISTS magicLinks;
 //   DROP TABLE IF EXISTS users;
-//   CREATE TABLE magicLinks (
-//     email VARCHAR(100) UNIQUE  NOT NULL,
-//     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-//     token VARCHAR(1000) NOT NULL
-// );
-// CREATE  TABLE users (
+
+//   CREATE  TABLE users (
 //     id SERIAL PRIMARY KEY,
 //     name VARCHAR(100) NOT NULL,
 //     username VARCHAR(100) NOT NULL,
+//     avatar VARCHAR(255)  default 'https://static.vecteezy.com/system/resources/previews/027/708/418/large_2x/default-avatar-profile-icon-in-flat-style-free-vector.jpg',
 //     email VARCHAR(100) UNIQUE NOT NULL,
 //     profession VARCHAR(100) NOT NULL,
 //     user_password VARCHAR(255) NOT NULL,
@@ -40,6 +37,7 @@ const app: Express = express();
 
 // Set the application to trust the reverse proxy
 app.set("trust proxy", true);
+app.use(cookieParser());
 
 // Middlewares
 app.use(express.json());

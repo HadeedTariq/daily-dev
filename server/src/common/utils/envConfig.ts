@@ -21,6 +21,8 @@ export const env = cleanEnv(process.env, {
   DATABASE_PASSWORD: str({ devDefault: testOnly("password") }),
   PASSWORD_SALT: str({ devDefault: testOnly("salt") }),
   JWT_SECRET: str({ devDefault: testOnly("secret") }),
+  JWT_REFRESH_TOKEN_SECRET: str({ devDefault: testOnly("secret") }),
+  JWT_ACCESS_TOKEN_SECRET: str({ devDefault: testOnly("secret") }),
   NODE_MAILER_USER: str({ devDefault: testOnly("user") }),
   NODE_MAILER_PASSWORD: str({ devDefault: testOnly("password") }),
 });

@@ -5,12 +5,13 @@ import { DatabaseError } from "pg";
 import { createCipheriv, createDecipheriv } from "crypto";
 import { env } from "@/common/utils/envConfig";
 import nodeMailer from "nodemailer";
-import { hash } from "bcrypt";
+import { hash, compare } from "bcrypt";
 
 class UserController {
   constructor() {
     this.registerUser = this.registerUser.bind(this);
     this.createUser = this.createUser.bind(this);
+    this.loginUser = this.loginUser.bind(this);
   }
   async createUser(req: Request, res: Response, next: NextFunction) {
     const { token } = req.query;
@@ -49,25 +50,129 @@ class UserController {
     }
   }
 
+  async loginUser(req: Request, res: Response, next: NextFunction) {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return next({ status: 404, message: "Please fill all the fields" });
+    }
+    const { rows } = await db.query(
+      `SELECT * from users where email = $1 and is_verified = $2 `,
+      [email, true]
+    );
+
+    if (rows.length < 1) {
+      return next({ message: "User not found", status: 404 });
+    }
+
+    const is_correct_password = await this.verifyPassword(
+      password,
+      rows[0].user_password
+    );
+    console.log(is_correct_password);
+
+    if (!is_correct_password) {
+      return next({ message: "Incorrect Credentials", status: 404 });
+    }
+    const { accessToken, refreshToken } = this.generateAccessAndRefreshToken(
+      rows[0]
+    );
+
+    await db.query("update users set refresh_token = $1 where email = $2", [
+      refreshToken,
+      email,
+    ]);
+
+    res
+      .cookie("accessToken", accessToken, {
+        secure: true,
+        httpOnly: false,
+        sameSite: "none",
+      })
+      .cookie("refreshToken", refreshToken, {
+        secure: true,
+        httpOnly: false,
+        sameSite: "none",
+      });
+
+    res.status(200).json({ message: "User logged in successfully" });
+  }
+
+  async registerUser(req: Request, res: Response, next: NextFunction) {
+    const { name, username, profession, email, password } = req.body;
+    if (!username || !name || !profession || !email || !password) {
+      return next({ message: "Please fill all the fields", status: 404 });
+    }
+    const user = await db.query(`select email from users where email=$1`, [
+      email,
+    ]);
+    // await db.query(`delete from users where email=$1`, [email]);
+    // await db.query(`delete from magiclinks where email=$1`, [email]);
+    if (user.rowCount && user.rowCount > 0) {
+      return next({ message: "User already exist", status: 404 });
+    }
+    const expiresIn = "1d";
+    const dataStoredInToken = {
+      name,
+      username,
+      profession,
+      email,
+    };
+
+    const signedToken = sign(dataStoredInToken, env.JWT_SECRET, { expiresIn });
+    const token = this.encryptToken(signedToken);
+
+    const magicLink = `${env.SERVER_DOMAIN}/auth/register?token=${token}`;
+
+    await db.query(`INSERT INTO  magicLinks (email,token) VALUES ($1,$2)`, [
+      email,
+      token,
+    ]);
+
+    const hashPassword = await this.hashPassword(password);
+    await db.query(
+      "INSERT INTO users ( name, username, profession, email,user_password) VALUES ($1,$2,$3,$4,$5)",
+      [name, username, profession, email, hashPassword]
+    );
+    const { error } = await this.sendMail(email, magicLink);
+
+    if (error) {
+      return next({
+        message: "Failed to send verification email",
+        status: 500,
+      });
+    }
+    return res
+      .status(200)
+      .json({ message: "Verification email sent successfully" });
+  }
+
   encryptToken = (token: string): string => {
-    const key = Buffer.from("12345678901234567890123456789012"); // 32-byte key
+    const key = Buffer.from("12345678901234567890123456789012");
     const algorithm = "aes-256-cbc";
-    const initVector = Buffer.from("1234567890abcdef"); // Direct raw string (16 bytes)
+    const initVector = Buffer.from("1234567890abcdef");
     const cipher = createCipheriv(algorithm, key, initVector);
     return cipher.update(token, "utf8", "hex") + cipher.final("hex");
   };
 
   decryptToken = (token: string): string => {
-    const key = Buffer.from("12345678901234567890123456789012"); // 32-byte key
+    const key = Buffer.from("12345678901234567890123456789012");
     const algorithm = "aes-256-cbc";
-    const initVector = Buffer.from("1234567890abcdef"); // Direct raw string (16 bytes)
+    const initVector = Buffer.from("1234567890abcdef");
     const decipher = createDecipheriv(algorithm, key, initVector);
     return decipher.update(token, "hex", "utf8") + decipher.final("utf8");
   };
 
   hashPassword = async (password: string): Promise<string> => {
-    const hashPassword = await hash(password, 10);
+    const hashPassword = await hash(password, 16);
+
     return hashPassword;
+  };
+  verifyPassword = async (
+    password: string,
+    actual_password: string
+  ): Promise<boolean> => {
+    const is_correct_password = await compare(password, actual_password);
+    return is_correct_password;
   };
 
   sendMail = async (email: string, magicLink: string) => {
@@ -96,53 +201,24 @@ class UserController {
       return { error: err };
     }
   };
-
-  async registerUser(req: Request, res: Response, next: NextFunction) {
-    const { name, username, profession, email, password } = req.body;
-    if (!username || !name || !profession || !email || !password) {
-      return next({ message: "Please fill all the fields", status: 404 });
-    }
-    const user = await db.query(`select email from users where email=$1`, [
-      email,
-    ]);
-    if (user.rowCount && user.rowCount > 0) {
-      return next({ message: "User already exist", status: 404 });
-    }
-    const expiresIn = "1d";
-    const dataStoredInToken = {
-      name,
-      username,
-      profession,
-      email,
-    };
-
-    const signedToken = sign(dataStoredInToken, env.JWT_SECRET, { expiresIn });
-    const token = this.encryptToken(signedToken);
-
-    const magicLink = `${env.SERVER_DOMAIN}/auth/register?token=${token}`;
-
-    await db.query(`INSERT INTO  magicLinks (email,token) VALUES ($1,$2)`, [
-      email,
-      token,
-    ]);
-
-    const hashPassword = this.hashPassword(password);
-    await db.query(
-      "INSERT INTO users (email,name,username,profession,user_password) VALUES ($1,$2,$3,$4,$5)",
-      [name, username, profession, email, hashPassword]
+  generateAccessAndRefreshToken = function (user: any) {
+    const refreshToken = sign({ id: user.id }, env.JWT_REFRESH_TOKEN_SECRET, {
+      expiresIn: "15d",
+    });
+    const accessToken = sign(
+      {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        profession: user.profession,
+        avatar: user.avatar,
+      },
+      env.JWT_ACCESS_TOKEN_SECRET,
+      { expiresIn: "2d" }
     );
-    const { error } = await this.sendMail(email, magicLink);
 
-    if (error) {
-      return next({
-        message: "Failed to send verification email",
-        status: 500,
-      });
-    }
-    return res
-      .status(200)
-      .json({ message: "Verification email sent successfully" });
-  }
+    return { refreshToken, accessToken };
+  };
 }
 
 export const userController = new UserController();
