@@ -11,7 +11,10 @@ import requestLogger from "./common/middleware/requestLogger";
 import { authRouter } from "./routes/auth/auth.routes";
 import { connectToDb } from "./db/connect";
 import cookieParser from "cookie-parser";
+import { passport } from "./utils/passport";
+import session from "express-session";
 import { createTable } from "./db/createTable";
+import { env } from "./common/utils/envConfig";
 
 const logger = pino({ name: "server start" });
 export const db = connectToDb();
@@ -24,8 +27,8 @@ export const db = connectToDb();
 //     username VARCHAR(100) NOT NULL,
 //     avatar VARCHAR(255)  default 'https://static.vecteezy.com/system/resources/previews/027/708/418/large_2x/default-avatar-profile-icon-in-flat-style-free-vector.jpg',
 //     email VARCHAR(100) UNIQUE NOT NULL,
-//     profession VARCHAR(100) NOT NULL,
-//     user_password VARCHAR(255) NOT NULL,
+//     profession VARCHAR(100),
+//     user_password VARCHAR(255),
 //     refresh_token VARCHAR(255),
 //     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 //     is_verified BOOLEAN DEFAULT FALSE
@@ -38,6 +41,16 @@ const app: Express = express();
 // Set the application to trust the reverse proxy
 app.set("trust proxy", true);
 app.use(cookieParser());
+
+app.use(
+  session({
+    secret: env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+  })
+);
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Middlewares
 app.use(express.json());

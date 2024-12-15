@@ -23,6 +23,9 @@ export const env = cleanEnv(process.env, {
   JWT_SECRET: str({ devDefault: testOnly("secret") }),
   JWT_REFRESH_TOKEN_SECRET: str({ devDefault: testOnly("secret") }),
   JWT_ACCESS_TOKEN_SECRET: str({ devDefault: testOnly("secret") }),
+  GITHUB_CLIENT_ID: str({ devDefault: testOnly("secret") }),
+  GITHUB_CLIENT_SECRET: str({ devDefault: testOnly("secret") }),
   NODE_MAILER_USER: str({ devDefault: testOnly("user") }),
+  SESSION_SECRET: str({ devDefault: testOnly("user") }),
   NODE_MAILER_PASSWORD: str({ devDefault: testOnly("password") }),
 });

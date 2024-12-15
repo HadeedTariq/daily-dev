@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { useLogin } from "../hooks/useLogin";
 import { LoginValidator } from "../validators/auth.validator";
+import { useMutation } from "@tanstack/react-query";
+import { authApi } from "@/lib/axios";
 
 const Login = () => {
   const {
@@ -10,6 +12,14 @@ const Login = () => {
   const authAccount = (user: LoginValidator) => {
     loginUser(user);
   };
+
+  const { mutate } = useMutation({
+    mutationKey: ["github"],
+    mutationFn: async () => {
+      const { data } = await authApi.get("/github");
+      console.log(data);
+    },
+  });
   return (
     <>
       <section className="bg-white">
@@ -91,6 +101,13 @@ const Login = () => {
             </div>
           </main>
         </div>
+        <button
+          disabled={formState.disabled || isPending}
+          className="inline-block shrink-0 rounded-md border border-blue-600 bg-blue-600 px-12 py-3 text-sm font-medium text-white transition hover:bg-transparent hover:text-blue-600  disabled:bg-blue-400"
+          onClick={() => mutate()}
+        >
+          Github
+        </button>
       </section>
     </>
   );
