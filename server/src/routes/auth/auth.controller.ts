@@ -12,6 +12,7 @@ class UserController {
     this.registerUser = this.registerUser.bind(this);
     this.createUser = this.createUser.bind(this);
     this.loginUser = this.loginUser.bind(this);
+    this.authenticate_github = this.authenticate_github.bind(this);
   }
   async createUser(req: Request, res: Response, next: NextFunction) {
     const { token } = req.query;
@@ -68,7 +69,6 @@ class UserController {
       password,
       rows[0].user_password
     );
-    console.log(is_correct_password);
 
     if (!is_correct_password) {
       return next({ message: "Incorrect Credentials", status: 404 });
@@ -146,6 +146,88 @@ class UserController {
       .json({ message: "Verification email sent successfully" });
   }
 
+  async authenticate_github(req: Request, res: Response, next: NextFunction) {
+    const user = req.user as User;
+    if (!user?.email) {
+      return res.redirect(`http://localhost:5173/verify/github-user`);
+    }
+    const { rows, rowCount } = await db.query(
+      `select * from users where email=$1`,
+      [user.email]
+    );
+    if (rowCount && rowCount > 0) {
+      if (rows[0].is_verified) {
+        const { accessToken, refreshToken } =
+          this.generateAccessAndRefreshToken(rows[0]);
+
+        await db.query("update users set refresh_token = $1 where email = $2", [
+          refreshToken,
+          user.email,
+        ]);
+
+        return res
+          .cookie("accessToken", accessToken, {
+            secure: true,
+            httpOnly: false,
+            sameSite: "none",
+          })
+          .cookie("refreshToken", refreshToken, {
+            secure: true,
+            httpOnly: false,
+            sameSite: "none",
+          })
+          .redirect(`http://localhost:5173`);
+      } else {
+        const { accessToken, refreshToken } =
+          this.generateAccessAndRefreshToken(rows[0]);
+
+        await db.query(
+          "update users set refresh_token = $1,is_verified=$2 where email = $3",
+          [refreshToken, true, user.email]
+        );
+
+        return res
+          .cookie("accessToken", accessToken, {
+            secure: true,
+            httpOnly: false,
+            sameSite: "none",
+          })
+          .cookie("refreshToken", refreshToken, {
+            secure: true,
+            httpOnly: false,
+            sameSite: "none",
+          })
+          .redirect(`http://localhost:5173`);
+      }
+    }
+
+    const { rows: authUser } = await db.query(
+      "INSERT INTO users (name, username, email,avatar,is_verified) VALUES ($1,$2,$3,$4,$5) RETURNING id",
+      [user.name, user.username, user.email, user.avatar, true]
+    );
+    user.id = authUser[0].id;
+    const { accessToken, refreshToken } =
+      this.generateAccessAndRefreshToken(user);
+
+    await db.query("update users set refresh_token = $1 where email = $2", [
+      refreshToken,
+      user.email,
+    ]);
+
+    return res
+      .cookie("accessToken", accessToken, {
+        secure: true,
+        httpOnly: false,
+        sameSite: "none",
+      })
+      .cookie("refreshToken", refreshToken, {
+        secure: true,
+        httpOnly: false,
+        sameSite: "none",
+      })
+      .redirect(`http://localhost:5173`);
+  }
+
   encryptToken = (token: string): string => {
     const key = Buffer.from("12345678901234567890123456789012");
     const algorithm = "aes-256-cbc";
@@ -210,7 +292,6 @@ class UserController {
         id: user.id,
         username: user.username,
         email: user.email,
-        profession: user.profession,
         avatar: user.avatar,
       },
       env.JWT_ACCESS_TOKEN_SECRET,
