@@ -24,19 +24,32 @@ import {
 const logger = pino({ name: "server start" });
 export const db = connectToDb();
 // createTable(`
-//   DROP TABLE IF EXISTS users;
-
-//   CREATE  TABLE users (
+//   CREATE TABLE about (
 //     id SERIAL PRIMARY KEY,
-//     name VARCHAR(100) NOT NULL,
-//     username VARCHAR(100) NOT NULL,
-//     avatar VARCHAR(255)  default 'https://static.vecteezy.com/system/resources/previews/027/708/418/large_2x/default-avatar-profile-icon-in-flat-style-free-vector.jpg',
-//     email VARCHAR(100) UNIQUE NOT NULL,
-//     profession VARCHAR(100),
-//     user_password VARCHAR(255),
-//     refresh_token VARCHAR(255),
+//     user_id INT NOT NULL,
+//     bio VARCHAR(255),
+//     company VARCHAR(255),
+//     job_title VARCHAR(255),
 //     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-//     is_verified BOOLEAN DEFAULT FALSE
+//     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+// );
+
+// CREATE TABLE social_links (
+//     id SERIAL PRIMARY KEY,
+//     user_id INT NOT NULL,
+//     github VARCHAR(255),
+//     linkedin VARCHAR(255),
+//     your_website VARCHAR(255),
+//     x VARCHAR(255),
+//     youtube VARCHAR(255),
+//     stack_overflow VARCHAR(255),
+//     reddit VARCHAR(255),
+//     roadmap_sh VARCHAR(255),
+//     codepen VARCHAR(255),
+//     mastodon VARCHAR(255),
+//     threads VARCHAR(255),
+//     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+//     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 // );
 
 // `);

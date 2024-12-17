@@ -57,7 +57,7 @@ class UserController {
       return next({ status: 404, message: "Please fill all the fields" });
     }
     const { rows } = await db.query(
-      `SELECT * from users where email = $1 and is_verified = $2 `,
+      `SELECT * from users where email = $1 and is_verified = $2`,
       [email, true]
     );
 
@@ -149,7 +149,11 @@ class UserController {
   async authenticate_github(req: Request, res: Response, next: NextFunction) {
     const user = req.user as User;
     if (!user?.email) {
-      return res.redirect(`http://localhost:5173/verify/github-user`);
+      return next({
+        message:
+          "We couldn’t retrieve your email from GitHub. To continue, please make your email public or provide an alternative email address in github",
+        status: 404,
+      });
     }
     const { rows, rowCount } = await db.query(
       `select * from users where email=$1`,
@@ -226,6 +230,72 @@ class UserController {
         sameSite: "none",
       })
       .redirect(`http://localhost:5173`);
+  }
+
+  authenticateUser(req: Request, res: Response, next: NextFunction) {
+    const { user } = req.body;
+
+    return res.status(200).json(user);
+  }
+
+  async authenticateByResfreshToken(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    const { refreshToken: refToken } = req.cookies;
+    if (!refToken) {
+      return next({ message: "Refresh Token not found", status: 404 });
+    }
+    const { id }: any = verify(refToken, env.JWT_REFRESH_TOKEN_SECRET!);
+    if (!id) {
+      return next({ message: "Invalid Refresh Token", status: 404 });
+    }
+
+    const { rows } = await db.query(`SELECT * from users where id = $1`, [id]);
+
+    if (rows.length < 1) {
+      return next({ status: 404, message: "User not found" });
+    }
+
+    const { accessToken, refreshToken } = this.generateAccessAndRefreshToken(
+      rows[0]
+    );
+    await db.query(`update users set refresh_token=$1 where email=$2`, [
+      refreshToken,
+      rows[0].email,
+    ]);
+
+    res
+      .cookie("accessToken", accessToken, {
+        secure: true,
+        httpOnly: false,
+        sameSite: "none",
+      })
+      .cookie("refreshToken", refreshToken, {
+        secure: true,
+        httpOnly: false,
+        sameSite: "none",
+      });
+
+    return res
+      .status(200)
+      .json({ message: "User logged in by using refreshToken successfully" });
+  }
+
+  async logoutUser(req: Request, res: Response, next: NextFunction) {
+    res
+      .clearCookie("refreshToken", {
+        secure: true,
+        httpOnly: false,
+        sameSite: "none",
+      })
+      .clearCookie("accessToken", {
+        secure: true,
+        httpOnly: false,
+        sameSite: "none",
+      })
+      .json({ message: "User logged out successfully" });
   }
 
   encryptToken = (token: string): string => {
