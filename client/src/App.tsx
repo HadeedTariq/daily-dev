@@ -10,6 +10,7 @@ import { setUser } from "./reducers/fullAppReducer";
 import { useEffect } from "react";
 import AuthProtector from "./pages/auth/components/AuthProtector";
 import NavBar from "./pages/app/components/Nabar";
+import Profile from "./pages/app/routes/Profile";
 
 function App() {
   const { user } = useFullApp();
@@ -37,7 +38,9 @@ function App() {
   if (isPending) return <LoadingBar />;
   return (
     <Routes>
-      <Route path="/" element={<NavBar />}></Route>
+      <Route path="/" element={<NavBar />}>
+        <Route path="profile" element={<Profile />} />
+      </Route>
       <Route path="/auth" element={<AuthProtector />}>
         <Route path="register" element={<Register />} />
         <Route path="login" element={<Login />} />

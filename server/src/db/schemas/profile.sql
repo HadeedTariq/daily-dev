@@ -25,3 +25,14 @@ CREATE TABLE social_links (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
+
+CREATE TABLE user_stats (
+    id SERIAL PRIMARY KEY,
+    followers INTEGER DEFAULT 0,
+    following INTEGER DEFAULT 0,
+    reputation INTEGER DEFAULT 0,
+    views INTEGER DEFAULT 0,
+    upvotes INTEGER DEFAULT 0,
+    user_id INT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);

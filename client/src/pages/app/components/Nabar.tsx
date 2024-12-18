@@ -4,6 +4,7 @@ import { authApi } from "@/lib/axios";
 import { useFullApp } from "@/store/hooks/useFullApp";
 import { Button } from "@/components/ui/button";
 import { NavDrawer } from "./NavDrawer";
+import Authenticate from "./NonAuthorizer";
 
 const NavBar = () => {
   const navigate = useNavigate();
@@ -34,9 +35,7 @@ const NavBar = () => {
                       Logout
                     </Button>
                     <Link to={"/profile"}>
-                      <Button variant={"link"} onClick={logout}>
-                        Profile
-                      </Button>
+                      <Button variant={"link"}>Profile</Button>
                     </Link>
                   </>
                 ) : (
@@ -64,7 +63,7 @@ const NavBar = () => {
           </div>
         </header>
       </div>
-      <Outlet />
+      {user ? <Outlet /> : <Authenticate />}
     </div>
   );
 };

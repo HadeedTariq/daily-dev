@@ -361,6 +361,7 @@ class UserController {
       {
         id: user.id,
         username: user.username,
+        name: user.name,
         email: user.email,
         avatar: user.avatar,
       },
