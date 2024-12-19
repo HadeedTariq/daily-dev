@@ -1,7 +1,7 @@
 import { env } from "@/common/utils/envConfig";
-import pg from "pg";
+import { Pool } from "pg";
 
-const config = {
+const pool = new Pool({
   user: env.DATABASE_USER,
   password: env.DATABASE_PASSWORD,
   host: env.DATABASE_HOST,
@@ -10,16 +10,66 @@ const config = {
   ssl: {
     rejectUnauthorized: false,
   },
+});
+
+export const queryDb = async (query: string, params: any[] = []) => {
+  const client = await pool.connect();
+  try {
+    const result = await client.query(query, params);
+    return result;
+  } finally {
+    client.release();
+  }
 };
 
-export const connectToDb = () => {
-  const client = new pg.Client(config);
+export const runDependentTransaction = async (
+  queries: {
+    query: string;
+    params: any[];
+  }[]
+) => {
+  const client = await pool.connect();
 
-  // Connect to the database
-  client
-    .connect()
-    .then(() => console.log("Connected to the database successfully"))
-    .catch((err) => console.error("Error connecting to the database:", err));
+  try {
+    await client.query("BEGIN");
 
-  return client;
+    for (const q of queries) {
+      await client.query(q.query, q.params);
+    }
+
+    await client.query("COMMIT");
+    console.log("Transaction committed successfully");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Transaction failed and rolled back:", error);
+    throw error;
+  } finally {
+    client.release();
+    console.log("Database client released");
+  }
+};
+
+export const runIndependentTransaction = async (
+  queries: {
+    query: string;
+    params: any[];
+  }[]
+) => {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    await Promise.all(queries.map((q) => client.query(q.query, q.params)));
+
+    await client.query("COMMIT");
+    console.log("Transaction committed successfully");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Transaction failed and rolled back:", error);
+    throw error;
+  } finally {
+    client.release();
+    console.log("Database client released");
+  }
 };

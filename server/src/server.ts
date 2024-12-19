@@ -9,7 +9,7 @@ import errorHandler, {
 } from "@/common/middleware/errorHandler";
 import requestLogger from "./common/middleware/requestLogger";
 import { authRouter } from "./routes/auth/auth.routes";
-import { connectToDb } from "./db/connect";
+
 import cookieParser from "cookie-parser";
 
 import session from "express-session";
@@ -23,18 +23,17 @@ import {
 import { profileRouter } from "./routes/profile/profile.routes";
 
 const logger = pino({ name: "server start" });
-export const db = connectToDb();
+
 // createTable(`
-// CREATE TABLE user_stats (
-//     id SERIAL PRIMARY KEY,
-//     followers INTEGER DEFAULT 0,
-//     following INTEGER DEFAULT 0,
-//     reputation INTEGER DEFAULT 0,
-//     views INTEGER DEFAULT 0,
-//     upvotes INTEGER DEFAULT 0,
-//     user_id INT NOT NULL,
-//     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-// );
+
+// ALTER TABLE about
+// ADD CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+
+// ALTER TABLE social_links
+// ADD CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+
+// ALTER TABLE user_stats
+// ADD CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
 
 // `);
 
@@ -100,7 +99,7 @@ app.use(requestLogger);
 
 // Routes
 app.use("/auth", authRouter);
-app.use("/prfile", profileRouter);
+app.use("/profile", profileRouter);
 // Swagger UI
 app.use(openAPIRouter);
 

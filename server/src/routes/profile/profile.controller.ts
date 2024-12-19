@@ -1,4 +1,4 @@
-import { db } from "@/server";
+import { queryDb } from "@/db/connect";
 import { NextFunction, Request, Response } from "express";
 
 import { DatabaseError } from "pg";
@@ -33,7 +33,7 @@ class ProfileController {
       u.id = $1
   `;
 
-      const { rows } = await db.query(query, [authUser.id]);
+      const { rows } = await queryDb(query, [authUser.id]);
 
       if (rows.length === 0) {
         return next({ status: 404, message: "User not found" });

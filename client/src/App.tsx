@@ -11,6 +11,7 @@ import { useEffect } from "react";
 import AuthProtector from "./pages/auth/components/AuthProtector";
 import NavBar from "./pages/app/components/Nabar";
 import Profile from "./pages/app/routes/Profile";
+import EditProfile from "./pages/app/routes/EditProfile";
 
 function App() {
   const { user } = useFullApp();
@@ -39,7 +40,10 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<NavBar />}>
-        <Route path="profile" element={<Profile />} />
+        <Route path="profile">
+          <Route index element={<Profile />} />
+          <Route path="edit" element={<EditProfile />} />
+        </Route>
       </Route>
       <Route path="/auth" element={<AuthProtector />}>
         <Route path="register" element={<Register />} />
