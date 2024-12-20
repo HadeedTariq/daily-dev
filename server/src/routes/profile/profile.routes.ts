@@ -8,4 +8,5 @@ import { profileController } from "./profile.controller";
 const router = Router();
 router.use(checkAuth);
 router.get("/", asyncHandler(profileController.getProfile));
+router.put("/edit", asyncHandler(profileController.editProfile));
 export { router as profileRouter };

@@ -19,6 +19,13 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
+import axios from "axios";
+import {
+  InvalidateQueryFilters,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { profileApi } from "@/lib/axios";
 
 const profileFormSchema = z.object({
   username: z
@@ -48,14 +55,47 @@ const profileFormSchema = z.object({
   github: z.string().url().optional().or(z.literal("")),
   linkedin: z.string().url().optional().or(z.literal("")),
   website: z.string().url().optional().or(z.literal("")),
-  twitter: z.string().url().optional().or(z.literal("")),
+  x: z.string().url().optional().or(z.literal("")),
+  youtube: z.string().url().optional().or(z.literal("")),
+  stack_overflow: z.string().url().optional().or(z.literal("")),
+  reddit: z.string().url().optional().or(z.literal("")),
+  roadmap_sh: z.string().url().optional().or(z.literal("")),
+  codepen: z.string().url().optional().or(z.literal("")),
+  mastodon: z.string().url().optional().or(z.literal("")),
+  threads: z.string().url().optional().or(z.literal("")),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 const EditProfile = () => {
+  const queryClient = useQueryClient();
   const { profile } = useFullApp();
-  const [avatar, setAvatar] = useState<string | null>(null);
+  const [avatar, setAvatar] = useState<string | undefined>(profile?.avatar);
+  const [file, setFile] = useState<string | File>("");
+  const { mutate: updateProfile, isPending } = useMutation({
+    mutationKey: ["updateProfile"],
+    mutationFn: async (formData: ProfileFormValues) => {
+      const { data } = await profileApi.put("/edit", { ...formData });
+      return data;
+    },
+    onError: (err: any) => {
+      toast({
+        title: err.response.data.message || "Something went wrong",
+        variant: "destructive",
+      });
+    },
+    onSuccess: (data) => {
+      console.log(data);
+
+      toast({
+        title: data.message || "Profile Updated successfully",
+      });
+      queryClient.invalidateQueries([
+        "getProfile",
+        0,
+      ] as InvalidateQueryFilters);
+    },
+  });
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -65,23 +105,39 @@ const EditProfile = () => {
       ...profile?.user_stats,
       ...profile?.about,
     },
-    // mode: "onChange",
+    mode: "onChange",
   });
 
-  function onSubmit(data: ProfileFormValues) {
-    toast({
-      title: "You submitted the following values:",
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
-    });
+  async function onSubmit(data: ProfileFormValues) {
+    if (file) {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", "n5y4fqsf");
+      formData.append("cloud_name", "lmsproject");
+      try {
+        const { data: cloudinaryData } = await axios.post(
+          "https://api.cloudinary.com/v1_1/lmsproject/image/upload",
+          formData
+        );
+        data.avatar = cloudinaryData.secure_url;
+      } catch (err) {
+        console.log(err);
+        toast({
+          title: "Error uploading",
+          description: "Failed to upload the file. Please try again.",
+          variant: "destructive",
+          duration: 2000,
+        });
+        return;
+      }
+    }
+    updateProfile(data);
   }
 
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      setFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatar(reader.result as string);
@@ -259,6 +315,7 @@ const EditProfile = () => {
               </FormItem>
             )}
           />
+
           <FormField
             control={form.control}
             name="linkedin"
@@ -276,6 +333,7 @@ const EditProfile = () => {
               </FormItem>
             )}
           />
+
           <FormField
             control={form.control}
             name="website"
@@ -285,31 +343,157 @@ const EditProfile = () => {
                 <FormControl>
                   <Input placeholder="https://www.yourwebsite.com" {...field} />
                 </FormControl>
-                <FormDescription>
-                  Your personal or professional website URL.
-                </FormDescription>
+                <FormDescription>Your personal website URL.</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
+
           <FormField
             control={form.control}
-            name="twitter"
+            name="x"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Twitter</FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder="https://twitter.com/yourusername"
-                    {...field}
-                  />
+                  <Input placeholder="https://x.com/yourusername" {...field} />
                 </FormControl>
                 <FormDescription>Your Twitter profile URL.</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <Button type="submit">Update profile</Button>
+
+          <FormField
+            control={form.control}
+            name="youtube"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>YouTube</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="https://www.youtube.com/c/yourchannel"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>Your YouTube channel URL.</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="stack_overflow"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Stack Overflow</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="https://stackoverflow.com/users/youruserid"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Your Stack Overflow profile URL.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="reddit"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Reddit</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="https://www.reddit.com/user/yourusername"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>Your Reddit profile URL.</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="roadmap_sh"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Roadmap.sh</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="https://roadmap.sh/yourusername"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>Your Roadmap.sh profile URL.</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="codepen"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>CodePen</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="https://codepen.io/yourusername"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>Your CodePen profile URL.</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="mastodon"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Mastodon</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="https://mastodon.social/@yourusername"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>Your Mastodon profile URL.</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="threads"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Threads</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="https://www.threads.net/@yourusername"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>Your Threads profile URL.</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button type="submit" disabled={isPending}>
+            Save Changes
+          </Button>
         </form>
       </Form>
     </div>

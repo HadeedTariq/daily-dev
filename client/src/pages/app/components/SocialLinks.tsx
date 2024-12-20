@@ -24,12 +24,12 @@ interface Social {
 interface SocialLinksProps {
   github?: string;
   linkedin?: string;
-  yourWebsite?: string;
+  website?: string;
   x?: string;
   youtube?: string;
-  stackOverflow?: string;
+  stack_overflow?: string;
   reddit?: string;
-  roadmapSh?: string;
+  roadmap_sh?: string;
   codepen?: string;
   mastodon?: string;
   threads?: string;
@@ -38,12 +38,12 @@ interface SocialLinksProps {
 export function SocialLinks({
   github,
   linkedin,
-  yourWebsite,
+  website,
   x,
   youtube,
-  stackOverflow,
+  stack_overflow,
   reddit,
-  roadmapSh,
+  roadmap_sh,
   codepen,
   mastodon,
   threads,
@@ -55,17 +55,17 @@ export function SocialLinks({
       icon: <Linkedin className="h-4 w-4" />,
       label: "LinkedIn",
     },
-    { url: yourWebsite, icon: <Globe className="h-4 w-4" />, label: "Website" },
+    { url: website, icon: <Globe className="h-4 w-4" />, label: "Website" },
     { url: x, icon: <Twitter className="h-4 w-4" />, label: "X (Twitter)" },
     { url: youtube, icon: <Youtube className="h-4 w-4" />, label: "YouTube" },
     {
-      url: stackOverflow,
+      url: stack_overflow,
       icon: <SquareStack className="h-4 w-4" />,
       label: "Stack Overflow",
     },
     { url: reddit, icon: <Reddit className="h-4 w-4" />, label: "Reddit" },
     {
-      url: roadmapSh,
+      url: roadmap_sh,
       icon: <FileCode2 className="h-4 w-4" />,
       label: "Roadmap.sh",
     },

@@ -6,6 +6,7 @@ import { DatabaseError } from "pg";
 class ProfileController {
   constructor() {
     this.getProfile = this.getProfile.bind(this);
+    this.editProfile = this.editProfile.bind(this);
   }
   async getProfile(req: Request, res: Response, next: NextFunction) {
     const { user: authUser } = req.body;
@@ -16,6 +17,7 @@ class ProfileController {
       u.name,
       u.username,
       u.avatar,
+      u.email,
       u.created_at,
       u.profession,
       row_to_json(ab) AS about,
@@ -47,6 +49,114 @@ class ProfileController {
 
       next(error);
     }
+  }
+
+  async editProfile(req: Request, res: Response, next: NextFunction) {
+    const {
+      username,
+      avatar,
+      name,
+      email,
+      profession,
+      bio,
+      company,
+      job_title,
+      github,
+      linkedin,
+      website,
+      x,
+      youtube,
+      stack_overflow,
+      reddit,
+      roadmap_sh,
+      codepen,
+      mastodon,
+      threads,
+    } = req.body;
+
+    if (username || avatar || name || email || profession) {
+      const query = `UPDATE users SET username=$1, avatar=$2, name=$3, email=$4, profession=$5 WHERE id=$6 RETURNING *`;
+      const { rows } = await queryDb(query, [
+        username,
+        avatar,
+        name,
+        email,
+        profession,
+        req.body.user.id,
+      ]);
+
+      if (rows.length === 0) {
+        return next({ status: 404, message: "User not found" });
+      }
+    }
+
+    if (bio || company || job_title) {
+      const query = `UPDATE about SET bio=$1, company=$2, job_title=$3 WHERE user_id=$4 RETURNING *`;
+      const { rows: aboutRows } = await queryDb(query, [
+        bio,
+        company,
+        job_title,
+        req.body.user.id,
+      ]);
+
+      if (aboutRows.length === 0) {
+        return next({ status: 404, message: "User not found" });
+      }
+    }
+
+    if (
+      github ||
+      linkedin ||
+      website ||
+      x ||
+      youtube ||
+      stack_overflow ||
+      reddit ||
+      roadmap_sh ||
+      codepen ||
+      mastodon ||
+      threads
+    ) {
+      const { rows: socialLinksRows } = await queryDb(
+        `
+        UPDATE social_links 
+        SET 
+          github = $1, 
+          linkedin = $2, 
+          website = $3, 
+          x = $4, 
+          youtube = $5, 
+          stack_overflow = $6, 
+          reddit = $7, 
+          roadmap_sh = $8, 
+          codepen = $9, 
+          mastodon = $10, 
+          threads = $11 
+        WHERE user_id = $12 
+        RETURNING *;
+        `,
+        [
+          github,
+          linkedin,
+          website,
+          x,
+          youtube,
+          stack_overflow,
+          reddit,
+          roadmap_sh,
+          codepen,
+          mastodon,
+          threads,
+          req.body.user.id,
+        ]
+      );
+
+      if (socialLinksRows.length === 0) {
+        return next({ status: 404, message: "User not found" });
+      }
+    }
+
+    res.status(200).json({ message: "Profile Updated Successfully" });
   }
 }
 

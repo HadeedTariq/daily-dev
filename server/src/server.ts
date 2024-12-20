@@ -27,13 +27,7 @@ const logger = pino({ name: "server start" });
 // createTable(`
 
 // ALTER TABLE about
-// ADD CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-
-// ALTER TABLE social_links
-// ADD CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-
-// ALTER TABLE user_stats
-// ADD CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+// ADD COLUMN readme TEXT DEFAULT ''
 
 // `);
 

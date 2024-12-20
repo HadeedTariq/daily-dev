@@ -40,10 +40,9 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<NavBar />}>
-        <Route path="profile">
-          <Route index element={<Profile />} />
-          <Route path="edit" element={<EditProfile />} />
-        </Route>
+        <Route path="profile" element={<Profile />}></Route>
+
+        <Route path="editProfile" element={<EditProfile />} />
       </Route>
       <Route path="/auth" element={<AuthProtector />}>
         <Route path="register" element={<Register />} />

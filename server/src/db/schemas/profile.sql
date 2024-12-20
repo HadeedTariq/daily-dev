@@ -3,6 +3,7 @@ CREATE TABLE about (
     user_id INT NOT NULL,
     bio VARCHAR(255) DEFAULT '',
     company VARCHAR(255) DEFAULT '',
+    readme TEXT DEFAULT '',
     job_title VARCHAR(255) DEFAULT '',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
@@ -13,7 +14,7 @@ CREATE TABLE social_links (
     user_id INT NOT NULL,
     github VARCHAR(255) DEFAULT '',
     linkedin VARCHAR(255) DEFAULT '',
-    your_website VARCHAR(255) DEFAULT '',
+    website VARCHAR(255) DEFAULT '',
     x VARCHAR(255) DEFAULT '',
     youtube VARCHAR(255) DEFAULT '',
     stack_overflow VARCHAR(255) DEFAULT '',

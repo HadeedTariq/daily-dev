@@ -40,7 +40,7 @@ type SocialLinks = {
   user_id: number;
   github?: string;
   linkedin?: string;
-  your_website?: string;
+  website?: string;
   x?: string;
   youtube?: string;
   stack_overflow?: string;
