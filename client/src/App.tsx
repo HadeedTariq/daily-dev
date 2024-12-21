@@ -13,6 +13,9 @@ import NavBar from "./pages/app/components/Nabar";
 import Profile from "./pages/app/routes/Profile";
 import EditProfile from "./pages/app/routes/EditProfile";
 import { ReadmeHandler } from "./pages/app/routes/ReadmeHandler";
+import MyPosts from "./pages/app/routes/MyPosts";
+import MyReplies from "./pages/app/routes/MyReplies";
+import MyUpvotes from "./pages/app/routes/MyUpVotes";
 
 function App() {
   const { user } = useFullApp();
@@ -43,6 +46,9 @@ function App() {
       <Route path="/" element={<NavBar />}>
         <Route path="profile" element={<Profile />}>
           <Route index element={<ReadmeHandler />} />
+          <Route path="posts" element={<MyPosts />} />
+          <Route path="replies" element={<MyReplies />} />
+          <Route path="upvotes" element={<MyUpvotes />} />
         </Route>
 
         <Route path="editProfile" element={<EditProfile />} />

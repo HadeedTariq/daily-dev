@@ -24,6 +24,7 @@ type UserProfile = {
   about: About;
   social_links: SocialLinks;
   user_stats: UserStats;
+  streaks: Streak;
 };
 
 type About = {
@@ -62,4 +63,14 @@ type UserStats = {
   views: number;
   upvotes: number;
   created_at: string;
+};
+
+type Streak = {
+  id: number;
+  user_id: number;
+  streak_start: Date;
+  streak_end: Date;
+  updated_at: Date;
+  streak_length: number;
+  longest_streak: number;
 };

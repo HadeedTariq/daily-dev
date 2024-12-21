@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 
 const navItems = [
-  { name: "Readme", path: "/profile" },
+  { name: "Readme", path: "" },
   { name: "Posts", path: "posts" },
   { name: "Replies", path: "replies" },
   { name: "Upvotes", path: "upvotes" },
@@ -18,7 +18,8 @@ export function ProfileHeader() {
             <Link
               to={item.path}
               className={`text-sm font-medium transition-colors hover:text-primary ${
-                pathname === item.path
+                pathname ===
+                `/profile${item.path === "" ? "" : `/${item.path}`}`
                   ? "text-primary"
                   : "text-muted-foreground"
               }`}

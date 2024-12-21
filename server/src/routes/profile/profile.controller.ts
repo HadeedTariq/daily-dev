@@ -24,7 +24,8 @@ class ProfileController {
       u.profession,
       row_to_json(ab) AS about,
       row_to_json(sl) AS social_links,
-      row_to_json(ust) AS user_stats
+      row_to_json(ust) AS user_stats,
+      row_to_json(stk) AS streaks
     FROM 
       users u
     LEFT JOIN 
@@ -33,6 +34,8 @@ class ProfileController {
       social_links sl ON u.id = sl.user_id
     LEFT JOIN 
       user_stats ust ON u.id = ust.user_id
+    LEFT JOIN 
+      streaks stk ON u.id = stk.user_id
     WHERE 
       u.id = $1
   `;
@@ -161,11 +164,6 @@ class ProfileController {
     res.status(200).json({ message: "Profile Updated Successfully" });
   }
   async readmeHandler(req: Request, res: Response, next: NextFunction) {
-    await queryDb(
-      `INSERT INTO streaks (user_id)
-    VALUES ($1)`,
-      [req.body.user.id]
-    );
     const { readme } = req.body;
 
     if (!readme || typeof readme !== "string") {
