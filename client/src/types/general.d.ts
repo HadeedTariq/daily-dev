@@ -31,6 +31,7 @@ type About = {
   user_id: number;
   bio?: string;
   company?: string;
+  readme?: string;
   job_title?: string;
   created_at: string;
 };

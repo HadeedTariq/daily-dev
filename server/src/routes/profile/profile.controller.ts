@@ -7,6 +7,7 @@ class ProfileController {
   constructor() {
     this.getProfile = this.getProfile.bind(this);
     this.editProfile = this.editProfile.bind(this);
+    this.readmeHandler = this.readmeHandler.bind(this);
   }
   async getProfile(req: Request, res: Response, next: NextFunction) {
     const { user: authUser } = req.body;
@@ -157,6 +158,24 @@ class ProfileController {
     }
 
     res.status(200).json({ message: "Profile Updated Successfully" });
+  }
+  async readmeHandler(req: Request, res: Response, next: NextFunction) {
+    const { readme } = req.body;
+
+    if (!readme || typeof readme !== "string") {
+      return res.status(400).json({
+        error: 'The "readme" field is required and should be a string.',
+      });
+    }
+
+    const query = "update  about set readme= $1  where user_id = $2";
+    const values = [readme, req.body.user.id];
+
+    await queryDb(query, values);
+
+    return res.status(201).json({
+      message: "Readme successfully saved.",
+    });
   }
 }
 

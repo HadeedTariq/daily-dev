@@ -12,6 +12,7 @@ import AuthProtector from "./pages/auth/components/AuthProtector";
 import NavBar from "./pages/app/components/Nabar";
 import Profile from "./pages/app/routes/Profile";
 import EditProfile from "./pages/app/routes/EditProfile";
+import { ReadmeHandler } from "./pages/app/routes/ReadmeHandler";
 
 function App() {
   const { user } = useFullApp();
@@ -40,7 +41,9 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<NavBar />}>
-        <Route path="profile" element={<Profile />}></Route>
+        <Route path="profile" element={<Profile />}>
+          <Route index element={<ReadmeHandler />} />
+        </Route>
 
         <Route path="editProfile" element={<EditProfile />} />
       </Route>

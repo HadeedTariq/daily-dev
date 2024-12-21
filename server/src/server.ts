@@ -26,8 +26,16 @@ const logger = pino({ name: "server start" });
 
 // createTable(`
 
-// ALTER TABLE about
-// ADD COLUMN readme TEXT DEFAULT ''
+// CREATE TABLE streaks (
+//     id SERIAL PRIMARY KEY,
+//     user_id INT NOT NULL,
+//     streak_start TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+//     streak_end TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+//     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+//     streak_length INTEGER DEFAULT 1,
+//     longest_streak INTEGER DEFAULT 1,
+//     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+// );
 
 // `);
 
