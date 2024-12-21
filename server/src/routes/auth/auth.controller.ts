@@ -234,6 +234,11 @@ class UserController {
                 VALUES ($1, 0, 0, 0, 0, 0)`,
         params: [user.id],
       },
+      {
+        query: `INSERT INTO streaks (user_id)
+                VALUES ($1)`,
+        params: [user.id],
+      },
     ]);
 
     return res

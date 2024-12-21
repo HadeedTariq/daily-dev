@@ -21,6 +21,7 @@ import {
 } from "@tanstack/react-query";
 import { profileApi } from "@/lib/axios";
 import { toast } from "@/hooks/use-toast";
+import ReadmeRendrer from "../components/ReadmeRendrer";
 
 export function ReadmeHandler() {
   const queryClient = useQueryClient();
@@ -28,6 +29,7 @@ export function ReadmeHandler() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { profile } = useFullApp();
   const [markdown, setMarkdown] = useState(profile?.about.readme);
+
   const { mutate: updateProfile, isPending } = useMutation({
     mutationKey: ["readmeHandler"],
     mutationFn: async () => {
@@ -43,10 +45,8 @@ export function ReadmeHandler() {
       });
     },
     onSuccess: (data) => {
-      console.log(data);
-
       toast({
-        title: data.message || "Profile Updated successfully",
+        title: data.message || "Readme Saved Successfully",
       });
       queryClient.invalidateQueries([
         "getProfile",
@@ -56,7 +56,7 @@ export function ReadmeHandler() {
   });
 
   return (
-    <>
+    <div className="w-full">
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogTrigger asChild>
           {profile?.about.readme ? (
@@ -73,7 +73,11 @@ export function ReadmeHandler() {
         </DialogTrigger>
         <DialogContent className="w-[425px]">
           <DialogHeader>
-            <DialogTitle>Add README</DialogTitle>
+            {profile?.about.readme ? (
+              <DialogTitle>Edit README</DialogTitle>
+            ) : (
+              <DialogTitle>Add README</DialogTitle>
+            )}
             <DialogDescription>
               Create a README for your profile. Click save when you're done.
             </DialogDescription>
@@ -94,6 +98,7 @@ export function ReadmeHandler() {
           </div>
         </DialogContent>
       </Dialog>
-    </>
+      <ReadmeRendrer />
+    </div>
   );
 }

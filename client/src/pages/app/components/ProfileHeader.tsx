@@ -2,8 +2,9 @@ import { Link, useLocation } from "react-router-dom";
 
 const navItems = [
   { name: "Readme", path: "/profile" },
-  { name: "Explore", path: "/explore" },
-  { name: "Bookmarks", path: "/bookmarks" },
+  { name: "Posts", path: "posts" },
+  { name: "Replies", path: "replies" },
+  { name: "Upvotes", path: "upvotes" },
 ];
 
 export function ProfileHeader() {

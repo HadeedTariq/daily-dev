@@ -30,11 +30,11 @@ export default function DailyDevProfile() {
 
   return (
     <div className="flex flex-row  w-full">
-      <header className="bg-background border-b">
+      <header className="bg-background border-b w-full">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <ProfileHeader />
-          <Outlet />
         </div>
+        <Outlet />
       </header>
       <div className="absolute top-10 right-0 h-full w-full max-w-md p-4 overflow-y-auto">
         <Card className="h-full">

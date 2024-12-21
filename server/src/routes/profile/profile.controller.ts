@@ -1,5 +1,6 @@
 import { queryDb } from "@/db/connect";
 import { NextFunction, Request, Response } from "express";
+import sanitizeHtml from "sanitize-html";
 
 import { DatabaseError } from "pg";
 
@@ -160,6 +161,11 @@ class ProfileController {
     res.status(200).json({ message: "Profile Updated Successfully" });
   }
   async readmeHandler(req: Request, res: Response, next: NextFunction) {
+    await queryDb(
+      `INSERT INTO streaks (user_id)
+    VALUES ($1)`,
+      [req.body.user.id]
+    );
     const { readme } = req.body;
 
     if (!readme || typeof readme !== "string") {
@@ -167,9 +173,13 @@ class ProfileController {
         error: 'The "readme" field is required and should be a string.',
       });
     }
+    const sanitizedReadme = sanitizeHtml(readme, {
+      allowedTags: [],
+      allowedAttributes: {},
+    });
 
     const query = "update  about set readme= $1  where user_id = $2";
-    const values = [readme, req.body.user.id];
+    const values = [sanitizedReadme, req.body.user.id];
 
     await queryDb(query, values);
 
