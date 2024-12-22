@@ -9,5 +9,9 @@ const profileApi = axios.create({
   baseURL: `${url}/profile`,
   withCredentials: true,
 });
+const postApi = axios.create({
+  baseURL: `${url}/posts`,
+  withCredentials: true,
+});
 
-export { authApi, profileApi };
+export { authApi, profileApi, postApi };

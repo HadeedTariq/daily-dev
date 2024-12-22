@@ -1,8 +1,13 @@
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Link } from "react-router-dom";
 
 export default function MyPosts() {
   return (
     <div className="space-y-4">
+      <Link to={"/post/create"}>
+        <Button>New Post</Button>
+      </Link>
       <Card>
         <CardHeader>
           <CardTitle>My First Post</CardTitle>

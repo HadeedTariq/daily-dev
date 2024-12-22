@@ -16,6 +16,7 @@ import { ReadmeHandler } from "./pages/app/routes/ReadmeHandler";
 import MyPosts from "./pages/app/routes/MyPosts";
 import MyReplies from "./pages/app/routes/MyReplies";
 import MyUpvotes from "./pages/app/routes/MyUpVotes";
+import { CreatePost } from "./pages/app/routes/CreatePost";
 
 function App() {
   const { user } = useFullApp();
@@ -50,6 +51,7 @@ function App() {
           <Route path="replies" element={<MyReplies />} />
           <Route path="upvotes" element={<MyUpvotes />} />
         </Route>
+        <Route path="post/create" element={<CreatePost />} />
 
         <Route path="editProfile" element={<EditProfile />} />
       </Route>

@@ -21,20 +21,26 @@ import {
   Profile as GitHubProfile,
 } from "passport-github2";
 import { profileRouter } from "./routes/profile/profile.routes";
+import { postRouter } from "./routes/posts/posts.routes";
 
 const logger = pino({ name: "server start" });
 
 // createTable(`
-
-// CREATE TABLE streaks (
+// CREATE TABLE posts (
 //     id SERIAL PRIMARY KEY,
-//     user_id INT NOT NULL,
-//     streak_start TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-//     streak_end TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+//     title VARCHAR(255) NOT NULL,
+//     thumbnail VARCHAR(500) NOT NULL,
+//     content TEXT NOT NULL,
+//     author_id INT NOT NULL,
+//     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 //     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-//     streak_length INTEGER DEFAULT 1,
-//     longest_streak INTEGER DEFAULT 1,
-//     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+//     FOREIGN KEY (author_id) REFERENCES users (id) ON DELETE CASCADE
+// );
+
+// CREATE TABLE post_tags (
+//     post_id INT REFERENCES posts(id) ON DELETE CASCADE,
+//     tag_id INT REFERENCES tags(id) ON DELETE CASCADE,
+//     PRIMARY KEY (post_id, tag_id)
 // );
 
 // `);
@@ -102,6 +108,7 @@ app.use(requestLogger);
 // Routes
 app.use("/auth", authRouter);
 app.use("/profile", profileRouter);
+app.use("/posts", postRouter);
 // Swagger UI
 app.use(openAPIRouter);
 

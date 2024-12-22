@@ -74,3 +74,22 @@ type Streak = {
   streak_length: number;
   longest_streak: number;
 };
+
+type UserPosts = {
+  id: number;
+  title: string;
+  thumbnail: string;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type Tag = {
+  id: number;
+  name: string;
+};
+
+type PostTag = {
+  post_id: number;
+  tag_id: number;
+};
