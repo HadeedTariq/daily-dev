@@ -22,6 +22,7 @@ import {
 import { profileApi } from "@/lib/axios";
 import { toast } from "@/hooks/use-toast";
 import ReadmeRendrer from "../components/ReadmeRendrer";
+import ReadingStreak from "../components/ReadingStreak";
 
 export function ReadmeHandler() {
   const queryClient = useQueryClient();
@@ -99,6 +100,7 @@ export function ReadmeHandler() {
         </DialogContent>
       </Dialog>
       <ReadmeRendrer />
+      <ReadingStreak />
     </div>
   );
 }

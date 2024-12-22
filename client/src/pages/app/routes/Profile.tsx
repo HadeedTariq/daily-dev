@@ -14,7 +14,7 @@ import { setProfile } from "@/reducers/fullAppReducer";
 import ShareProfile from "../components/ShareProfile";
 import { ProfileHeader } from "../components/ProfileHeader";
 
-export default function DailyDevProfile() {
+export default function Profile() {
   const dispatch = useDispatch();
   const { isLoading, data: profile } = useQuery({
     queryKey: ["getProfile"],
