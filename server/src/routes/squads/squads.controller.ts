@@ -2,6 +2,20 @@ import { queryDb } from "@/db/connect";
 import { NextFunction, Request, Response } from "express";
 import { DatabaseError } from "pg";
 
+export const squadCategories = [
+  "frontend",
+  "backend",
+  "full-stack",
+  "devops",
+  "data-science",
+  "AI",
+  "mobile",
+  "cloud",
+  "security",
+  "quality-assurance",
+  "general",
+];
+
 class SquadController {
   constructor() {
     this.getSquads = this.getSquads.bind(this);
@@ -57,6 +71,12 @@ class SquadController {
     if (!name || !squad_handle) {
       return res.status(400).json({
         message: "Name, squad handle are required.",
+      });
+    }
+
+    if (!squadCategories.includes(category)) {
+      return res.status(400).json({
+        message: "Invalid category",
       });
     }
 

@@ -16,12 +16,26 @@ CREATE TABLE tags (
 
 CREATE TYPE post_content AS ENUM ('members', 'moderators');
 
+CREATE TYPE squad_category AS ENUM (
+    'frontend',
+    'backend',
+    'full-stack',
+    'devops',
+    'data-science',
+    'AI',
+    'mobile',
+    'cloud',
+    'security',
+    'quality-assurance',
+    'general'
+);
+
 CREATE TABLE squads (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) UNIQUE NOT NULL,
     squad_handle VARCHAR(255) UNIQUE NOT NULL,
     description TEXT,
-    category VARCHAR(100),
+    category squad_category DEFAULT 'general',
     is_public BOOLEAN DEFAULT TRUE,
     admin_id INT NOT NULL,
     post_creation_allowed_to post_content DEFAULT 'members',

@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/card";
 import { squadApi } from "@/lib/axios";
 import { toast } from "@/hooks/use-toast";
+import { squadCategories } from "@/utils/data";
 
 const formSchema = z.object({
   name: z
@@ -46,10 +47,19 @@ const formSchema = z.object({
     .string()
     .max(1000, "Description must be less than 1000 characters")
     .optional(),
-  category: z
-    .string()
-    .min(2, "Category must be at least 2 characters")
-    .max(100, "Category must be less than 100 characters"),
+  category: z.enum([
+    "frontend",
+    "backend",
+    "full-stack",
+    "devops",
+    "data-science",
+    "AI",
+    "mobile",
+    "cloud",
+    "security",
+    "quality-assurance",
+    "general",
+  ]),
   is_public: z.boolean().default(true),
   post_creation_allowed_to: z.enum(["members", "moderators"]),
   invitation_permission: z.enum(["members", "moderators"]),
@@ -63,7 +73,7 @@ export default function SquadCreationForm() {
       name: "",
       squad_handle: "",
       description: "",
-      category: "",
+      category: "general",
       is_public: true,
       post_creation_allowed_to: "members",
       invitation_permission: "members",
@@ -157,9 +167,23 @@ export default function SquadCreationForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter squad category" {...field} />
-                  </FormControl>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {squadCategories.map((category) => (
+                        <SelectItem value={category}>
+                          {category.split("-").join(" ").toUpperCase()}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
