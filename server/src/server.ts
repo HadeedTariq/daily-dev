@@ -26,23 +26,6 @@ import { postRouter } from "./routes/posts/posts.routes";
 const logger = pino({ name: "server start" });
 
 // createTable(`
-// CREATE TABLE posts (
-//     id SERIAL PRIMARY KEY,
-//     title VARCHAR(255) NOT NULL,
-//     thumbnail VARCHAR(500) NOT NULL,
-//     content TEXT NOT NULL,
-//     author_id INT NOT NULL,
-//     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-//     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-//     FOREIGN KEY (author_id) REFERENCES users (id) ON DELETE CASCADE
-// );
-
-// CREATE TABLE post_tags (
-//     post_id INT REFERENCES posts(id) ON DELETE CASCADE,
-//     tag_id INT REFERENCES tags(id) ON DELETE CASCADE,
-//     PRIMARY KEY (post_id, tag_id)
-// );
-
 // `);
 
 const app: Express = express();
