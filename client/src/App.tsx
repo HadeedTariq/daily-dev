@@ -5,7 +5,7 @@ import LoadingBar from "./components/LoadingBar";
 import { useFullApp } from "./store/hooks/useFullApp";
 import { useDispatch } from "react-redux";
 import { useMutation } from "@tanstack/react-query";
-import { authApi } from "./lib/axios";
+import { authApi, profileApi } from "./lib/axios";
 import { setUser } from "./reducers/fullAppReducer";
 import { useEffect } from "react";
 import AuthProtector from "./pages/auth/components/AuthProtector";
@@ -17,10 +17,18 @@ import MyPosts from "./pages/app/routes/MyPosts";
 import MyReplies from "./pages/app/routes/MyReplies";
 import MyUpvotes from "./pages/app/routes/MyUpVotes";
 import { CreatePost } from "./pages/app/routes/CreatePost";
+import Home from "./pages/app/routes/Home";
 
 function App() {
   const { user } = useFullApp();
   const dispatch = useDispatch();
+  const { mutate: updateUserStreak } = useMutation({
+    mutationKey: ["updateUserStreak"],
+    mutationFn: async () => {
+      const { data } = await profileApi.put("/update-streak");
+      return data;
+    },
+  });
   const { isPending, mutate: authUser } = useMutation({
     mutationKey: ["authenticateUser"],
     mutationFn: async () => {
@@ -32,9 +40,14 @@ function App() {
       if (status < 400) {
         const { data } = await authApi.get("/");
         dispatch(setUser(data));
+        updateUserStreak();
       }
     },
+    onSuccess: () => {
+      updateUserStreak();
+    },
   });
+
   useEffect(() => {
     if (!user) {
       authUser();
@@ -45,6 +58,8 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<NavBar />}>
+        <Route index element={<Home />} />
+
         <Route path="profile" element={<Profile />}>
           <Route index element={<ReadmeHandler />} />
           <Route path="posts" element={<MyPosts />} />

@@ -10,4 +10,5 @@ router.use(checkAuth);
 router.get("/", asyncHandler(profileController.getProfile));
 router.put("/edit", asyncHandler(profileController.editProfile));
 router.post("/readme-handler", asyncHandler(profileController.readmeHandler));
+router.put("/update-streak", asyncHandler(profileController.updateStreak));
 export { router as profileRouter };

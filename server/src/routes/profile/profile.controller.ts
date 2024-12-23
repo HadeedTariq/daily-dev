@@ -9,6 +9,7 @@ class ProfileController {
     this.getProfile = this.getProfile.bind(this);
     this.editProfile = this.editProfile.bind(this);
     this.readmeHandler = this.readmeHandler.bind(this);
+    this.updateStreak = this.updateStreak.bind(this);
   }
   async getProfile(req: Request, res: Response, next: NextFunction) {
     const { user: authUser } = req.body;
@@ -162,6 +163,59 @@ class ProfileController {
     }
 
     res.status(200).json({ message: "Profile Updated Successfully" });
+  }
+  async updateStreak(req: Request, res: Response, next: NextFunction) {
+    const { user } = req.body;
+    const currentDate = new Date();
+
+    const { rows } = await queryDb(
+      `SELECT updated_at, streak_length, longest_streak FROM streaks WHERE user_id = $1`,
+      [user.id]
+    );
+
+    if (rows.length === 0) {
+      return next({ status: 404, message: "User not found" });
+    }
+
+    const lastUpdated = new Date(rows[0].updated_at);
+    const sameDay =
+      currentDate.toISOString().split("T")[0] ===
+      lastUpdated.toISOString().split("T")[0];
+
+    if (sameDay) {
+      return res.status(204).json({});
+    }
+
+    const diffDays = Math.floor(
+      (Number(currentDate) - Number(lastUpdated)) / (1000 * 60 * 60 * 24)
+    );
+    let query, values;
+
+    if (diffDays > 1) {
+      const longestStreak = Math.max(
+        rows[0].streak_length,
+        rows[0].longest_streak
+      );
+      query = `
+        UPDATE streaks
+        SET streak_length = $1, updated_at = $2, streak_end = $2, streak_start = $2, longest_streak = $3
+        WHERE user_id = $4
+      `;
+      values = [1, currentDate, longestStreak, user.id];
+    } else {
+      query = `
+        UPDATE streaks
+        SET streak_length = streak_length + 1, updated_at = $1
+        WHERE user_id = $2
+      `;
+      values = [currentDate, user.id];
+    }
+
+    await queryDb(query, values);
+
+    return res.status(201).json({
+      message: "Streak updated successfully",
+    });
   }
   async readmeHandler(req: Request, res: Response, next: NextFunction) {
     const { readme } = req.body;
