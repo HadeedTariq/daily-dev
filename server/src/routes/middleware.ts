@@ -32,7 +32,7 @@ export async function checkAuth(
     return next({
       message:
         error instanceof jwt.JsonWebTokenError
-          ? "Invalid or Expired Access Token"
+          ? "Please authenticate to perform this action"
           : "Authentication Error",
       status: 401,
     });

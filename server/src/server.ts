@@ -22,10 +22,38 @@ import {
 } from "passport-github2";
 import { profileRouter } from "./routes/profile/profile.routes";
 import { postRouter } from "./routes/posts/posts.routes";
+import { squadRouter } from "./routes/squads/squad.routes";
 
 const logger = pino({ name: "server start" });
 
 // createTable(`
+// CREATE TABLE squads (
+//     id SERIAL PRIMARY KEY,
+//     name VARCHAR(255) UNIQUE NOT NULL,
+//     squad_handle VARCHAR(255) UNIQUE NOT NULL,
+//     description TEXT,
+//     category VARCHAR(100),
+//     is_public BOOLEAN DEFAULT TRUE,
+//     admin_id INT NOT NULL,
+//     post_creation_allowed_to post_content DEFAULT 'members',
+//     invitation_permission post_content DEFAULT 'members',
+//     post_approval_required BOOLEAN DEFAULT FALSE,
+//     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+//     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+//     FOREIGN KEY (admin_id) REFERENCES users (id) ON DELETE CASCADE
+// );
+
+// CREATE TYPE squad_roles AS ENUM ('member', 'moderator', 'admin');
+
+// CREATE TABLE squad_members (
+//     id SERIAL PRIMARY KEY,
+//     squad_id INT NOT NULL,
+//     user_id INT NOT NULL,
+//     role squad_roles DEFAULT 'member',
+//     joined_at TIMESTAMP DEFAULT NOW(),
+//     FOREIGN KEY (squad_id) REFERENCES squads(id) ON DELETE CASCADE,
+//     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+// );
 // `);
 
 const app: Express = express();
@@ -92,6 +120,7 @@ app.use(requestLogger);
 app.use("/auth", authRouter);
 app.use("/profile", profileRouter);
 app.use("/posts", postRouter);
+app.use("/squad", squadRouter);
 // Swagger UI
 app.use(openAPIRouter);
 

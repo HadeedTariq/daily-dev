@@ -18,6 +18,8 @@ import MyReplies from "./pages/app/routes/MyReplies";
 import MyUpvotes from "./pages/app/routes/MyUpVotes";
 import { CreatePost } from "./pages/app/routes/CreatePost";
 import Home from "./pages/app/routes/Home";
+import CreateSquad from "./pages/app/routes/CreateSquad";
+import SquadsHandler from "./pages/app/routes/MySquads";
 
 function App() {
   const { user } = useFullApp();
@@ -59,14 +61,17 @@ function App() {
     <Routes>
       <Route path="/" element={<NavBar />}>
         <Route index element={<Home />} />
-
         <Route path="profile" element={<Profile />}>
           <Route index element={<ReadmeHandler />} />
           <Route path="posts" element={<MyPosts />} />
           <Route path="replies" element={<MyReplies />} />
           <Route path="upvotes" element={<MyUpvotes />} />
+          <Route path="squads">
+            <Route index element={<SquadsHandler />} />
+          </Route>
         </Route>
         <Route path="post/create" element={<CreatePost />} />
+        <Route path="squads/create" element={<CreateSquad />} />
 
         <Route path="editProfile" element={<EditProfile />} />
       </Route>
