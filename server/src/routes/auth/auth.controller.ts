@@ -1,4 +1,4 @@
-import { queryDb, runIndependentTransaction } from "@/db/connect";
+import { pool, queryDb, runIndependentTransaction } from "@/db/connect";
 import { NextFunction, Request, Response } from "express";
 import { sign, verify } from "jsonwebtoken";
 import { DatabaseError } from "pg";
@@ -22,7 +22,7 @@ class UserController {
     }
     try {
       const { rows } = await queryDb(
-        `select email from  magicLinks where token =$1`,
+        `SELECT email FROM magicLinks WHERE token = $1`,
         [token]
       );
       if (rows.length < 1) {
@@ -30,24 +30,66 @@ class UserController {
       }
 
       const decryptedToken = this.decryptToken(token as string);
-
       const user: any = verify(decryptedToken, env.JWT_SECRET);
 
       if (user.email !== rows[0].email) {
         return next({ status: 404, message: "Incorrect Token" });
       }
 
-      await queryDb(`update users set is_verified=$1 where email=$2`, [
-        true,
-        user.email,
-      ]);
+      const client = await pool.connect();
 
-      res.status(201).json({ message: "User registered successfully" });
-    } catch (error) {
-      if (error instanceof DatabaseError) {
-        return next({ status: 404, message: "Please fill all the fields" });
+      try {
+        await client.query("BEGIN");
+
+        const { rows: userRow } = await client.query(
+          `UPDATE users SET is_verified = $1 WHERE email = $2 RETURNING id`,
+          [true, user.email]
+        );
+
+        if (userRow.length < 1) {
+          throw new Error("User not found or already verified");
+        }
+
+        const userId = userRow[0].id;
+
+        const queries = [
+          {
+            query: `DELETE FROM magicLinks WHERE email = $1`,
+            params: [user.email],
+          },
+          {
+            query: `INSERT INTO about (user_id, bio, company, job_title) VALUES ($1, '', '', '')`,
+            params: [userId],
+          },
+          {
+            query: `INSERT INTO social_links (user_id) VALUES ($1)`,
+            params: [userId],
+          },
+          {
+            query: `INSERT INTO user_stats (user_id, followers, following, reputation, views, upvotes)
+                    VALUES ($1, 0, 0, 0, 0, 0)`,
+            params: [userId],
+          },
+          {
+            query: `INSERT INTO streaks (user_id) VALUES ($1)`,
+            params: [userId],
+          },
+        ];
+
+        await Promise.all(queries.map((q) => client.query(q.query, q.params)));
+
+        await client.query("COMMIT");
+        res.status(201).json({ message: "User registered successfully" });
+      } catch (error) {
+        await client.query("ROLLBACK");
+        console.error("Transaction failed:", error);
+        return next({ status: 500, message: "Internal Server Error" });
+      } finally {
+        client.release();
       }
-      next(error);
+    } catch (error) {
+      console.error("Error:", error);
+      return next({ status: 500, message: "Internal Server Error" });
     }
   }
 
@@ -105,11 +147,10 @@ class UserController {
     const user = await queryDb(`select email from users where email=$1`, [
       email,
     ]);
-    // await queryDb(`delete from users where email=$1`, [email]);
-    // await queryDb(`delete from magiclinks where email=$1`, [email]);
     if (user.rowCount && user.rowCount > 0) {
       return next({ message: "User already exist", status: 404 });
     }
+
     const expiresIn = "1d";
     const dataStoredInToken = {
       name,
@@ -123,10 +164,17 @@ class UserController {
 
     const magicLink = `${env.SERVER_DOMAIN}/auth/register?token=${token}`;
 
-    await queryDb(`INSERT INTO  magicLinks (email,token) VALUES ($1,$2)`, [
-      email,
-      token,
-    ]);
+    try {
+      await queryDb(`INSERT INTO magicLinks (email, token) VALUES ($1, $2)`, [
+        email,
+        token,
+      ]);
+    } catch (error) {
+      return next({
+        message: "Already send verification email",
+        status: 400,
+      });
+    }
 
     const hashPassword = await this.hashPassword(password);
     await queryDb(

@@ -23,24 +23,42 @@ import {
 import { profileRouter } from "./routes/profile/profile.routes";
 import { postRouter } from "./routes/posts/posts.routes";
 import { squadRouter } from "./routes/squads/squad.routes";
+import { deleteUnverifiedUsers } from "./db/connect";
 
 const logger = pino({ name: "server start" });
 
 // createTable(`
-// CREATE TYPE squad_roles AS ENUM ('member', 'moderator', 'admin');
-
-// CREATE TABLE squad_members (
+//   DROP TABLE IF EXISTS posts CASCADE;
+//   DROP TABLE IF EXISTS tags CASCADE;
+//   DROP TABLE IF EXISTS post_tags CASCADE;
+//   CREATE TABLE posts (
 //     id SERIAL PRIMARY KEY,
+//     title VARCHAR(255) NOT NULL,
+//     thumbnail VARCHAR(500) NOT NULL,
+//     content TEXT NOT NULL,
 //     squad_id INT NOT NULL,
-//     user_id INT NOT NULL,
-//     role squad_roles DEFAULT 'member',
-//     joined_at TIMESTAMP DEFAULT NOW(),
-//     FOREIGN KEY (squad_id) REFERENCES squads(id) ON DELETE CASCADE,
-//     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+//     author_id INT NOT NULL,
+//     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+//     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+//     FOREIGN KEY (author_id) REFERENCES users (id) ON DELETE CASCADE,
+//     FOREIGN KEY (squad_id) REFERENCES squads (id) ON DELETE CASCADE
+// );
+
+// CREATE TABLE tags (
+//     id SERIAL PRIMARY KEY,
+//     name VARCHAR(255) UNIQUE NOT NULL
+// );
+
+// CREATE TABLE post_tags (
+//     post_id INT REFERENCES posts(id) ON DELETE CASCADE,
+//     tag_id INT REFERENCES tags(id) ON DELETE CASCADE,
+//     PRIMARY KEY (post_id, tag_id)
 // );
 // `);
 
 const app: Express = express();
+
+// deleteUnverifiedUsers();
 
 // Set the application to trust the reverse proxy
 app.set("trust proxy", true);

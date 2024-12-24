@@ -1,7 +1,7 @@
 import { env } from "@/common/utils/envConfig";
 import { Pool } from "pg";
 
-const pool = new Pool({
+export const pool = new Pool({
   user: env.DATABASE_USER,
   password: env.DATABASE_PASSWORD,
   host: env.DATABASE_HOST,
@@ -22,30 +22,21 @@ export const queryDb = async (query: string, params: any[] = []) => {
   }
 };
 
-export const runDependentTransaction = async (
-  queries: {
-    query: string;
-    params: any[];
-  }[]
-) => {
-  const client = await pool.connect();
-
+export const deleteUnverifiedUsers = async () => {
   try {
-    await client.query("BEGIN");
-
-    for (const q of queries) {
-      await client.query(q.query, q.params);
-    }
-
-    await client.query("COMMIT");
-    console.log("Transaction committed successfully");
+    // const query = `
+    //   DELETE FROM users
+    //   WHERE created_at < NOW() - INTERVAL '24 hours'
+    //   AND is_verified = false;
+    // `;
+    const query = `
+      DELETE FROM users
+      WHERE email = $1;
+    `;
+    const result = await queryDb(query, ["hadeedtariq12@gmail.com"]);
+    console.log(`Deleted ${result.rowCount} unverified users.`);
   } catch (error) {
-    await client.query("ROLLBACK");
-    console.error("Transaction failed and rolled back:", error);
-    throw error;
-  } finally {
-    client.release();
-    console.log("Database client released");
+    console.error("Error deleting unverified users:", error);
   }
 };
 

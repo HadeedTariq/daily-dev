@@ -3,15 +3,23 @@ CREATE TABLE posts (
     title VARCHAR(255) NOT NULL,
     thumbnail VARCHAR(500) NOT NULL,
     content TEXT NOT NULL,
+    squad_id INT NOT NULL,
     author_id INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (author_id) REFERENCES users (id) ON DELETE CASCADE
+    FOREIGN KEY (author_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (squad_id) REFERENCES squads (id) ON DELETE CASCADE
 );
 
 CREATE TABLE tags (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) UNIQUE NOT NULL
+);
+
+CREATE TABLE post_tags (
+    post_id INT REFERENCES posts(id) ON DELETE CASCADE,
+    tag_id INT REFERENCES tags(id) ON DELETE CASCADE,
+    PRIMARY KEY (post_id, tag_id)
 );
 
 CREATE TYPE post_content AS ENUM ('members', 'moderators');
@@ -46,7 +54,7 @@ CREATE TABLE squads (
     FOREIGN KEY (admin_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
-CREATE TYPE squad_roles AS ENUM ('member', 'moderator', 'admin');
+CREATE TYPE squad_roles AS ENUM ('member', 'moderator');
 
 CREATE TABLE squad_members (
     id SERIAL PRIMARY KEY,

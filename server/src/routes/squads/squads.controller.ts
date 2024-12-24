@@ -111,19 +111,32 @@ class SquadController {
   }
 
   async addMember(req: Request, res: Response, next: NextFunction) {
-    const { squadId, userId } = req.body;
+    const { squadName, squadId } = req.body;
 
-    if (!squadId || !userId) {
+    if (!squadName || !squadId) {
       return res
         .status(400)
-        .json({ message: "Squad ID and user ID are required." });
+        .json({ message: "Squad name and Squad id are required." });
+    }
+
+    const user_already_in_squad_query = `
+      select id from squad_members where squad_id =$1 and user_id =$2
+    `;
+
+    const { rows } = await queryDb(user_already_in_squad_query, [
+      squadId,
+      req.body.user.id,
+    ]);
+
+    if (rows.length > 0) {
+      return res.status(400).json({ message: "User already in squad." });
     }
 
     const query = `
       INSERT INTO squad_members (squad_id, user_id)
       VALUES ($1, $2)
     `;
-    await queryDb(query, [squadId, userId]);
+    await queryDb(query, [squadName, req.body.user.id]);
 
     res.status(201).json({ message: "Member added successfully." });
   }
