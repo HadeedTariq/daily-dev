@@ -4,7 +4,11 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useMutation } from "@tanstack/react-query";
+import {
+  InvalidateQueryFilters,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 
 import {
   Select,
@@ -67,6 +71,7 @@ const formSchema = z.object({
 });
 
 export default function SquadCreationForm() {
+  const queryClient = useQueryClient();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -98,6 +103,7 @@ export default function SquadCreationForm() {
       toast({
         title: data.message || "Squad created successfully",
       });
+      queryClient.invalidateQueries(["getMySquads"] as InvalidateQueryFilters);
     },
   });
 

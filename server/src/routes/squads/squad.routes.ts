@@ -7,6 +7,11 @@ const router = Router();
 
 router.use(checkAuth);
 router.post("/create", asyncHandler(squadController.createSquad));
+router.get("/my", asyncHandler(squadController.mySquads));
+router.get(
+  "/details/:squad_handle",
+  asyncHandler(squadController.squadDetails)
+);
 router.get("/", asyncHandler(squadController.getSquads));
 router.get("/members", asyncHandler(squadController.getSquadMembers));
 router.post("/add-member", asyncHandler(squadController.addMember));

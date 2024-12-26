@@ -93,3 +93,16 @@ type PostTag = {
   post_id: number;
   tag_id: number;
 };
+
+type Squad = {
+  name: string;
+  squad_handle: string;
+  description: string | null; // description can be null
+  category: string; // Replace with actual enum values for squad_category
+  is_public: boolean;
+  post_creation_allowed_to: string; // Replace with actual enum values for post_content
+  invitation_permission: string; // Replace with actual enum values for post_content
+  post_approval_required: boolean;
+  created_at: string; // or Date depending on how you want to handle timestamps
+  updated_at: string; // or Date depending on how you want to handle timestamps
+};

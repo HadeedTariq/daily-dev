@@ -5,6 +5,7 @@ import { useFullApp } from "@/store/hooks/useFullApp";
 import { Button } from "@/components/ui/button";
 import { NavDrawer } from "./NavDrawer";
 import Authenticate from "./NonAuthorizer";
+import { AppSidebar } from "@/components/app-sidebar";
 
 const NavBar = () => {
   const navigate = useNavigate();
@@ -61,10 +62,18 @@ const NavBar = () => {
                   <NavDrawer />
                 </div>
               </div>
+              <AppSidebar />
             </div>
           </header>
         </div>
-        {user ? <Outlet /> : <Authenticate />}
+
+        {user ? (
+          <div className="ml-16">
+            <Outlet />
+          </div>
+        ) : (
+          <Authenticate />
+        )}
       </div>
     </>
   );

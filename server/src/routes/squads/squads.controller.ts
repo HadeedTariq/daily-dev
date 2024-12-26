@@ -21,6 +21,7 @@ class SquadController {
     this.getSquads = this.getSquads.bind(this);
     this.getSquadMembers = this.getSquadMembers.bind(this);
     this.createSquad = this.createSquad.bind(this);
+    this.squadDetails = this.squadDetails.bind(this);
     this.addMember = this.addMember.bind(this);
     this.editSquad = this.editSquad.bind(this);
     this.deleteSquad = this.deleteSquad.bind(this);
@@ -110,6 +111,60 @@ class SquadController {
     }
   }
 
+  async squadDetails(req: Request, res: Response, next: NextFunction) {
+    const { squad_handle } = req.params;
+
+    if (!squad_handle) {
+      return res.status(400).json({ message: "Squad handle is required." });
+    }
+
+    const query = `
+      SELECT 
+        s.id,
+        s.name,
+        s.squad_handle,
+        s.description,
+        s.category,
+        s.is_public,
+        s.post_creation_allowed_to,
+        s.invitation_permission,
+        s.post_approval_required,
+        s.created_at,
+        s.updated_at,
+        json_agg(sm.user_id) AS members
+      FROM squads s
+      LEFT JOIN squad_members sm ON s.id = sm.squad_id
+      WHERE s.squad_handle = $1
+      GROUP BY s.id
+    `;
+  }
+  async mySquads(req: Request, res: Response, next: NextFunction) {
+    const query = `
+          SELECT 
+            name,
+            squad_handle,
+            description,
+            category,
+            is_public,
+            post_creation_allowed_to,
+            invitation_permission,
+            post_approval_required,
+            created_at,
+            updated_at 
+          FROM squads 
+          WHERE admin_id = $1
+  `;
+
+    try {
+      const { rows } = await queryDb(query, [req.body.user.id]);
+      console.log(rows);
+
+      res.status(200).json(rows);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async addMember(req: Request, res: Response, next: NextFunction) {
     const { squadName, squadId } = req.body;
 
@@ -136,7 +191,7 @@ class SquadController {
       INSERT INTO squad_members (squad_id, user_id)
       VALUES ($1, $2)
     `;
-    await queryDb(query, [squadName, req.body.user.id]);
+    await queryDb(query, [squadId, req.body.user.id]);
 
     res.status(201).json({ message: "Member added successfully." });
   }
