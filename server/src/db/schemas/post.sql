@@ -43,6 +43,7 @@ CREATE TABLE squads (
     name VARCHAR(255) UNIQUE NOT NULL,
     squad_handle VARCHAR(255) UNIQUE NOT NULL,
     description TEXT,
+    thumbnail TEXT,
     category squad_category DEFAULT 'general',
     is_public BOOLEAN DEFAULT TRUE,
     admin_id INT NOT NULL,
