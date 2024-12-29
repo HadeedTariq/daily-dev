@@ -88,7 +88,7 @@ class SquadController {
           post_creation_allowed_to, invitation_permission, post_approval_required
         ) VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9
-        )
+        ) returning id
       `;
 
       const { rows } = await queryDb(insertSquadQuery, [
@@ -102,6 +102,13 @@ class SquadController {
         invitation_permission || "members",
         post_approval_required || false,
       ]);
+
+      await queryDb(
+        `
+            insert into squad_members (squad_id,user_id,role) values ($1,$2,$3)
+        `,
+        [rows[0].id, req.body.user.id, "admin"]
+      );
 
       res.status(201).json({
         message: "Squad created successfully.",
@@ -141,6 +148,7 @@ class SquadController {
   async mySquads(req: Request, res: Response, next: NextFunction) {
     const query = `
           SELECT 
+            id,
             name,
             squad_handle,
             description,
@@ -157,7 +165,7 @@ class SquadController {
 
     try {
       const { rows } = await queryDb(query, [req.body.user.id]);
-      console.log(rows);
+      const { rows: users } = await queryDb(`SELECT * FROM users`);
 
       res.status(200).json(rows);
     } catch (error) {

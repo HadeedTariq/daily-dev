@@ -28,9 +28,22 @@ import { deleteUnverifiedUsers } from "./db/connect";
 const logger = pino({ name: "server start" });
 
 // createTable(`
-//   ALTER TABLE squads
-// ADD COLUMN thumbnail TEXT DEFAULT ' ';
 
+// CREATE TABLE post_upvotes (
+//   id SERIAL PRIMARY KEY,
+//   post_id INT REFERENCES posts(id) ON DELETE CASCADE,
+//   upvotes INT DEFAULT 0,
+//   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+//   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+// );
+
+// CREATE TABLE post_views (
+//   id SERIAL PRIMARY KEY,
+//   post_id INT REFERENCES posts(id) ON DELETE CASCADE,
+//   views INT DEFAULT 0,
+//   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+//   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+// );
 // `);
 
 const app: Express = express();

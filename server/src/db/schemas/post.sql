@@ -22,6 +22,22 @@ CREATE TABLE post_tags (
     PRIMARY KEY (post_id, tag_id)
 );
 
+CREATE TABLE post_upvotes (
+    id SERIAL PRIMARY KEY,
+    post_id INT REFERENCES posts(id) ON DELETE CASCADE,
+    upvotes INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE post_views (
+    id SERIAL PRIMARY KEY,
+    post_id INT REFERENCES posts(id) ON DELETE CASCADE,
+    views INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TYPE post_content AS ENUM ('members', 'moderators');
 
 CREATE TYPE squad_category AS ENUM (
@@ -55,7 +71,54 @@ CREATE TABLE squads (
     FOREIGN KEY (admin_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
-CREATE TYPE squad_roles AS ENUM ('member', 'moderator');
+CREATE TYPE squad_roles AS ENUM ('member', 'moderator', 'admin');
+
+CREATE TABLE squad_members (
+    id SERIAL PRIMARY KEY,
+    squad_id INT NOT NULL,
+    user_id INT NOT NULL,
+    role squad_roles DEFAULT 'member',
+    joined_at TIMESTAMP DEFAULT NOW(),
+    FOREIGN KEY (squad_id) REFERENCES squads(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+);
+
+CREATE TYPE post_content AS ENUM ('members', 'moderators');
+
+CREATE TYPE squad_category AS ENUM (
+    'frontend',
+    'backend',
+    'full-stack',
+    'devops',
+    'data-science',
+    'AI',
+    'mobile',
+    'cloud',
+    'security',
+    'quality-assurance',
+    'general'
+);
+
+CREATE TABLE squads (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) UNIQUE NOT NULL,
+    squad_handle VARCHAR(255) UNIQUE NOT NULL,
+    description TEXT,
+    thumbnail TEXT,
+    category squad_category DEFAULT 'general',
+    is_public BOOLEAN DEFAULT TRUE,
+    admin_id INT NOT NULL,
+    post_creation_allowed_to post_content DEFAULT 'members',
+    invitation_permission post_content DEFAULT 'members',
+    post_approval_required BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (admin_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
+CREATE TYPE squad_roles AS ENUM ('member', 'moderator', 'admin');
 
 CREATE TABLE squad_members (
     id SERIAL PRIMARY KEY,
