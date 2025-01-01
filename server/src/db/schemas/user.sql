@@ -11,6 +11,7 @@ CREATE TABLE users (
     is_verified BOOLEAN DEFAULT FALSE
 );
 
+-- create this table so that we can show users his upvoted posts for future refrence
 CREATE TABLE user_upvotes (
     id SERIAL PRIMARY KEY,
     user_id INT REFERENCES users(id),

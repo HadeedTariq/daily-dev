@@ -28,22 +28,45 @@ import { deleteUnverifiedUsers } from "./db/connect";
 const logger = pino({ name: "server start" });
 
 // createTable(`
+//       INSERT INTO posts (title, thumbnail, content, squad_id, author_id) VALUES
+//       ('Introduction to SQL', 'https://img.freepik.com/free-vector/gradient-ui-ux-background_23-2149065782.jpg', 'This post covers the basics of SQL.', 4, 2),
+//       ('Understanding Digital Marketing', 'https://img.freepik.com/free-vector/gradient-ui-ux-background_23-2149065782.jpg', 'Digital marketing strategies explained.', 4, 15),
+//       ('Project Management 101', 'https://img.freepik.com/free-vector/gradient-ui-ux-background_23-2149065782.jpg', 'Effective project management tips.', 4, 16),
+//       ('The Role of a Data Analyst', 'https://img.freepik.com/free-vector/gradient-ui-ux-background_23-2149065782.jpg', 'Exploring data analyst responsibilities.', 4, 18),
+//       ('Designing for Success', 'https://img.freepik.com/free-vector/gradient-ui-ux-background_23-2149065782.jpg', 'Key principles of UI/UX design.', 4, 21);
 
-// CREATE TABLE post_upvotes (
-//   id SERIAL PRIMARY KEY,
-//   post_id INT REFERENCES posts(id) ON DELETE CASCADE,
-//   upvotes INT DEFAULT 0,
-//   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-//   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-// );
+//       -- Insert tags
+//       INSERT INTO tags (name) VALUES
+//       ('SQL'),
+//       ('Digital Marketing'),
+//       ('Project Management'),
+//       ('Data Analysis'),
+//       ('UI/UX Design');
 
-// CREATE TABLE post_views (
-//   id SERIAL PRIMARY KEY,
-//   post_id INT REFERENCES posts(id) ON DELETE CASCADE,
-//   views INT DEFAULT 0,
-//   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-//   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-// );
+//       -- Insert post_tags
+//       INSERT INTO post_tags (post_id, tag_id) VALUES
+//       (1, 1),
+//       (2, 2),
+//       (3, 3),
+//       (4, 4),
+//       (5, 5);
+
+//       -- Insert post upvotes
+//       INSERT INTO post_upvotes (post_id, upvotes) VALUES
+//       (1, 10),
+//       (2, 15),
+//       (3, 8),
+//       (4, 20),
+//       (5, 25);
+
+//       -- Insert post views
+//       INSERT INTO post_views (post_id, views) VALUES
+//       (1, 100),
+//       (2, 150),
+//       (3, 80),
+//       (4, 200),
+//       (5, 250);
+
 // `);
 
 const app: Express = express();

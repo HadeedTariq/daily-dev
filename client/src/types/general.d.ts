@@ -93,16 +93,32 @@ type PostTag = {
   post_id: number;
   tag_id: number;
 };
+interface SquadPost {
+  post_id: number;
+  post_title: string;
+  post_thumbnail: string;
+  post_content: string;
+  post_created_at: string;
+  author_avatar: string;
+  post_upvotes: number;
+  post_views: number;
+  post_tags: string[];
+}
 
-type Squad = {
-  name: string;
+type SquadDetails = {
+  squad_id: number;
+  squad_name: string;
   squad_handle: string;
-  description: string | null; // description can be null
-  category: string; // Replace with actual enum values for squad_category
+  description: string;
+  thumbnail: string;
+  category: string;
   is_public: boolean;
-  post_creation_allowed_to: string; // Replace with actual enum values for post_content
-  invitation_permission: string; // Replace with actual enum values for post_content
+  admin_id: number;
+  post_creation_allowed_to: string;
+  invitation_permission: string;
   post_approval_required: boolean;
-  created_at: string; // or Date depending on how you want to handle timestamps
-  updated_at: string; // or Date depending on how you want to handle timestamps
+  created_at: string;
+  squad_posts: SquadPost[];
 };
+
+type Squads = SquadDetails[];

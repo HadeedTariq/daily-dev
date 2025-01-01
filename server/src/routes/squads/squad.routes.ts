@@ -13,9 +13,9 @@ router.get(
   asyncHandler(squadController.squadDetails)
 );
 router.get("/", asyncHandler(squadController.getSquads));
+router.put("/edit/:squad_handle", asyncHandler(squadController.updateSquad));
 router.get("/members", asyncHandler(squadController.getSquadMembers));
 router.post("/add-member", asyncHandler(squadController.addMember));
-router.put("/:squadId", asyncHandler(squadController.editSquad));
 router.delete("/:squadId", asyncHandler(squadController.deleteSquad));
 
 export { router as squadRouter };

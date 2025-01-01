@@ -1,20 +1,11 @@
 import { Badge } from "@/components/ui/badge";
 import { Lock, Globe } from "lucide-react";
+import SquadManagement from "./squad/SquadManagement";
 
-interface SquadHeaderProps {
-  squad: {
-    name: string;
-    squad_handle: string;
-    description: string;
-    is_public: boolean;
-    category: string;
-  };
-}
-
-export default function SquadHeader({ squad }: SquadHeaderProps) {
+export default function SquadHeader({ squad }: { squad: SquadDetails }) {
   return (
     <div className="mb-6">
-      <h1 className="text-3xl font-bold mb-2">{squad.name}</h1>
+      <h1 className="text-3xl font-bold mb-2">{squad.squad_name}</h1>
       <div className="flex items-center space-x-2 mb-2">
         <span className="text-gray-500">@{squad.squad_handle}</span>
         <Badge variant="outline">
@@ -26,8 +17,12 @@ export default function SquadHeader({ squad }: SquadHeaderProps) {
           {squad.is_public ? "Public" : "Private"}
         </Badge>
         <Badge>{squad.category}</Badge>
+        <SquadManagement adminId={squad.admin_id} />
       </div>
       <p className="text-gray-700">{squad.description}</p>
+      <div>
+        <p>Moderated By</p>
+      </div>
     </div>
   );
 }

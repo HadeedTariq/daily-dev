@@ -13,7 +13,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  InvalidateQueryFilters,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 
 import { Input } from "@/components/ui/input";
 
@@ -29,6 +33,7 @@ import { postApi } from "@/lib/axios";
 import MarkdownEditor from "@uiw/react-markdown-editor";
 import axios from "axios";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
+import { useGetTags } from "../hooks/useGetTags";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required").max(100, "Title is too long"),
@@ -38,20 +43,10 @@ const formSchema = z.object({
 });
 
 export function CreatePost() {
-  const [tags, setTags] = useState<Tag[]>([]);
+  const queryClient = useQueryClient();
   const [thumbnail, setThumbnail] = useState<string>("");
   const [file, setFile] = useState<string | File>("");
-
-  const { isLoading } = useQuery({
-    queryKey: ["getTags"],
-    queryFn: async () => {
-      const { data } = await postApi.get("/tags");
-
-      setTags(data.tags as Tag[]);
-      return data.tags as Tag[];
-    },
-    refetchOnMount: false,
-  });
+  const { isLoading, data: tags } = useGetTags();
   const [newTag, setNewTag] = useState("");
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -105,7 +100,7 @@ export function CreatePost() {
       return;
     }
     const postTags = values.tags?.map((tag) => {
-      const tagData = tags.find((t) => t.name === tag);
+      const tagData = tags?.find((t) => t.name === tag);
       return { id: tagData?.id, name: tag };
     });
     values.tags = postTags as any;
@@ -124,7 +119,7 @@ export function CreatePost() {
       });
     },
     onSuccess: (data: any) => {
-      setTags([...tags, data.newTag]);
+      queryClient.invalidateQueries(["getTags"] as InvalidateQueryFilters);
       toast({
         title: data.message || "Tag created successfully",
       });
