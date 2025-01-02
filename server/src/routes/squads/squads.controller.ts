@@ -126,50 +126,74 @@ class SquadController {
     }
 
     const query = `
-       WITH selected_squad AS (
+        WITH selected_squad AS (
+                SELECT 
+                    squads.id AS squad_id,
+                    squads.name AS squad_name,
+                    squads.squad_handle,
+                    squads.description,
+                    squads.thumbnail,
+                    squads.category,
+                    squads.is_public,
+                    squads.admin_id,
+                    squads.post_creation_allowed_to,
+                    squads.invitation_permission,
+                    squads.post_approval_required,
+                    squads.created_at
+                FROM squads 
+                WHERE squads.squad_handle = $1
+            ),
+            filtered_squad_members AS (
+                SELECT 
+                    squad_members.role,
+                    squad_members.user_id
+                FROM squad_members
+                WHERE squad_members.squad_id = (SELECT squad_id FROM selected_squad)
+            )
             SELECT 
-                squads.id AS squad_id,
-                squads.name AS squad_name,
-                squads.squad_handle,
-                squads.description,
-                squads.thumbnail,
-                squads.category,
-                squads.is_public,
-                squads.admin_id,
-                squads.post_creation_allowed_to,
-                squads.invitation_permission,
-                squads.post_approval_required,
-                squads.created_at
-            FROM squads 
-            WHERE squads.squad_handle = $1
-        )
-        SELECT 
-            s.*,
-            (
-                SELECT JSON_AGG(
-                    JSON_BUILD_OBJECT(
-                        'post_id', posts.id,
-                        'post_title', posts.title,
-                        'post_thumbnail', posts.thumbnail,
-                        'post_content', posts.content,
-                        'post_created_at', posts.created_at,
-                        'author_avatar', users.avatar,
-                        'post_upvotes', post_upvotes.upvotes,
-                        'post_views', post_views.views,
-                        'post_tags', (
-                            SELECT JSON_AGG(tag_id) 
-                            FROM post_tags 
-                            WHERE post_tags.post_id = posts.id
+                s.*,
+                (
+                    SELECT JSON_AGG(
+                        JSON_BUILD_OBJECT(
+                            'post_id', posts.id,
+                            'post_title', posts.title,
+                            'post_thumbnail', posts.thumbnail,
+                            'post_content', posts.content,
+                            'post_created_at', posts.created_at,
+                            'author_avatar', users.avatar,
+                            'post_upvotes', COALESCE(post_upvotes.upvotes, 0),
+                            'post_views', COALESCE(post_views.views, 0),
+                            'post_tags', (
+                                SELECT JSON_AGG(tag_id) 
+                                FROM post_tags 
+                                WHERE post_tags.post_id = posts.id
+                            )
                         )
                     )
-                )
-                FROM posts
-                LEFT JOIN users ON posts.author_id = users.id
-                LEFT JOIN post_upvotes ON posts.id = post_upvotes.post_id
-                LEFT JOIN post_views ON posts.id = post_views.post_id
-                WHERE posts.squad_id = s.squad_id
-            ) AS squad_posts
-        FROM selected_squad s;
+                    FROM posts
+                    LEFT JOIN users ON posts.author_id = users.id
+                    LEFT JOIN post_upvotes ON posts.id = post_upvotes.post_id
+                    LEFT JOIN post_views ON posts.id = post_views.post_id
+                    WHERE posts.squad_id = s.squad_id
+                ) AS squad_posts,
+                (
+                    SELECT JSON_AGG(
+                        JSON_BUILD_OBJECT(
+                            'role', fsm.role,
+                            'userDetails', JSON_BUILD_OBJECT(
+                                'userId', users.id,
+                                'name', users.name,
+                                'username', users.username,
+                                'email', users.email,
+                                'avatar', users.avatar,
+                                'profession', users.profession
+                            )
+                        )
+                    )
+                    FROM filtered_squad_members fsm
+                    LEFT JOIN users ON fsm.user_id = users.id
+                ) AS squad_members
+            FROM selected_squad s;
     `;
 
     const { rows } = await queryDb(query, [squad_handle]);
@@ -179,7 +203,7 @@ class SquadController {
     const query = `
           SELECT 
             id,
-            name,
+            name as squad_name,
             squad_handle,
             description,
             category,
@@ -195,7 +219,6 @@ class SquadController {
 
     try {
       const { rows } = await queryDb(query, [req.body.user.id]);
-      const { rows: users } = await queryDb(`SELECT * FROM users`);
 
       res.status(200).json(rows);
     } catch (error) {

@@ -105,6 +105,18 @@ interface SquadPost {
   post_tags: string[];
 }
 
+type SquadMember = {
+  role: string;
+  userDetails: {
+    userId: number;
+    name: string;
+    username: string;
+    email: string;
+    avatar: string | null;
+    profession: string | null;
+  };
+};
+
 type SquadDetails = {
   squad_id: number;
   squad_name: string;
@@ -119,6 +131,7 @@ type SquadDetails = {
   post_approval_required: boolean;
   created_at: string;
   squad_posts: SquadPost[];
+  squad_members: SquadMember[];
 };
 
 type Squads = SquadDetails[];

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 
-export function SquadCard({ squad }: { squad: Squad }) {
+export function SquadCard({ squad }: { squad: SquadDetails }) {
   return (
     <Card className="flex flex-col">
       <CardHeader>
@@ -22,8 +22,11 @@ export function SquadCard({ squad }: { squad: Squad }) {
           <Badge variant="outline">{squad.category}</Badge>
         </div>
         <CardTitle className="mt-2">
-          <Link to={`/squad/${squad.squad_handle}`} className="hover:underline">
-            {squad.name}
+          <Link
+            to={`/squads/${squad.squad_handle}`}
+            className="hover:underline"
+          >
+            {squad.squad_name}
           </Link>
         </CardTitle>
       </CardHeader>

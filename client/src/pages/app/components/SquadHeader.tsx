@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Lock, Globe } from "lucide-react";
 import SquadManagement from "./squad/SquadManagement";
+import Moderators from "./squad/moderators/Moderators";
 
 export default function SquadHeader({ squad }: { squad: SquadDetails }) {
   return (
@@ -20,9 +21,7 @@ export default function SquadHeader({ squad }: { squad: SquadDetails }) {
         <SquadManagement adminId={squad.admin_id} />
       </div>
       <p className="text-gray-700">{squad.description}</p>
-      <div>
-        <p>Moderated By</p>
-      </div>
+      <Moderators members={squad.squad_members} />
     </div>
   );
 }
