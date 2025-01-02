@@ -33,6 +33,7 @@ import { Navigate, useParams } from "react-router-dom";
 
 import { squadCategories } from "@/utils/data";
 import axios from "axios";
+import { DeleteSquad } from "../components/squad/DeleteSquad";
 
 export const squadSchema = z.object({
   name: z
@@ -149,197 +150,203 @@ export default function SquadEditPage() {
   if (isLoading || isSquadPending) return <h1>Loading...</h1>;
   if (!squad) return <Navigate to={"/"} />;
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Edit Squad</h1>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Name</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="squad_handle"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Squad Handle</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Description</FormLabel>
-                <FormControl>
-                  <Textarea {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormItem>
-            <FormLabel>Thumbnail</FormLabel>
-            <FormControl>
-              <Input
-                type="file"
-                onChange={handleThumbnailChange}
-                accept="image/*"
-              />
-            </FormControl>
-            {form.getValues("thumbnail") && (
-              <img
-                src={String(form.watch("thumbnail"))}
-                alt="Squad thumbnail"
-                className="mt-2 w-32 h-32 object-cover"
-              />
-            )}
-          </FormItem>
-
-          <FormField
-            control={form.control}
-            name="category"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Category</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
+    <>
+      <div className="container mx-auto p-4">
+        <h1 className="text-2xl font-bold mb-4">Edit Squad</h1>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a category" />
-                    </SelectTrigger>
+                    <Input {...field} />
                   </FormControl>
-                  <SelectContent>
-                    {squadCategories.map((category) => (
-                      <SelectItem value={category} key={category}>
-                        {category.split("-").join(" ").toUpperCase()}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="is_public"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
-                  <FormLabel className="text-base">Public Squad</FormLabel>
-                  <FormDescription>
-                    Make this squad visible to everyone
-                  </FormDescription>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="post_creation_allowed_to"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Post Creation Allowed To</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
+            <FormField
+              control={form.control}
+              name="squad_handle"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Squad Handle</FormLabel>
                   <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select who can create posts" />
-                    </SelectTrigger>
+                    <Input {...field} />
                   </FormControl>
-                  <SelectContent>
-                    <SelectItem value="members">Members</SelectItem>
-                    <SelectItem value="admins">Admins</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="invitation_permission"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Invitation Permission</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select who can invite" />
-                    </SelectTrigger>
+                    <Textarea {...field} />
                   </FormControl>
-                  <SelectContent>
-                    <SelectItem value="members">Members</SelectItem>
-                    <SelectItem value="admins">Admins</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="post_approval_required"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
-                  <FormLabel className="text-base">
-                    Post Approval Required
-                  </FormLabel>
-                  <FormDescription>
-                    Require approval for new posts
-                  </FormDescription>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
+            <FormItem>
+              <FormLabel>Thumbnail</FormLabel>
+              <FormControl>
+                <Input
+                  type="file"
+                  onChange={handleThumbnailChange}
+                  accept="image/*"
+                />
+              </FormControl>
+              {form.getValues("thumbnail") && (
+                <img
+                  src={String(form.watch("thumbnail"))}
+                  alt="Squad thumbnail"
+                  className="mt-2 w-32 h-32 object-cover"
+                />
+              )}
+            </FormItem>
 
-          <Button type="submit" disabled={isPending}>
-            {isPending ? "Updating..." : "Update Squad"}
-          </Button>
-        </form>
-      </Form>
-    </div>
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {squadCategories.map((category) => (
+                        <SelectItem value={category} key={category}>
+                          {category.split("-").join(" ").toUpperCase()}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="is_public"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">Public Squad</FormLabel>
+                    <FormDescription>
+                      Make this squad visible to everyone
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="post_creation_allowed_to"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Post Creation Allowed To</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select who can create posts" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="members">Members</SelectItem>
+                      <SelectItem value="admins">Admins</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="invitation_permission"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Invitation Permission</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select who can invite" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="members">Members</SelectItem>
+                      <SelectItem value="admins">Admins</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="post_approval_required"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">
+                      Post Approval Required
+                    </FormLabel>
+                    <FormDescription>
+                      Require approval for new posts
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <Button type="submit" disabled={isPending}>
+              {isPending ? "Updating..." : "Update Squad"}
+            </Button>
+          </form>
+        </Form>
+        <DeleteSquad
+          squad_handle={squad.squad_handle}
+          squadName={squad.squad_name}
+        />
+      </div>
+    </>
   );
 }

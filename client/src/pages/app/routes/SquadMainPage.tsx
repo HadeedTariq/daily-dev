@@ -5,6 +5,7 @@ import { useSquadMain } from "../hooks/useSquadMain";
 
 export default function SquadMainPage() {
   const { squad_handle } = useParams();
+
   const { data: squadData, isLoading } = useSquadMain(squad_handle as string);
   if (isLoading) {
     return <h1>Loading...</h1>;

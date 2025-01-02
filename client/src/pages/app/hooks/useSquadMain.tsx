@@ -16,18 +16,21 @@ export const useSquadMain = (squad_handle: string) => {
     queryKey: [`squad-${squad_handle}`],
     queryFn: async () => {
       const { data } = await squadApi.get(`/details/${squad_handle}`);
-      const postsData = data?.squad_posts.map((post: any) => {
-        const postTagIds = post.post_tags;
-        const postTags = postTagIds.map((postTagId: number) => {
-          const tag = tags?.find((t) => t.id === postTagId);
-          return `#${tag?.name.split(" ").join("-").toLowerCase()}`;
+      if (data.squad_posts) {
+        const postsData = data.squad_posts.map((post: any) => {
+          const postTagIds = post.post_tags;
+          const postTags = postTagIds.map((postTagId: number) => {
+            const tag = tags?.find((t) => t.id === postTagId);
+            return `#${tag?.name.split(" ").join("-").toLowerCase()}`;
+          });
+          post.post_tags = postTags;
+          return post;
         });
-        post.post_tags = postTags;
-        return post;
-      });
+        data.squad_posts = postsData;
+      }
 
-      data.squad_posts = postsData;
       dispatch(setCurrentSquad(data));
+      console.log(data);
 
       return data as SquadDetails;
     },

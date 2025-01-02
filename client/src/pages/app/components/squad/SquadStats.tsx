@@ -1,10 +1,10 @@
 export function SquadStats({ squad }: { squad: SquadDetails }) {
-  const totalPosts = squad.squad_posts.length;
-  const totalUpvotes = squad.squad_posts.reduce(
+  const totalPosts = squad.squad_posts?.length || 0;
+  const totalUpvotes = squad.squad_posts?.reduce(
     (sum, post) => sum + post.post_upvotes,
     0
   );
-  const totalViews = squad.squad_posts.reduce(
+  const totalViews = squad.squad_posts?.reduce(
     (sum, post) => sum + post.post_views,
     0
   );
@@ -19,11 +19,11 @@ export function SquadStats({ squad }: { squad: SquadDetails }) {
         </div>
         <div>
           <p className="text-gray-600">Total Upvotes</p>
-          <p className="text-2xl font-bold">{totalUpvotes}</p>
+          <p className="text-2xl font-bold">{totalUpvotes || 0}</p>
         </div>
         <div>
           <p className="text-gray-600">Total Views</p>
-          <p className="text-2xl font-bold">{totalViews}</p>
+          <p className="text-2xl font-bold">{totalViews || 0}</p>
         </div>
         <div>
           <p className="text-gray-600">Created At</p>

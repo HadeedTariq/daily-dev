@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 import { squadApi } from "@/lib/axios";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -10,9 +10,10 @@ export default function MySquads() {
     queryKey: ["getMySquads"],
     queryFn: async () => {
       const { data } = await squadApi.get("/my");
-      return data as Squad[];
+      return data as SquadDetails[];
     },
   });
+  if (isLoading) return <h1>Loading...</h1>;
   return (
     <div className="space-y-4">
       <Link to={"/squads/create"}>
