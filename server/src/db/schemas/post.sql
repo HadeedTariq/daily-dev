@@ -59,7 +59,7 @@ CREATE TABLE squads (
     name VARCHAR(255) UNIQUE NOT NULL,
     squad_handle VARCHAR(255) UNIQUE NOT NULL,
     description TEXT,
-    thumbnail TEXT,
+    thumbnail TEXT DEFAULT 'https://img.freepik.com/free-photo/user-icon-front-side-white-background_187299-40226.jpg?t=st=1735790338~exp=1735793938~hmac=94a72501b7f761f634e532f88e25ab145272e0d37cde6be342971cd4f6ec9ad4&w=1800',
     category squad_category DEFAULT 'general',
     is_public BOOLEAN DEFAULT TRUE,
     admin_id INT NOT NULL,

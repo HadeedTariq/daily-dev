@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,14 +26,13 @@ import {
 } from "@/components/ui/form";
 
 import { squadApi } from "@/lib/axios";
-import { useQueryClient } from "@tanstack/react-query";
-import { InvalidateQueryFilters } from "@tanstack/react-query";
 
 import * as z from "zod";
 import { toast } from "@/hooks/use-toast";
-import { useParams } from "react-router-dom";
-import { useFullApp } from "@/store/hooks/useFullApp";
+import { Navigate, useParams } from "react-router-dom";
+
 import { squadCategories } from "@/utils/data";
+import axios from "axios";
 
 export const squadSchema = z.object({
   name: z
@@ -49,6 +48,7 @@ export const squadSchema = z.object({
     .max(1000, "Description must be 1000 characters or less")
     .optional(),
   category: z.string(),
+  thumbnail: z.string(),
   is_public: z.boolean(),
   post_creation_allowed_to: z.string(),
   invitation_permission: z.string(),
@@ -56,41 +56,70 @@ export const squadSchema = z.object({
 });
 
 export type SquadFormData = z.infer<typeof squadSchema>;
-// 1. current squad data
+
 export default function SquadEditPage() {
   const { squad_handle } = useParams();
-  const { currentSquad: squad } = useFullApp();
+  const [file, setFile] = useState<File | string>("");
 
-  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(
-    squad?.thumbnail || ""
-  );
-
-  console.log(squad);
   const form = useForm<SquadFormData>({
     resolver: zodResolver(squadSchema),
-    defaultValues: {
-      name: squad?.squad_name,
-      squad_handle: squad?.squad_handle,
-      description: squad?.description,
-      category: squad?.category,
-      is_public: squad?.is_public,
-      post_creation_allowed_to: squad?.post_creation_allowed_to || "members",
-      invitation_permission: squad?.invitation_permission || "members",
-      post_approval_required: squad?.post_approval_required,
+  });
+  const {
+    data: squad,
+    isLoading,
+    isPending: isSquadPending,
+  } = useQuery({
+    queryKey: [`squad-${squad_handle}`],
+    queryFn: async () => {
+      const { data } = await squadApi.get(`/details/${squad_handle}`);
+      delete data.squad_posts;
+      Object.keys(data).forEach((key) => {
+        if (key === "squad_name") {
+          form.setValue("name", data[key]);
+          return;
+        }
+        form.setValue(key as any, data[key]);
+      });
+
+      return data as SquadDetails;
     },
   });
+
   const { isPending, mutate } = useMutation({
     mutationKey: [`update_squad-${squad_handle}`],
-    mutationFn: async (formData: SquadFormData) => {},
-    onSuccess: () => {
+    mutationFn: async (formData: SquadFormData) => {
+      const cloudinaryForm = new FormData();
+      cloudinaryForm.append("file", file);
+      cloudinaryForm.append("upload_preset", "n5y4fqsf");
+      cloudinaryForm.append("cloud_name", "lmsproject");
+      try {
+        const { data: cloudinaryData } = await axios.post(
+          "https://api.cloudinary.com/v1_1/lmsproject/image/upload",
+          cloudinaryForm
+        );
+        formData.thumbnail = cloudinaryData.secure_url;
+      } catch (err) {
+        console.log(err);
+        toast({
+          title: "Error uploading",
+          description: "Failed to upload the file. Please try again.",
+          variant: "destructive",
+          duration: 2000,
+        });
+        return;
+      }
+      const { data } = await squadApi.put(`/edit/${squad_handle}`, formData);
+      return data;
+    },
+    onSuccess: (data: any) => {
       toast({
-        title: "Squad updated successfully",
+        title: data.message || "Squad updated successfully",
         description: "Your changes have been saved.",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
-        title: "Error updating squad",
+        title: error.response.data.message || "Error updating squad",
         description:
           "There was a problem saving your changes. Please try again.",
         variant: "destructive",
@@ -103,9 +132,10 @@ export default function SquadEditPage() {
   ) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
+      setFile(file);
       const reader = new FileReader();
       reader.onload = (e) => {
-        setThumbnailPreview(e.target?.result as string);
+        form.setValue("thumbnail", e.target?.result as string);
       };
       reader.readAsDataURL(file);
     }
@@ -116,16 +146,8 @@ export default function SquadEditPage() {
 
     mutate(data);
   };
-  useEffect(() => {
-    const refetchSquads = async () => {
-      if (!squad) {
-        await tagRefetching();
-        await refetch();
-      }
-    };
-    refetchSquads();
-  }, [squad_handle]);
-  if (isRefetching || isTagRefetching) return <h1>Loading...</h1>;
+  if (isLoading || isSquadPending) return <h1>Loading...</h1>;
+  if (!squad) return <Navigate to={"/"} />;
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Edit Squad</h1>
@@ -182,9 +204,9 @@ export default function SquadEditPage() {
                 accept="image/*"
               />
             </FormControl>
-            {thumbnailPreview && (
+            {form.getValues("thumbnail") && (
               <img
-                src={thumbnailPreview}
+                src={String(form.watch("thumbnail"))}
                 alt="Squad thumbnail"
                 className="mt-2 w-32 h-32 object-cover"
               />

@@ -28,44 +28,9 @@ import { deleteUnverifiedUsers } from "./db/connect";
 const logger = pino({ name: "server start" });
 
 // createTable(`
-//       INSERT INTO posts (title, thumbnail, content, squad_id, author_id) VALUES
-//       ('Introduction to SQL', 'https://img.freepik.com/free-vector/gradient-ui-ux-background_23-2149065782.jpg', 'This post covers the basics of SQL.', 4, 2),
-//       ('Understanding Digital Marketing', 'https://img.freepik.com/free-vector/gradient-ui-ux-background_23-2149065782.jpg', 'Digital marketing strategies explained.', 4, 15),
-//       ('Project Management 101', 'https://img.freepik.com/free-vector/gradient-ui-ux-background_23-2149065782.jpg', 'Effective project management tips.', 4, 16),
-//       ('The Role of a Data Analyst', 'https://img.freepik.com/free-vector/gradient-ui-ux-background_23-2149065782.jpg', 'Exploring data analyst responsibilities.', 4, 18),
-//       ('Designing for Success', 'https://img.freepik.com/free-vector/gradient-ui-ux-background_23-2149065782.jpg', 'Key principles of UI/UX design.', 4, 21);
-
-//       -- Insert tags
-//       INSERT INTO tags (name) VALUES
-//       ('SQL'),
-//       ('Digital Marketing'),
-//       ('Project Management'),
-//       ('Data Analysis'),
-//       ('UI/UX Design');
-
-//       -- Insert post_tags
-//       INSERT INTO post_tags (post_id, tag_id) VALUES
-//       (1, 1),
-//       (2, 2),
-//       (3, 3),
-//       (4, 4),
-//       (5, 5);
-
-//       -- Insert post upvotes
-//       INSERT INTO post_upvotes (post_id, upvotes) VALUES
-//       (1, 10),
-//       (2, 15),
-//       (3, 8),
-//       (4, 20),
-//       (5, 25);
-
-//       -- Insert post views
-//       INSERT INTO post_views (post_id, views) VALUES
-//       (1, 100),
-//       (2, 150),
-//       (3, 80),
-//       (4, 200),
-//       (5, 250);
+// UPDATE squads
+// SET thumbnail = 'https://img.freepik.com/free-photo/user-icon-front-side-white-background_187299-40226.jpg?t=st=1735790338~exp=1735793938~hmac=94a72501b7f761f634e532f88e25ab145272e0d37cde6be342971cd4f6ec9ad4&w=1800'
+// WHERE thumbnail IS NULL OR thumbnail = ' ';
 
 // `);
 

@@ -248,6 +248,7 @@ class SquadController {
       post_creation_allowed_to,
       invitation_permission,
       post_approval_required,
+      thumbnail,
     } = req.body;
 
     try {
@@ -261,8 +262,9 @@ class SquadController {
           is_public = $5,
           post_creation_allowed_to = $6,
           invitation_permission = $7,
-          post_approval_required = $8
-        WHERE squad_handle = $9
+          post_approval_required = $8,
+          thumbnail = $9
+        WHERE squad_handle = $10
         RETURNING squad_handle;
       `;
 
@@ -275,6 +277,7 @@ class SquadController {
         post_creation_allowed_to,
         invitation_permission,
         post_approval_required,
+        thumbnail,
         squad_handle,
       ]);
 
