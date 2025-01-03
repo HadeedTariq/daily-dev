@@ -31,7 +31,10 @@ export default function SquadHeader({ squad }: { squad: SquadDetails }) {
         <Badge>{squad.category}</Badge>
       </div>
       <div className="flex justify-start">
-        <SquadMembersCard members={actualSquad.squad_members} />
+        <SquadMembersCard
+          members={actualSquad.squad_members}
+          adminId={actualSquad.admin_id}
+        />
         <SquadManagement adminId={actualSquad.admin_id} squad={squad} />
       </div>
       <p className="text-gray-700">{actualSquad.description}</p>

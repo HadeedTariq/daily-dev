@@ -23,6 +23,7 @@ class SquadController {
     this.createSquad = this.createSquad.bind(this);
     this.squadDetails = this.squadDetails.bind(this);
     this.joinSquad = this.joinSquad.bind(this);
+    this.leaveSquad = this.leaveSquad.bind(this);
     this.updateSquad = this.updateSquad.bind(this);
     this.deleteSquad = this.deleteSquad.bind(this);
   }
@@ -256,6 +257,35 @@ class SquadController {
       }
 
       res.status(201).json({ message: "Successfully joined the squad" });
+    } catch (error) {
+      next(error);
+    }
+  }
+  async leaveSquad(req: Request, res: Response, next: NextFunction) {
+    const { squad_id } = req.body;
+
+    if (!squad_id) {
+      return res.status(400).json({ message: "Squad ID is required." });
+    }
+
+    const userId = req.body.user.id;
+
+    const query = `
+      DELETE FROM squad_members
+      WHERE squad_id = $1 AND user_id = $2
+      RETURNING id;
+    `;
+
+    try {
+      const { rows } = await queryDb(query, [squad_id, userId]);
+
+      if (rows.length === 0) {
+        return res
+          .status(400)
+          .json({ message: "You are not a member of this squad." });
+      }
+
+      res.status(200).json({ message: "Successfully left the squad" });
     } catch (error) {
       next(error);
     }

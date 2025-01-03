@@ -68,10 +68,34 @@ export default function SquadSettingsMenu({
     (member) => member.userDetails.userId === user?.id
   );
 
+  const { mutate: leaveSquad, isPending: isLeavingPending } = useMutation({
+    mutationKey: [`leaveSquad_${squad.squad_handle}`],
+    mutationFn: async () => {
+      const { data } = await squadApi.put("/leave", {
+        squad_id: squad.squad_id,
+        squad_handle: squad.squad_handle,
+      });
+      return data;
+    },
+    onError: (err: any) => {
+      toast({
+        title: err.response.data.message || "Failed to leav the squad",
+        variant: "destructive",
+      });
+    },
+    onSuccess: (data) => {
+      toast({
+        title: data.message || "Successfully leaved the squad",
+      });
+      queryClient.invalidateQueries([
+        `squad-${squad.squad_handle}`,
+      ] as InvalidateQueryFilters);
+    },
+  });
   const { mutate: joinSquad, isPending: isJoinPending } = useMutation({
     mutationKey: [`joinSquad_${squad.squad_handle}`],
     mutationFn: async () => {
-      const { data } = await squadApi.post("/join", {
+      const { data } = await squadApi.put("/join", {
         squad_id: squad.squad_id,
         squad_handle: squad.squad_handle,
       });
@@ -123,9 +147,8 @@ export default function SquadSettingsMenu({
               <CommandGroup>
                 {isUserMemberOfSquad ? (
                   <CommandItem
-                    onSelect={() => {
-                      setOpen(false);
-                    }}
+                    disabled={isLeavingPending}
+                    onSelect={() => leaveSquad()}
                   >
                     <LogOutIcon className="mr-2 h-4 w-4" />
                     Leave Squad

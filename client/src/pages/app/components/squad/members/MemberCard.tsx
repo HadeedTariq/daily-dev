@@ -5,8 +5,12 @@ import { MembersDialog } from "./MemberDialog";
 
 type SquadMembersCardProps = {
   members: SquadMember[];
+  adminId: number;
 };
-export default function SquadMembersCard({ members }: SquadMembersCardProps) {
+export default function SquadMembersCard({
+  members,
+  adminId,
+}: SquadMembersCardProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const handleCardClick = () => {
@@ -49,6 +53,7 @@ export default function SquadMembersCard({ members }: SquadMembersCardProps) {
       </Card>
 
       <MembersDialog
+        adminId={adminId}
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
         members={members}
