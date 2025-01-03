@@ -3,8 +3,10 @@ import {
   EllipsisVertical,
   Users,
   Settings,
-  LogOut,
   DeleteIcon,
+  LogOutIcon,
+  LeafyGreen,
+  JoystickIcon,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -21,21 +23,13 @@ import {
 } from "@/components/ui/popover";
 import { useFullApp } from "@/store/hooks/useFullApp";
 import { useNavigate } from "react-router-dom";
-
-const squadUserSettings = [
-  {
-    value: "squad-wokring",
-    label: "Learn How Squad Works",
-    icon: Users,
-    href: "/squad/working",
-  },
-  {
-    value: "leave",
-    label: "Leave Squad",
-    icon: LogOut,
-    href: "/squad/leave",
-  },
-];
+import {
+  InvalidateQueryFilters,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { toast } from "@/hooks/use-toast";
+import { squadApi } from "@/lib/axios";
 
 const squadAdminSettings = [
   {
@@ -60,11 +54,45 @@ const squadAdminSettings = [
 
 type SquadSettingsMenuProps = {
   adminId: number;
+  squad: SquadDetails;
 };
-export default function SquadSettingsMenu({ adminId }: SquadSettingsMenuProps) {
+export default function SquadSettingsMenu({
+  adminId,
+  squad,
+}: SquadSettingsMenuProps) {
+  const queryClient = useQueryClient();
   const [open, setOpen] = React.useState(false);
   const navigate = useNavigate();
   const { user } = useFullApp();
+  const isUserMemberOfSquad = squad.squad_members?.find(
+    (member) => member.userDetails.userId === user?.id
+  );
+
+  const { mutate: joinSquad, isPending: isJoinPending } = useMutation({
+    mutationKey: [`joinSquad_${squad.squad_handle}`],
+    mutationFn: async () => {
+      const { data } = await squadApi.post("/join", {
+        squad_id: squad.squad_id,
+        squad_handle: squad.squad_handle,
+      });
+      return data;
+    },
+    onError: (err: any) => {
+      toast({
+        title: err.response.data.message || "Failed to join the squad",
+        variant: "destructive",
+      });
+    },
+    onSuccess: (data) => {
+      toast({
+        title: data.message || "Successfully joined the squad",
+      });
+      queryClient.invalidateQueries([
+        `squad-${squad.squad_handle}`,
+      ] as InvalidateQueryFilters);
+    },
+  });
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -93,18 +121,32 @@ export default function SquadSettingsMenu({ adminId }: SquadSettingsMenuProps) {
               </CommandGroup>
             ) : (
               <CommandGroup>
-                {squadUserSettings.map((item) => (
+                {isUserMemberOfSquad ? (
                   <CommandItem
-                    key={item.value}
                     onSelect={() => {
                       setOpen(false);
-                      console.log(`Navigating to ${item.href}`);
                     }}
                   >
-                    <item.icon className="mr-2 h-4 w-4" />
-                    {item.label}
+                    <LogOutIcon className="mr-2 h-4 w-4" />
+                    Leave Squad
                   </CommandItem>
-                ))}
+                ) : (
+                  <CommandItem
+                    disabled={isJoinPending}
+                    onSelect={() => joinSquad()}
+                  >
+                    <JoystickIcon className="mr-2 h-4 w-4" />
+                    Join Squad
+                  </CommandItem>
+                )}
+                <CommandItem
+                  onSelect={() => {
+                    setOpen(false);
+                  }}
+                >
+                  <LeafyGreen className="mr-2 h-4 w-4" />
+                  Learn More
+                </CommandItem>
               </CommandGroup>
             )}
           </CommandList>

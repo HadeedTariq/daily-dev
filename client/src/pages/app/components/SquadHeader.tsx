@@ -32,7 +32,7 @@ export default function SquadHeader({ squad }: { squad: SquadDetails }) {
       </div>
       <div className="flex justify-start">
         <SquadMembersCard members={actualSquad.squad_members} />
-        <SquadManagement adminId={actualSquad.admin_id} />
+        <SquadManagement adminId={actualSquad.admin_id} squad={squad} />
       </div>
       <p className="text-gray-700">{actualSquad.description}</p>
       <Moderators members={actualSquad.squad_members} />

@@ -34,7 +34,7 @@ export const useSquadMain = (squad_handle: string) => {
 
       return data as SquadDetails;
     },
-    enabled: tags ? true : false,
+    enabled: tags.length > 0 ? true : false,
   });
 
   return { ...squadHandleQuery, tagRefetching, isTagRefetching };

@@ -22,7 +22,7 @@ class SquadController {
     this.getSquadMembers = this.getSquadMembers.bind(this);
     this.createSquad = this.createSquad.bind(this);
     this.squadDetails = this.squadDetails.bind(this);
-    this.addMember = this.addMember.bind(this);
+    this.joinSquad = this.joinSquad.bind(this);
     this.updateSquad = this.updateSquad.bind(this);
     this.deleteSquad = this.deleteSquad.bind(this);
   }
@@ -225,36 +225,40 @@ class SquadController {
       next(error);
     }
   }
+  async joinSquad(req: Request, res: Response, next: NextFunction) {
+    const { squad_handle, squad_id } = req.body;
 
-  async addMember(req: Request, res: Response, next: NextFunction) {
-    const { squadName, squadId } = req.body;
-
-    if (!squadName || !squadId) {
+    if (!squad_handle || !squad_id) {
       return res
         .status(400)
-        .json({ message: "Squad name and Squad id are required." });
-    }
-
-    const user_already_in_squad_query = `
-      select id from squad_members where squad_id =$1 and user_id =$2
-    `;
-
-    const { rows } = await queryDb(user_already_in_squad_query, [
-      squadId,
-      req.body.user.id,
-    ]);
-
-    if (rows.length > 0) {
-      return res.status(400).json({ message: "User already in squad." });
+        .json({ message: "Squad handle and ID are required." });
     }
 
     const query = `
+      WITH check_user AS (
+        SELECT id
+        FROM squad_members
+        WHERE squad_id = $1 AND user_id = $2
+      )
       INSERT INTO squad_members (squad_id, user_id)
-      VALUES ($1, $2)
+      SELECT $1, $2
+      WHERE NOT EXISTS (SELECT 1 FROM check_user)
+      RETURNING id;
     `;
-    await queryDb(query, [squadId, req.body.user.id]);
 
-    res.status(201).json({ message: "Member added successfully." });
+    try {
+      const { rows } = await queryDb(query, [squad_id, req.body.user.id]);
+
+      if (rows.length === 0) {
+        return res
+          .status(400)
+          .json({ message: "You already joined the squad" });
+      }
+
+      res.status(201).json({ message: "Successfully joined the squad" });
+    } catch (error) {
+      next(error);
+    }
   }
 
   async updateSquad(req: Request, res: Response, next: NextFunction) {
