@@ -191,7 +191,7 @@ class SquadController {
                         )
                     )
                     FROM filtered_squad_members fsm
-                    LEFT JOIN users ON fsm.user_id = users.id
+                    inner JOIN users ON fsm.user_id = users.id
                 ) AS squad_members
             FROM selected_squad s;
     `;
