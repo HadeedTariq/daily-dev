@@ -349,13 +349,13 @@ class SquadController {
   }
 
   async deleteSquad(req: Request, res: Response, next: NextFunction) {
-    const { squad_handle } = req.params;
+    const { squad_id } = req.params;
 
     try {
       const query = `
-        DELETE FROM squads WHERE  squad_handle = $1 RETURNING *;
+        DELETE FROM squads WHERE  id = $1 RETURNING id;
       `;
-      const { rows } = await queryDb(query, [squad_handle]);
+      const { rows } = await queryDb(query, [Number(squad_id)]);
 
       if (rows.length === 0) {
         return res.status(404).json({ message: "Squad not found." });

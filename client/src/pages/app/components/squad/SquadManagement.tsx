@@ -31,27 +31,6 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { squadApi } from "@/lib/axios";
 
-const squadAdminSettings = [
-  {
-    value: "squad-wokring",
-    label: "Learn How Squad Works",
-    icon: Users,
-    href: "/squad/working",
-  },
-  {
-    value: "settings",
-    label: "Squad Settings",
-    icon: Settings,
-    href: "edit",
-  },
-  {
-    value: "delete",
-    label: "Delete Squad",
-    icon: DeleteIcon,
-    href: "/squad/delete",
-  },
-];
-
 type SquadSettingsMenuProps = {
   adminId: number;
   squad: SquadDetails;
@@ -79,7 +58,7 @@ export default function SquadSettingsMenu({
     },
     onError: (err: any) => {
       toast({
-        title: err.response.data.message || "Failed to leav the squad",
+        title: err.response.data.message || "Failed to leave the squad",
         variant: "destructive",
       });
     },
@@ -90,6 +69,28 @@ export default function SquadSettingsMenu({
       queryClient.invalidateQueries([
         `squad-${squad.squad_handle}`,
       ] as InvalidateQueryFilters);
+    },
+  });
+  const { mutate: deleteSquad, isPending: isDeletingPending } = useMutation({
+    mutationKey: [`deleteSquad_${squad.squad_handle}`],
+    mutationFn: async () => {
+      const { data } = await squadApi.delete(`/${squad.squad_id}`);
+      return data;
+    },
+    onError: (err: any) => {
+      toast({
+        title: err.response.data.message || "Failed to delete the squad",
+        variant: "destructive",
+      });
+    },
+    onSuccess: (data) => {
+      toast({
+        title: data.message || "Successfully delete the squad",
+      });
+      queryClient.invalidateQueries([
+        `squad-${squad.squad_handle}`,
+      ] as InvalidateQueryFilters);
+      navigate("/profile/squads");
     },
   });
   const { mutate: joinSquad, isPending: isJoinPending } = useMutation({
@@ -130,18 +131,23 @@ export default function SquadSettingsMenu({
           <CommandList>
             {user?.id === adminId ? (
               <CommandGroup>
-                {squadAdminSettings.map((item) => (
-                  <CommandItem
-                    key={item.value}
-                    onSelect={() => {
-                      setOpen(false);
-                      navigate(`${item.href}`);
-                    }}
-                  >
-                    <item.icon className="mr-2 h-4 w-4" />
-                    {item.label}
-                  </CommandItem>
-                ))}
+                <CommandItem
+                  onSelect={() => {
+                    navigate("edit");
+                  }}
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  Manage Squad
+                </CommandItem>
+                <CommandItem
+                  disabled={isDeletingPending}
+                  onSelect={() => {
+                    deleteSquad();
+                  }}
+                >
+                  <DeleteIcon className="mr-2 h-4 w-4" />
+                  Delete Squad
+                </CommandItem>
               </CommandGroup>
             ) : (
               <CommandGroup>

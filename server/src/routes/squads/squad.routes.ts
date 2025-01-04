@@ -2,6 +2,7 @@ import { Router } from "express";
 import { asyncHandler } from "@/utils/asyncHandler";
 import { checkAuth } from "../middleware";
 import { squadController } from "./squads.controller";
+import { isSquadAdmin } from "./squads.middleware";
 
 const router = Router();
 
@@ -16,7 +17,13 @@ router.get("/", asyncHandler(squadController.getSquads));
 router.put("/edit/:squad_handle", asyncHandler(squadController.updateSquad));
 router.put("/join", asyncHandler(squadController.joinSquad));
 router.put("/leave", asyncHandler(squadController.leaveSquad));
-router.get("/members", asyncHandler(squadController.getSquadMembers));
-router.delete("/:squad_handle", asyncHandler(squadController.deleteSquad));
+
+// admin work
+
+router.delete(
+  "/:squad_id",
+  isSquadAdmin,
+  asyncHandler(squadController.deleteSquad)
+);
 
 export { router as squadRouter };
