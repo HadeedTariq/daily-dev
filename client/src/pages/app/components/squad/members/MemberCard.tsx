@@ -6,10 +6,14 @@ import { MembersDialog } from "./MemberDialog";
 type SquadMembersCardProps = {
   members: SquadMember[];
   adminId: number;
+  squadId: number;
+  squadHandle: string;
 };
 export default function SquadMembersCard({
   members,
   adminId,
+  squadId,
+  squadHandle,
 }: SquadMembersCardProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -56,6 +60,8 @@ export default function SquadMembersCard({
         adminId={adminId}
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
+        squadId={squadId}
+        squadHandle={squadHandle}
         members={members}
       />
     </div>

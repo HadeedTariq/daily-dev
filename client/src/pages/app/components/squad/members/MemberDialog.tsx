@@ -10,10 +10,22 @@ import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { useFullApp } from "@/store/hooks/useFullApp";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
+
+import {
+  InvalidateQueryFilters,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+
+import { squadApi } from "@/lib/axios";
 
 type MembersDialogProps = {
   isOpen: boolean;
   adminId: number;
+  squadId: number;
+  squadHandle: string;
+
   onClose: () => void;
   members: SquadMember[];
 };
@@ -23,10 +35,69 @@ export const MembersDialog = ({
   onClose,
   members,
   adminId,
+  squadId,
+  squadHandle,
 }: MembersDialogProps) => {
   const { user } = useFullApp();
+  const queryClient = useQueryClient();
 
   const isUserAdmin = user?.id === adminId;
+
+  const { isPending, mutate: updateRole } = useMutation({
+    mutationKey: [`update-role`],
+    mutationFn: async ({
+      role,
+      user_id,
+    }: {
+      user_id: number;
+      role: string;
+    }) => {
+      const { data } = await squadApi.put(`/${squadId}/make-${role}`, {
+        user_id,
+      });
+      return data;
+    },
+    onSuccess: (data: any) => {
+      toast({
+        title: data.message || "Role updated successfully",
+        description: "Your changes have been saved.",
+      });
+      queryClient.invalidateQueries([
+        `squad-${squadHandle}`,
+      ] as InvalidateQueryFilters);
+    },
+    onError: (error: any) => {
+      toast({
+        title: error.response.data.message || "Error updating role",
+        variant: "destructive",
+      });
+    },
+  });
+  const { isPending: isRemovingPending, mutate: removeMember } = useMutation({
+    mutationKey: [`remove-member`],
+    mutationFn: async ({ user_id }: { user_id: number }) => {
+      const { data } = await squadApi.put(`/${squadId}/remove-member`, {
+        user_id,
+      });
+      return data;
+    },
+    onSuccess: (data: any) => {
+      toast({
+        title: data.message || "Removed Member successfully",
+        description: "Your changes have been saved.",
+      });
+      queryClient.invalidateQueries([
+        `squad-${squadHandle}`,
+      ] as InvalidateQueryFilters);
+    },
+    onError: (error: any) => {
+      toast({
+        title: error.response.data.message || "Error removing member",
+        variant: "destructive",
+      });
+    },
+  });
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] overflow-y-scroll">
@@ -64,20 +135,59 @@ export const MembersDialog = ({
                       <div className="flex flex-wrap gap-2">
                         {member.role === "moderator" && (
                           <>
-                            <Button variant={"outline"} size={"sm"}>
+                            <Button
+                              variant={"outline"}
+                              size={"sm"}
+                              disabled={isPending}
+                              onClick={() =>
+                                updateRole({
+                                  user_id: member.userDetails.userId,
+                                  role: "member",
+                                })
+                              }
+                            >
                               Make Member
                             </Button>
-                            <Button variant={"default"} size={"sm"}>
+                            <Button
+                              variant={"default"}
+                              size={"sm"}
+                              disabled={isPending}
+                              onClick={() =>
+                                updateRole({
+                                  user_id: member.userDetails.userId,
+                                  role: "admin",
+                                })
+                              }
+                            >
                               Make Admin
                             </Button>
                           </>
                         )}
                         {member.role === "member" && (
                           <>
-                            <Button variant={"outline"} size={"sm"}>
+                            <Button
+                              variant={"outline"}
+                              size={"sm"}
+                              disabled={isPending}
+                              onClick={() =>
+                                updateRole({
+                                  user_id: member.userDetails.userId,
+                                  role: "moderator",
+                                })
+                              }
+                            >
                               Make Moderator
                             </Button>
-                            <Button variant={"destructive"} size={"sm"}>
+                            <Button
+                              variant={"destructive"}
+                              size={"sm"}
+                              disabled={isRemovingPending}
+                              onClick={() =>
+                                removeMember({
+                                  user_id: member.userDetails.userId,
+                                })
+                              }
+                            >
                               Remove
                             </Button>
                           </>

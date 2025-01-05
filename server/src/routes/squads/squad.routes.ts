@@ -26,9 +26,24 @@ router.put(
 );
 
 router.put(
-  "/make-admin",
+  "/:squad_id/make-admin",
   isSquadAdmin,
   asyncHandler(squadController.makeAdmin)
+);
+router.put(
+  "/:squad_id/make-moderator",
+  isSquadAdmin,
+  asyncHandler(squadController.makeModerator)
+);
+router.put(
+  "/:squad_id/make-member",
+  isSquadAdmin,
+  asyncHandler(squadController.makeMember)
+);
+router.put(
+  "/:squad_id/remove-member",
+  isSquadAdmin,
+  asyncHandler(squadController.removeMember)
 );
 router.delete(
   "/:squad_id",

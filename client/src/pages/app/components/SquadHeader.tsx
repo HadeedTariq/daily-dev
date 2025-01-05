@@ -34,6 +34,8 @@ export default function SquadHeader({ squad }: { squad: SquadDetails }) {
         <SquadMembersCard
           members={actualSquad.squad_members}
           adminId={actualSquad.admin_id}
+          squadId={actualSquad.squad_id}
+          squadHandle={actualSquad.squad_handle}
         />
         <SquadManagement adminId={actualSquad.admin_id} squad={squad} />
       </div>
