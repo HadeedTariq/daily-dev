@@ -14,12 +14,22 @@ router.get(
   asyncHandler(squadController.squadDetails)
 );
 router.get("/", asyncHandler(squadController.getSquads));
-router.put("/edit/:squad_handle", asyncHandler(squadController.updateSquad));
 router.put("/join", asyncHandler(squadController.joinSquad));
 router.put("/leave", asyncHandler(squadController.leaveSquad));
 
 // admin work
 
+router.put(
+  "/edit/:squad_id/:squad_handle",
+  isSquadAdmin,
+  asyncHandler(squadController.updateSquad)
+);
+
+router.put(
+  "/make-admin",
+  isSquadAdmin,
+  asyncHandler(squadController.makeAdmin)
+);
 router.delete(
   "/:squad_id",
   isSquadAdmin,

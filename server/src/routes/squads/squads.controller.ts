@@ -26,6 +26,9 @@ class SquadController {
     this.leaveSquad = this.leaveSquad.bind(this);
     this.updateSquad = this.updateSquad.bind(this);
     this.deleteSquad = this.deleteSquad.bind(this);
+    this.makeAdmin = this.makeAdmin.bind(this);
+    this.makeModerator = this.makeModerator.bind(this);
+    this.removeMember = this.removeMember.bind(this);
   }
 
   async getSquads(req: Request, res: Response, next: NextFunction) {
@@ -292,7 +295,7 @@ class SquadController {
   }
 
   async updateSquad(req: Request, res: Response, next: NextFunction) {
-    const { squad_handle } = req.params;
+    const { squad_handle, squad_id } = req.params;
     if (!squad_handle) {
       return res.status(400).json({ message: "Squad handle is required." });
     }
@@ -321,7 +324,7 @@ class SquadController {
           invitation_permission = $7,
           post_approval_required = $8,
           thumbnail = $9
-        WHERE squad_handle = $10
+        WHERE squad_handle = $10 and id = $11
         RETURNING squad_handle;
       `;
 
@@ -336,6 +339,7 @@ class SquadController {
         post_approval_required,
         thumbnail,
         squad_handle,
+        squad_id,
       ]);
 
       if (rows.length === 0) {
@@ -362,6 +366,89 @@ class SquadController {
       }
 
       res.status(200).json({ message: "Squad deleted successfully." });
+    } catch (error) {
+      next(error);
+    }
+  }
+  async makeAdmin(req: Request, res: Response, next: NextFunction) {
+    const { squad_id, user_id } = req.body;
+
+    try {
+      const query = `
+        UPDATE squad_members 
+        SET role = 'admin' 
+        WHERE squad_id = $1 AND user_id = $2 
+        RETURNING role;
+      `;
+      const { rows } = await queryDb(query, [
+        Number(squad_id),
+        Number(user_id),
+      ]);
+
+      if (rows.length === 0) {
+        return res
+          .status(404)
+          .json({ message: "Member not found or update failed." });
+      }
+
+      res
+        .status(200)
+        .json({ message: `User role updated to ${rows[0].role}.` });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async makeModerator(req: Request, res: Response, next: NextFunction) {
+    const { squad_id, user_id } = req.body;
+
+    try {
+      const query = `
+        UPDATE squad_members 
+        SET role = 'moderator' 
+        WHERE squad_id = $1 AND user_id = $2 
+        RETURNING role;
+      `;
+      const { rows } = await queryDb(query, [
+        Number(squad_id),
+        Number(user_id),
+      ]);
+
+      if (rows.length === 0) {
+        return res
+          .status(404)
+          .json({ message: "Member not found or update failed." });
+      }
+
+      res
+        .status(200)
+        .json({ message: `User role updated to ${rows[0].role}.` });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async removeMember(req: Request, res: Response, next: NextFunction) {
+    const { squad_id, user_id } = req.body;
+
+    try {
+      const query = `
+        DELETE FROM squad_members 
+        WHERE squad_id = $1 AND user_id = $2 
+        RETURNING user_id;
+      `;
+      const { rows } = await queryDb(query, [
+        Number(squad_id),
+        Number(user_id),
+      ]);
+
+      if (rows.length === 0) {
+        return res
+          .status(404)
+          .json({ message: "Member not found or already removed." });
+      }
+
+      res.status(200).json({ message: "Member removed successfully." });
     } catch (error) {
       next(error);
     }

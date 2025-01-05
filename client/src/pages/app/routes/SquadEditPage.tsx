@@ -74,6 +74,7 @@ export default function SquadEditPage() {
     queryFn: async () => {
       const { data } = await squadApi.get(`/details/${squad_handle}`);
       delete data.squad_posts;
+      delete data.squad_members;
       Object.keys(data).forEach((key) => {
         if (key === "squad_name") {
           form.setValue("name", data[key]);
@@ -89,27 +90,32 @@ export default function SquadEditPage() {
   const { isPending, mutate } = useMutation({
     mutationKey: [`update_squad-${squad_handle}`],
     mutationFn: async (formData: SquadFormData) => {
-      const cloudinaryForm = new FormData();
-      cloudinaryForm.append("file", file);
-      cloudinaryForm.append("upload_preset", "n5y4fqsf");
-      cloudinaryForm.append("cloud_name", "lmsproject");
-      try {
-        const { data: cloudinaryData } = await axios.post(
-          "https://api.cloudinary.com/v1_1/lmsproject/image/upload",
-          cloudinaryForm
-        );
-        formData.thumbnail = cloudinaryData.secure_url;
-      } catch (err) {
-        console.log(err);
-        toast({
-          title: "Error uploading",
-          description: "Failed to upload the file. Please try again.",
-          variant: "destructive",
-          duration: 2000,
-        });
-        return;
+      if (file) {
+        const cloudinaryForm = new FormData();
+        cloudinaryForm.append("file", file);
+        cloudinaryForm.append("upload_preset", "n5y4fqsf");
+        cloudinaryForm.append("cloud_name", "lmsproject");
+        try {
+          const { data: cloudinaryData } = await axios.post(
+            "https://api.cloudinary.com/v1_1/lmsproject/image/upload",
+            cloudinaryForm
+          );
+          formData.thumbnail = cloudinaryData.secure_url;
+        } catch (err) {
+          console.log(err);
+          toast({
+            title: "Error uploading",
+            description: "Failed to upload the file. Please try again.",
+            variant: "destructive",
+            duration: 2000,
+          });
+          return;
+        }
       }
-      const { data } = await squadApi.put(`/edit/${squad_handle}`, formData);
+      const { data } = await squadApi.put(
+        `/edit/${squad?.squad_id}/${squad_handle}`,
+        formData
+      );
       return data;
     },
     onSuccess: (data: any) => {
@@ -121,8 +127,6 @@ export default function SquadEditPage() {
     onError: (error: any) => {
       toast({
         title: error.response.data.message || "Error updating squad",
-        description:
-          "There was a problem saving your changes. Please try again.",
         variant: "destructive",
       });
     },
