@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
+
 import {
   Form,
   FormControl,
@@ -16,6 +17,7 @@ import {
 import {
   InvalidateQueryFilters,
   useMutation,
+  useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
 
@@ -29,21 +31,36 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { postApi } from "@/lib/axios";
+import { postApi, profileApi } from "@/lib/axios";
 import MarkdownEditor from "@uiw/react-markdown-editor";
 import axios from "axios";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { useGetTags } from "../hooks/useGetTags";
 
+export interface JoinedSquad {
+  squad_id: number;
+  squad_name: string;
+  squad_handle: string;
+}
+
 const formSchema = z.object({
   title: z.string().min(1, "Title is required").max(100, "Title is too long"),
   content: z.string().min(1, "Content is required"),
+  squad: z.string(),
   thumbnail: z.string().optional(),
   tags: z.array(z.string()).min(1, "At least one tag is required"),
 });
 
 export function CreatePost() {
   const queryClient = useQueryClient();
+  const { data: joinedSquads, isLoading: isSquadsLoading } = useQuery({
+    queryKey: ["getUserSquads"],
+    queryFn: async () => {
+      const { data } = await profileApi.get("/get-my-joined-squads");
+      return data.squads as JoinedSquad[];
+    },
+  });
+
   const [thumbnail, setThumbnail] = useState<string>("");
   const [file, setFile] = useState<string | File>("");
   const { isLoading, data: tags } = useGetTags();
@@ -54,6 +71,7 @@ export function CreatePost() {
     defaultValues: {
       title: "",
       content: "",
+      squad: "",
       tags: [],
     },
   });
@@ -184,6 +202,33 @@ export function CreatePost() {
                   />
                 </div>
               </FormControl>
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name={"squad"}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Select Squad</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger className="w-[280px]">
+                    <SelectValue placeholder="Select a squad" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {joinedSquads?.map((squad) => (
+                    <SelectItem
+                      key={squad.squad_id}
+                      value={squad.squad_id.toString()}
+                    >
+                      {squad.squad_name} (@{squad.squad_handle})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
             </FormItem>
           )}
         />

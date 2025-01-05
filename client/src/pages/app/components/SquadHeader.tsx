@@ -10,8 +10,8 @@ export default function SquadHeader({ squad }: { squad: SquadDetails }) {
     moderator: 2,
     member: 3,
   };
-  let squadMembers = [...squad.squad_members];
-  squadMembers.sort((a, b) => rolePriority[a.role] - rolePriority[b.role]);
+  let squadMembers = [...(squad.squad_members || "")];
+  squadMembers?.sort((a, b) => rolePriority[a.role] - rolePriority[b.role]);
 
   const actualSquad = { ...squad, squad_members: squadMembers };
 

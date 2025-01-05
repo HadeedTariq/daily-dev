@@ -10,35 +10,36 @@ class ProfileController {
     this.editProfile = this.editProfile.bind(this);
     this.readmeHandler = this.readmeHandler.bind(this);
     this.updateStreak = this.updateStreak.bind(this);
+    this.getMyJoinedSquads = this.getMyJoinedSquads.bind(this);
   }
   async getProfile(req: Request, res: Response, next: NextFunction) {
     const { user: authUser } = req.body;
 
     try {
       const query = `
-    SELECT 
-      u.name,
-      u.username,
-      u.avatar,
-      u.email,
-      u.created_at,
-      u.profession,
-      row_to_json(ab) AS about,
-      row_to_json(sl) AS social_links,
-      row_to_json(ust) AS user_stats,
-      row_to_json(stk) AS streaks
-    FROM 
-      users u
-    LEFT JOIN 
-      about ab ON u.id = ab.user_id
-    LEFT JOIN 
-      social_links sl ON u.id = sl.user_id
-    LEFT JOIN 
-      user_stats ust ON u.id = ust.user_id
-    LEFT JOIN 
-      streaks stk ON u.id = stk.user_id
-    WHERE 
-      u.id = $1
+        SELECT 
+          u.name,
+          u.username,
+          u.avatar,
+          u.email,
+          u.created_at,
+          u.profession,
+          row_to_json(ab) AS about,
+          row_to_json(sl) AS social_links,
+          row_to_json(ust) AS user_stats,
+          row_to_json(stk) AS streaks
+        FROM 
+          users u
+        LEFT JOIN 
+          about ab ON u.id = ab.user_id
+        LEFT JOIN 
+          social_links sl ON u.id = sl.user_id
+        LEFT JOIN 
+          user_stats ust ON u.id = ust.user_id
+        LEFT JOIN 
+          streaks stk ON u.id = stk.user_id
+        WHERE 
+          u.id = $1
   `;
 
       const { rows } = await queryDb(query, [authUser.id]);
@@ -57,6 +58,38 @@ class ProfileController {
     }
   }
 
+  async getMyJoinedSquads(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.body.user.id;
+      const query = `
+          WITH user_squads AS (
+              SELECT squad_id 
+              FROM squad_members 
+              WHERE user_id = $1
+          )
+          SELECT 
+              s.id AS squad_id, 
+              s.name AS squad_name, 
+              s.squad_handle AS squad_handle
+          FROM user_squads us
+          JOIN squads s ON us.squad_id = s.id;
+    `;
+
+      const { rows: squads } = await queryDb(query, [userId]);
+      if (squads.length === 0) {
+        return res.status(200).json({
+          message: "You have not joined any squads yet.",
+          squads: [],
+        });
+      }
+
+      res.status(200).json({
+        squads,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
   async editProfile(req: Request, res: Response, next: NextFunction) {
     const {
       username,
