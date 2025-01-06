@@ -17,7 +17,6 @@ import {
 import {
   InvalidateQueryFilters,
   useMutation,
-  useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
 
@@ -31,17 +30,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { postApi, profileApi } from "@/lib/axios";
+import { postApi } from "@/lib/axios";
 import MarkdownEditor from "@uiw/react-markdown-editor";
 import axios from "axios";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { useGetTags } from "../hooks/useGetTags";
-
-export interface JoinedSquad {
-  squad_id: number;
-  squad_name: string;
-  squad_handle: string;
-}
+import { useGetJoinedSquads } from "../hooks/useGetJoinedSquads";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required").max(100, "Title is too long"),
@@ -53,13 +47,7 @@ const formSchema = z.object({
 
 export function CreatePost() {
   const queryClient = useQueryClient();
-  const { data: joinedSquads } = useQuery({
-    queryKey: ["getUserSquads"],
-    queryFn: async () => {
-      const { data } = await profileApi.get("/get-my-joined-squads");
-      return data.squads as JoinedSquad[];
-    },
-  });
+  const { data: joinedSquads } = useGetJoinedSquads();
 
   const [thumbnail, setThumbnail] = useState<string>("");
   const [file, setFile] = useState<string | File>("");

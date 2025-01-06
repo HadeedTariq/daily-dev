@@ -13,6 +13,8 @@ import { useDispatch } from "react-redux";
 import { setProfile } from "@/reducers/fullAppReducer";
 import ShareProfile from "../components/ShareProfile";
 import { ProfileHeader } from "../components/ProfileHeader";
+import SquadGrid from "../components/SquadGrid";
+import { useGetJoinedSquads } from "../hooks/useGetJoinedSquads";
 
 export default function Profile() {
   const dispatch = useDispatch();
@@ -24,6 +26,8 @@ export default function Profile() {
       return data.profile as UserProfile;
     },
   });
+  const { data: joinedSquads, isLoading: isSquadLoading } =
+    useGetJoinedSquads();
 
   if (isLoading) return <div>Loading...</div>;
   if (!profile) return <div>Loading...</div>;
@@ -92,6 +96,13 @@ export default function Profile() {
             </Link>
             <div className="text-xs mt-3 text-muted-foreground">
               Member since: {new Date(profile.created_at).toLocaleDateString()}
+            </div>
+            <div className="flex flex-col gap-4">
+              <h2>User active in squads</h2>
+              <SquadGrid
+                squads={joinedSquads || []}
+                isLoading={isSquadLoading}
+              />
             </div>
           </CardContent>
         </Card>

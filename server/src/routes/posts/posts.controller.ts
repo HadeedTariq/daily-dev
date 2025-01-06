@@ -51,6 +51,17 @@ class PostController {
       return res.status(400).json({ message: "Maximum 3 tags are allowed." });
     }
 
+    const { rows: isSquadMember } = await queryDb(
+      `SELECT 1 FROM squad_members WHERE squad_id=$1 and user_id=$2`,
+      [Number(squad), Number(req.body.user.id)]
+    );
+
+    if (isSquadMember.length < 1) {
+      return res
+        .status(403)
+        .json({ message: "You are not a member of this squad." });
+    }
+
     const postQuery = `
         INSERT INTO posts (title, content,thumbnail,author_id,squad_id)
         VALUES ($1, $2,$3, $4,$5)
@@ -66,7 +77,7 @@ class PostController {
       title,
       sanitizedContent,
       thumbnail,
-      req.body.user.id,
+      Number(req.body.user.id),
       Number(squad),
     ]);
 

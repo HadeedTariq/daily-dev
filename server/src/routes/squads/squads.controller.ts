@@ -98,7 +98,7 @@ class SquadController {
 
       const { rows } = await queryDb(insertSquadQuery, [
         name,
-        squad_handle,
+        squad_handle.trim().split(" ").join(""),
         description || "",
         category || "general",
         is_public !== undefined ? is_public : true,

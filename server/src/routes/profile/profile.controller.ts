@@ -70,7 +70,8 @@ class ProfileController {
           SELECT 
               s.id AS squad_id, 
               s.name AS squad_name, 
-              s.squad_handle AS squad_handle
+              s.squad_handle AS squad_handle,
+              s.thumbnail AS squad_thumbnail
           FROM user_squads us
           JOIN squads s ON us.squad_id = s.id;
     `;

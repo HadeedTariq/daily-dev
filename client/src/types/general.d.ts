@@ -12,6 +12,12 @@ type ErrResponse = {
     };
   };
 };
+interface JoinedSquad {
+  squad_id: number;
+  squad_name: string;
+  squad_handle: string;
+  squad_thumbnail: string;
+}
 
 type UserProfile = {
   id: number;
@@ -135,3 +141,24 @@ type SquadDetails = {
 };
 
 type Squads = SquadDetails[];
+
+interface SquadDetails {
+  squad_thumbnail: string;
+  squad_handle: string;
+}
+
+interface AuthorDetails {
+  author_avatar: string;
+}
+
+interface PostCards {
+  title: string;
+  thumbnail: string;
+  created_at: string;
+  tags: string[];
+  upvotes: number;
+  views: number;
+  current_user_upvoted: boolean;
+  squad_details: SquadDetails;
+  author: AuthorDetails;
+}
