@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import { format } from "date-fns";
 import { ChevronUp, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,25 +9,6 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
-
-interface PostCardProps {
-  title: string;
-  thumbnail: string;
-  created_at: string;
-  tags: string[];
-  upvotes: number;
-  views: number;
-  current_user_upvoted: boolean;
-  squad_details: {
-    squad_thumbnail: string;
-    squad_handle: string;
-  };
-  author_details: {
-    author_avatar: string;
-  };
-  onUpvote: () => void;
-  onReadPost: () => void;
-}
 
 export function PostCard({
   title,
@@ -39,17 +20,17 @@ export function PostCard({
   current_user_upvoted,
   squad_details,
   author_details,
-  onUpvote,
-  onReadPost,
-}: PostCardProps) {
-  const [isUpvoted, setIsUpvoted] = useState(current_user_upvoted);
-  const [upvoteCount, setUpvoteCount] = useState(upvotes);
-
+}: PostCards) {
   const handleUpvote = () => {
     setIsUpvoted(!isUpvoted);
     setUpvoteCount(isUpvoted ? upvoteCount - 1 : upvoteCount + 1);
-    onUpvote();
   };
+
+  const handleReadPost = () => {
+    console.log("Read Post clicked");
+  };
+  const [isUpvoted, setIsUpvoted] = useState(current_user_upvoted);
+  const [upvoteCount, setUpvoteCount] = useState(upvotes);
 
   return (
     <Card className="max-w-md mx-auto">
@@ -64,7 +45,7 @@ export function PostCard({
         <Button
           variant="secondary"
           className="absolute top-2 right-2"
-          onClick={onReadPost}
+          onClick={handleReadPost}
         >
           Read Post
         </Button>

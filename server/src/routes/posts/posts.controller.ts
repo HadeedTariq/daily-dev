@@ -24,12 +24,34 @@ class PostController {
   async getPosts(req: Request, res: Response, next: NextFunction) {
     try {
       const query = `
-        SELECT p.id, p.title, p.content, p.created_at, 
-               json_agg(t.name) AS tags
-        FROM posts p
-        LEFT JOIN post_tags pt ON p.id = pt.post_id
-        LEFT JOIN tags t ON pt.tag_id = t.id
-        GROUP BY p.id
+   SELECT 
+          p.id,
+          p.title,
+          p.thumbnail,
+          p.created_at,
+          JSON_AGG(t.name) FILTER (WHERE t.id IS NOT NULL) AS tags,
+          p_v.upvotes AS upvotes,
+          p_vw.views AS views,
+          JSON_BUILD_OBJECT(
+              'squad_thumbnail', p_sq.thumbnail,
+              'squad_handle', p_sq.squad_handle
+          ) AS squad_details,
+          JSON_BUILD_OBJECT(
+              'author_avatar', u.avatar
+          ) AS author_details
+      FROM posts p
+      LEFT JOIN post_tags p_t ON p.id = p_t.post_id
+      LEFT JOIN tags t ON p_t.tag_id = t.id
+      INNER JOIN post_upvotes p_v ON p.id = p_v.post_id
+      INNER JOIN post_views p_vw ON p.id = p_vw.post_id
+      INNER JOIN squads p_sq ON p.squad_id = p_sq.id
+      INNER JOIN "user" u ON p.author_id = u.id
+      GROUP BY 
+          p.id, p.title, p.thumbnail, p.created_at, 
+          p_v.upvotes, p_vw.views, 
+          p_sq.thumbnail, p_sq.squad_handle, 
+          u.avatar;
+
       `;
       const { rows } = await queryDb(query);
       res.status(200).json({ posts: rows });

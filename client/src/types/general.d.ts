@@ -142,7 +142,7 @@ type SquadDetails = {
 
 type Squads = SquadDetails[];
 
-interface SquadDetails {
+interface PostSquadDetails {
   squad_thumbnail: string;
   squad_handle: string;
 }
@@ -159,6 +159,6 @@ interface PostCards {
   upvotes: number;
   views: number;
   current_user_upvoted: boolean;
-  squad_details: SquadDetails;
-  author: AuthorDetails;
+  squad_details: PostSquadDetails;
+  author_details: AuthorDetails;
 }
