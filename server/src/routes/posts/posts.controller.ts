@@ -39,11 +39,11 @@ class PostController {
   }
 
   async createPost(req: Request, res: Response, next: NextFunction) {
-    const { title, content, tags, thumbnail } = req.body;
+    const { title, content, tags, thumbnail, squad } = req.body;
 
-    if (!title || !content || !thumbnail || !Array.isArray(tags)) {
+    if (!title || !content || !thumbnail || !squad || !Array.isArray(tags)) {
       return res.status(400).json({
-        message: "Title, content, thumbnail and tags are required.",
+        message: "Please fill all the fields",
       });
     }
 
@@ -52,8 +52,8 @@ class PostController {
     }
 
     const postQuery = `
-        INSERT INTO posts (title, content,thumbnail,author_id)
-        VALUES ($1, $2,$3, $4)
+        INSERT INTO posts (title, content,thumbnail,author_id,squad_id)
+        VALUES ($1, $2,$3, $4,$5)
         RETURNING id;
       `;
 
@@ -67,6 +67,7 @@ class PostController {
       sanitizedContent,
       thumbnail,
       req.body.user.id,
+      Number(squad),
     ]);
 
     const postId = postRows[0].id;

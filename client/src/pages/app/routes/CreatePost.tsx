@@ -53,7 +53,7 @@ const formSchema = z.object({
 
 export function CreatePost() {
   const queryClient = useQueryClient();
-  const { data: joinedSquads, isLoading: isSquadsLoading } = useQuery({
+  const { data: joinedSquads } = useQuery({
     queryKey: ["getUserSquads"],
     queryFn: async () => {
       const { data } = await profileApi.get("/get-my-joined-squads");
@@ -97,33 +97,51 @@ export function CreatePost() {
     },
   });
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", "n5y4fqsf");
-    formData.append("cloud_name", "lmsproject");
-    try {
-      const { data: cloudinaryData } = await axios.post(
-        "https://api.cloudinary.com/v1_1/lmsproject/image/upload",
-        formData
-      );
-      values.thumbnail = cloudinaryData.secure_url;
-    } catch (err) {
-      console.log(err);
+    console.log("dfdf");
+
+    if (file) {
+      console.log("dfdsfdfdf");
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", "n5y4fqsf");
+      formData.append("cloud_name", "lmsproject");
+      try {
+        const { data: cloudinaryData } = await axios.post(
+          "https://api.cloudinary.com/v1_1/lmsproject/image/upload",
+          formData
+        );
+        values.thumbnail = cloudinaryData.secure_url;
+      } catch (err) {
+        console.log(err);
+        toast({
+          title: "Error uploading",
+          description: "Failed to upload the file. Please try again.",
+          variant: "destructive",
+          duration: 2000,
+        });
+        return;
+      }
+    }
+
+    if (!values.thumbnail) {
       toast({
-        title: "Error uploading",
-        description: "Failed to upload the file. Please try again.",
+        title: "Error",
+        description: "Please upload a thumbnail",
         variant: "destructive",
-        duration: 2000,
       });
       return;
     }
+
     const postTags = values.tags?.map((tag) => {
       const tagData = tags?.find((t) => t.name === tag);
       return { id: tagData?.id, name: tag };
     });
     values.tags = postTags as any;
+
     createPost(values);
   }
+
   const { mutate: handleAddTag, isPending: isTagPending } = useMutation({
     mutationKey: ["createTag"],
     mutationFn: async () => {
@@ -322,7 +340,10 @@ export function CreatePost() {
           )}
         />
 
-        <Button type="submit" disabled={isPostPending}>
+        <Button
+          type="submit"
+          disabled={isPostPending || form.formState.isSubmitting}
+        >
           Create Post
         </Button>
       </form>
