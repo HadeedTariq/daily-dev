@@ -10,14 +10,14 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 
-export function PostCard({
+export function HomePostCard({
   title,
   thumbnail,
   created_at,
   tags,
   upvotes,
   views,
-  current_user_upvoted,
+  // current_user_upvoted,
   squad_details,
   author_details,
 }: PostCards) {
@@ -29,11 +29,11 @@ export function PostCard({
   const handleReadPost = () => {
     console.log("Read Post clicked");
   };
-  const [isUpvoted, setIsUpvoted] = useState(current_user_upvoted);
+  const [isUpvoted, setIsUpvoted] = useState(false);
   const [upvoteCount, setUpvoteCount] = useState(upvotes);
 
   return (
-    <Card className="max-w-md mx-auto">
+    <Card className="w-[400px]">
       <CardHeader className="relative p-0">
         <img
           src={thumbnail}

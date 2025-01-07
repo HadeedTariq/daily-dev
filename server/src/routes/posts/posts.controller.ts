@@ -24,7 +24,7 @@ class PostController {
   async getPosts(req: Request, res: Response, next: NextFunction) {
     try {
       const query = `
-   SELECT 
+      SELECT 
           p.id,
           p.title,
           p.thumbnail,
@@ -45,15 +45,15 @@ class PostController {
       INNER JOIN post_upvotes p_v ON p.id = p_v.post_id
       INNER JOIN post_views p_vw ON p.id = p_vw.post_id
       INNER JOIN squads p_sq ON p.squad_id = p_sq.id
-      INNER JOIN "user" u ON p.author_id = u.id
+      INNER JOIN users u ON p.author_id = u.id
       GROUP BY 
           p.id, p.title, p.thumbnail, p.created_at, 
           p_v.upvotes, p_vw.views, 
           p_sq.thumbnail, p_sq.squad_handle, 
           u.avatar;
-
       `;
       const { rows } = await queryDb(query);
+
       res.status(200).json({ posts: rows });
     } catch (error) {
       next(error);
