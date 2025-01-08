@@ -19,3 +19,11 @@ CREATE TABLE user_upvotes (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (user_id, post_id)
 );
+
+CREATE TABLE user_views (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id),
+    post_id INT REFERENCES posts(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (user_id, post_id)
+);

@@ -1,6 +1,7 @@
 CREATE TABLE posts (
     id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) NOT NULL,
     thumbnail VARCHAR(500) NOT NULL,
     content TEXT NOT NULL,
     squad_id INT NOT NULL,

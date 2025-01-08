@@ -9,6 +9,9 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
+import { useMutation } from "@tanstack/react-query";
+import { postApi } from "@/lib/axios";
+import { toast } from "@/hooks/use-toast";
 
 export function HomePostCard({
   title,
@@ -20,16 +23,36 @@ export function HomePostCard({
   current_user_upvoted,
   squad_details,
   author_details,
+  id,
 }: PostCards) {
   const handleReadPost = () => {
     console.log("Read Post clicked");
   };
   const [isUpvoted, setIsUpvoted] = useState(current_user_upvoted);
 
+  const { mutate: upvotePost, isPending } = useMutation({
+    mutationKey: [`upvote_${id}`],
+    mutationFn: async () => {
+      const { data } = await postApi.put(`/upvote/${id}`);
+      return data;
+    },
+
+    onError: (err: any) => {
+      toast({
+        title:
+          err.response.data.message || "Something went wrong while upvoting",
+      });
+      setIsUpvoted(!isUpvoted);
+      setUpvoteCount(isUpvoted ? upvoteCount - 1 : upvoteCount + 1);
+    },
+  });
+
   const [upvoteCount, setUpvoteCount] = useState(upvotes);
   const handleUpvote = () => {
+    if (isPending) return;
     setIsUpvoted(!isUpvoted);
     setUpvoteCount(isUpvoted ? upvoteCount - 1 : upvoteCount + 1);
+    upvotePost();
   };
   return (
     <Card className="w-[400px]">
@@ -81,7 +104,7 @@ export function HomePostCard({
             variant="ghost"
             size="sm"
             className={`flex items-center space-x-1 ${
-              isUpvoted ? "text-primary" : ""
+              isUpvoted ? "text-green-500" : ""
             }`}
             onClick={handleUpvote}
           >

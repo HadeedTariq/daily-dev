@@ -152,7 +152,10 @@ interface AuthorDetails {
 }
 
 interface PostCards {
+  id: string;
   title: string;
+  content: string;
+  slug: string;
   thumbnail: string;
   created_at: string;
   tags: string[];

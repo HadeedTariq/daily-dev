@@ -11,6 +11,7 @@ class PostController {
     this.createTag = this.createTag.bind(this);
     this.editPost = this.editPost.bind(this);
     this.upvotePost = this.upvotePost.bind(this);
+    this.viewPost = this.viewPost.bind(this);
     this.deletePost = this.deletePost.bind(this);
   }
 
@@ -29,6 +30,8 @@ class PostController {
           p.id,
           p.title,
           p.thumbnail,
+          p.content,
+          p.slug,
           p.created_at,
           JSON_AGG(t.name) FILTER (WHERE t.id IS NOT NULL) AS tags,
           p_v.upvotes AS upvotes,
@@ -261,6 +264,45 @@ class PostController {
       );
 
       return res.status(200).json({ message: "Post upvoted successfully." });
+    } catch (error) {
+      console.error("Error upvoting post:", error);
+      return res
+        .status(500)
+        .json({ error: "An error occurred while upvoting the post." });
+    }
+  }
+  async viewPost(req: Request, res: Response, next: NextFunction) {
+    const { postId } = req.params;
+
+    if (!postId) {
+      return res.status(400).json({ error: "Post ID is required." });
+    }
+
+    try {
+      const userId = req.body.user.id;
+
+      const { rows } = await queryDb(
+        `SELECT 1 FROM user_views WHERE post_id = $1 AND user_id = $2`,
+        [Number(postId), userId]
+      );
+
+      if (rows.length > 0) {
+        return res.status(204).json({});
+      }
+
+      await queryDb(
+        `UPDATE post_views
+         SET views = views + 1 
+         WHERE post_id = $1`,
+        [Number(postId)]
+      );
+      await queryDb(
+        `INSERT INTO user_views (post_id, user_id) 
+         VALUES ($1, $2)`,
+        [Number(postId), userId]
+      );
+
+      return res.status(200).json({ message: "Post viewed successfully." });
     } catch (error) {
       console.error("Error upvoting post:", error);
       return res

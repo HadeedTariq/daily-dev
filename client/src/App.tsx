@@ -22,6 +22,7 @@ import CreateSquad from "./pages/app/routes/CreateSquad";
 import SquadsHandler from "./pages/app/routes/MySquads";
 import SquadMainPage from "./pages/app/routes/SquadMainPage";
 import SquadEditPage from "./pages/app/routes/SquadEditPage";
+import PostPage from "./pages/app/routes/PostPage";
 
 function App() {
   const { user } = useFullApp();
@@ -73,6 +74,8 @@ function App() {
           </Route>
         </Route>
         <Route path="post/create" element={<CreatePost />} />
+        <Route path="posts/:post_slug" element={<PostPage />} />
+
         <Route path="squads">
           <Route path="create" element={<CreateSquad />} />
           <Route path=":squad_handle" element={<SquadMainPage />} />

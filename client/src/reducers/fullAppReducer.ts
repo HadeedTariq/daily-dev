@@ -5,6 +5,7 @@ export type FullAppState = {
   profile: UserProfile | null;
   currentSquad: Omit<SquadDetails, "squad_posts"> | null;
   tags: Tag[];
+  posts: PostCards[];
 };
 
 const initialState: FullAppState = {
@@ -12,6 +13,7 @@ const initialState: FullAppState = {
   profile: null,
   currentSquad: null,
   tags: [],
+  posts: [],
 };
 
 const fullAppReducer = createSlice({
@@ -33,9 +35,12 @@ const fullAppReducer = createSlice({
     setTags: (state, { payload }: { payload: Tag[] }) => {
       state.tags = payload;
     },
+    setPosts: (state, { payload }: { payload: PostCards[] }) => {
+      state.posts = payload;
+    },
   },
 });
 
-export const { setUser, setProfile, setCurrentSquad, setTags } =
+export const { setUser, setProfile, setCurrentSquad, setTags, setPosts } =
   fullAppReducer.actions;
 export default fullAppReducer.reducer;
