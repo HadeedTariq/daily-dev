@@ -158,7 +158,7 @@ interface PostCards {
   tags: string[];
   upvotes: number;
   views: number;
-  // current_user_upvoted: boolean; // later functionality
+  current_user_upvoted: boolean;
   squad_details: PostSquadDetails;
   author_details: AuthorDetails;
 }

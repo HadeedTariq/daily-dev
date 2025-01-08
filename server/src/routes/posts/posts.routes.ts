@@ -11,6 +11,7 @@ router.get("/tags", asyncHandler(postController.getPostsTags));
 router.post("/create", asyncHandler(postController.createPost));
 router.post("/create-tag", asyncHandler(postController.createTag));
 router.put("/:postId", asyncHandler(postController.editPost));
+router.put("/upvote/:postId", asyncHandler(postController.editPost));
 router.delete("/:postId", asyncHandler(postController.deletePost));
 
 export { router as postRouter };

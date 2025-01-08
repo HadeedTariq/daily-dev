@@ -17,21 +17,20 @@ export function HomePostCard({
   tags,
   upvotes,
   views,
-  // current_user_upvoted,
+  current_user_upvoted,
   squad_details,
   author_details,
 }: PostCards) {
+  const handleReadPost = () => {
+    console.log("Read Post clicked");
+  };
+  const [isUpvoted, setIsUpvoted] = useState(current_user_upvoted);
+
+  const [upvoteCount, setUpvoteCount] = useState(upvotes);
   const handleUpvote = () => {
     setIsUpvoted(!isUpvoted);
     setUpvoteCount(isUpvoted ? upvoteCount - 1 : upvoteCount + 1);
   };
-
-  const handleReadPost = () => {
-    console.log("Read Post clicked");
-  };
-  const [isUpvoted, setIsUpvoted] = useState(false);
-  const [upvoteCount, setUpvoteCount] = useState(upvotes);
-
   return (
     <Card className="w-[400px]">
       <CardHeader className="relative p-0">

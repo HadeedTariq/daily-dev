@@ -10,6 +10,7 @@ class PostController {
     this.createPost = this.createPost.bind(this);
     this.createTag = this.createTag.bind(this);
     this.editPost = this.editPost.bind(this);
+    this.upvotePost = this.upvotePost.bind(this);
     this.deletePost = this.deletePost.bind(this);
   }
 
@@ -38,7 +39,13 @@ class PostController {
           ) AS squad_details,
           JSON_BUILD_OBJECT(
               'author_avatar', u.avatar
-          ) AS author_details
+          ) AS author_details,
+          EXISTS (
+              SELECT 1 
+              FROM user_upvotes u_u_v 
+              WHERE u_u_v.user_id = $1 
+                AND u_u_v.post_id = p.id
+          ) AS current_user_upvoted
       FROM posts p
       LEFT JOIN post_tags p_t ON p.id = p_t.post_id
       LEFT JOIN tags t ON p_t.tag_id = t.id
@@ -51,8 +58,9 @@ class PostController {
           p_v.upvotes, p_vw.views, 
           p_sq.thumbnail, p_sq.squad_handle, 
           u.avatar;
-      `;
-      const { rows } = await queryDb(query);
+  `;
+
+      const { rows } = await queryDb(query, [req.body.user.id]);
 
       res.status(200).json({ posts: rows });
     } catch (error) {
@@ -64,9 +72,7 @@ class PostController {
     const { title, content, tags, thumbnail, squad } = req.body;
 
     if (!title || !content || !thumbnail || !squad || !Array.isArray(tags)) {
-      return res.status(400).json({
-        message: "Please fill all the fields",
-      });
+      return res.status(400).json({ message: "Please fill all the fields" });
     }
 
     if (tags.length > 3) {
@@ -74,7 +80,7 @@ class PostController {
     }
 
     const { rows: isSquadMember } = await queryDb(
-      `SELECT 1 FROM squad_members WHERE squad_id=$1 and user_id=$2`,
+      `SELECT 1 FROM squad_members WHERE squad_id = $1 AND user_id = $2`,
       [Number(squad), Number(req.body.user.id)]
     );
 
@@ -85,10 +91,10 @@ class PostController {
     }
 
     const postQuery = `
-        INSERT INTO posts (title, content,thumbnail,author_id,squad_id)
-        VALUES ($1, $2,$3, $4,$5)
-        RETURNING id;
-      `;
+      INSERT INTO posts (title, content, thumbnail, author_id, squad_id)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING id;
+    `;
 
     const sanitizedContent = sanitizeHtml(content, {
       allowedTags: [],
@@ -108,11 +114,23 @@ class PostController {
     const postTagValues = tags
       .map((tag: { id: number }) => `(${postId}, ${tag.id})`)
       .join(", ");
+
     const insertPostTagsQuery = `
-        INSERT INTO post_tags (post_id, tag_id)
-        VALUES ${postTagValues};
-      `;
+      INSERT INTO post_tags (post_id, tag_id)
+      VALUES ${postTagValues};
+    `;
+
     await queryDb(insertPostTagsQuery);
+
+    await queryDb(
+      `INSERT INTO post_upvotes (post_id, upvotes) VALUES ($1, $2)`,
+      [postId, 0]
+    );
+
+    await queryDb(`INSERT INTO post_views (post_id, upvotes) VALUES ($1, $2)`, [
+      postId,
+      0,
+    ]);
 
     res.status(201).json({ message: "Post created successfully." });
   }
@@ -200,7 +218,57 @@ class PostController {
     }
   }
 
-  // Delete a post
+  async upvotePost(req: Request, res: Response, next: NextFunction) {
+    const { postId } = req.params;
+
+    if (!postId) {
+      return res.status(400).json({ error: "Post ID is required." });
+    }
+
+    try {
+      const userId = req.body.user.id;
+
+      const { rows } = await queryDb(
+        `SELECT 1 FROM user_upvotes WHERE post_id = $1 AND user_id = $2`,
+        [Number(postId), userId]
+      );
+
+      if (rows.length > 0) {
+        await queryDb(
+          `UPDATE post_upvotes 
+           SET upvotes = upvotes - 1 
+           WHERE post_id = $1 AND upvotes > 0`,
+          [Number(postId)]
+        );
+        await queryDb(
+          `DELETE FROM user_upvotes 
+           WHERE post_id = $1 AND user_id = $2`,
+          [Number(postId), userId]
+        );
+        return res.status(200).json({ message: "Upvote removed." });
+      }
+
+      await queryDb(
+        `UPDATE post_upvotes 
+         SET upvotes = upvotes + 1 
+         WHERE post_id = $1`,
+        [Number(postId)]
+      );
+      await queryDb(
+        `INSERT INTO user_upvotes (post_id, user_id) 
+         VALUES ($1, $2)`,
+        [Number(postId), userId]
+      );
+
+      return res.status(200).json({ message: "Post upvoted successfully." });
+    } catch (error) {
+      console.error("Error upvoting post:", error);
+      return res
+        .status(500)
+        .json({ error: "An error occurred while upvoting the post." });
+    }
+  }
+
   async deletePost(req: Request, res: Response, next: NextFunction) {
     const { postId } = req.params;
 
