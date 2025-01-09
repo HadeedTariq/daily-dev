@@ -30,7 +30,6 @@ export const useSquadMain = (squad_handle: string) => {
       }
 
       dispatch(setCurrentSquad(data));
-      console.log(data);
 
       return data as SquadDetails;
     },

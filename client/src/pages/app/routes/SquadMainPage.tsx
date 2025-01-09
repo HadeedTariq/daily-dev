@@ -6,10 +6,16 @@ import { useSquadMain } from "../hooks/useSquadMain";
 export default function SquadMainPage() {
   const { squad_handle } = useParams();
 
-  const { data: squadData, isLoading } = useSquadMain(squad_handle as string);
-  if (isLoading) {
+  const {
+    data: squadData,
+    isLoading,
+    isPending,
+  } = useSquadMain(squad_handle as string);
+  if (isLoading || isPending) {
     return <h1>Loading...</h1>;
   }
+  console.log(squadData);
+
   if (!squadData) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">

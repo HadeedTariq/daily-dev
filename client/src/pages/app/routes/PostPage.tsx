@@ -1,6 +1,8 @@
-import { Navigate, useParams } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { useGetPosts } from "../hooks/useGetPosts";
 import { format } from "date-fns";
+import MarkdownEditor from "@uiw/react-markdown-editor";
+
 import UpvoteButton from "../components/posts/UpvoteButton";
 
 const PostPage = () => {
@@ -17,7 +19,10 @@ const PostPage = () => {
   return (
     <article className="max-w-2xl mx-auto px-4 py-8">
       <header className="mb-8">
-        <div className="flex items-center mb-4">
+        <Link
+          to={`/squads/${post.squad_details.squad_handle}`}
+          className="flex items-center mb-4"
+        >
           <img
             src={post.squad_details.squad_thumbnail}
             alt={post.squad_details.squad_handle}
@@ -28,7 +33,7 @@ const PostPage = () => {
           <span className="text-sm text-gray-600">
             @{post.squad_details.squad_handle}
           </span>
-        </div>
+        </Link>
         <h1 className="text-3xl font-bold mb-2">{post.title}</h1>
         <div className="flex items-center mb-4">
           <img
@@ -60,9 +65,9 @@ const PostPage = () => {
         className="w-full h-auto mb-8 rounded-lg"
       />
 
-      <div
-        className="prose max-w-none mb-8"
-        dangerouslySetInnerHTML={{ __html: post.content }}
+      <MarkdownEditor.Markdown
+        source={post.content}
+        style={{ backgroundColor: "#09090B" }}
       />
 
       <footer>

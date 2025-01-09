@@ -7,11 +7,14 @@ class PostController {
   constructor() {
     this.getPosts = this.getPosts.bind(this);
     this.getPostsTags = this.getPostsTags.bind(this);
+    this.getPostComments = this.getPostComments.bind(this);
     this.createPost = this.createPost.bind(this);
     this.createTag = this.createTag.bind(this);
     this.editPost = this.editPost.bind(this);
     this.upvotePost = this.upvotePost.bind(this);
     this.viewPost = this.viewPost.bind(this);
+    this.commentOnPost = this.commentOnPost.bind(this);
+    this.replyToComment = this.replyToComment.bind(this);
     this.deletePost = this.deletePost.bind(this);
   }
 
@@ -70,6 +73,70 @@ class PostController {
       res.status(200).json({ posts: rows });
     } catch (error) {
       next(error);
+    }
+  }
+
+  async getPostComments(req: Request, res: Response, next: NextFunction) {
+    const { postId } = req.params;
+
+    if (!postId) {
+      return res.status(400).json({ error: "Post ID is required." });
+    }
+
+    try {
+      const commentsQuery = `
+      WITH current_post_comments AS (
+          SELECT * 
+          FROM post_comments 
+          WHERE post_id = $1
+      )
+      SELECT 
+          c.content,
+          c.created_at,
+          c.updated_at,
+          c.edited,
+          JSON_BUILD_OBJECT(
+              'name', u.name,
+              'username', u.username,
+              'avatar', u.avatar
+          ) AS user_details,
+          COALESCE(
+              JSON_AGG(
+                  JSON_BUILD_OBJECT(
+                      'id', c_r.id,
+                      'content', c_r.content,
+                      'created_at', c_r.created_at,
+                      'updated_at', c_r.updated_at,
+                      'edited', c_r.edited,
+                      'sender_details', JSON_BUILD_OBJECT(
+                          'name', s_d.name,
+                          'username', s_d.username,
+                          'avatar', s_d.avatar
+                      ),
+                      'recipient_details', JSON_BUILD_OBJECT(
+                          'name', r_d.name,
+                          'username', r_d.username,
+                          'avatar', r_d.avatar
+                      )
+                  )
+              ) FILTER (WHERE c_r.id IS NOT NULL), '[]'
+          ) AS replies
+      FROM current_post_comments c
+      INNER JOIN users u ON u.id = c.user_id
+      LEFT JOIN comment_replies c_r ON c.id = c_r.comment_id
+      LEFT JOIN users s_d ON s_d.id = c_r.sender_id
+      LEFT JOIN users r_d ON r_d.id = c_r.recipient_id
+      GROUP BY c.id;
+      `;
+
+      const { rows: comments } = await queryDb(commentsQuery, [Number(postId)]);
+
+      return res.status(200).json({ comments });
+    } catch (error) {
+      console.error("Error fetching post comments:", error);
+      return res
+        .status(500)
+        .json({ error: "An error occurred while fetching the comments." });
     }
   }
 
@@ -273,6 +340,67 @@ class PostController {
         .json({ error: "An error occurred while upvoting the post." });
     }
   }
+  async commentOnPost(req: Request, res: Response, next: NextFunction) {
+    const { postId } = req.params;
+    const { content } = req.body;
+
+    if (!postId || !content) {
+      return res
+        .status(400)
+        .json({ error: "Post ID and content are required." });
+    }
+
+    try {
+      const userId = req.body.user.id;
+
+      await queryDb(
+        `INSERT INTO post_comments (post_id, user_id, content) 
+         VALUES ($1, $2, $3)`,
+        [Number(postId), userId, content]
+      );
+
+      return res.status(201).json({ message: "Comment added successfully." });
+    } catch (error) {
+      console.error("Error creating comment:", error);
+      return res
+        .status(500)
+        .json({ error: "An error occurred while adding the comment." });
+    }
+  }
+
+  async replyToComment(req: Request, res: Response, next: NextFunction) {
+    const { commentId } = req.params;
+    const { content, receiverId } = req.body;
+
+    if (!commentId || !content || !receiverId) {
+      return res
+        .status(400)
+        .json({ error: "Comment ID, content, and receiver ID are required." });
+    }
+
+    try {
+      const senderId = req.body.user.id;
+      if (receiverId === senderId) {
+        return res
+          .status(404)
+          .json({ error: "You can't reply on your own comment" });
+      }
+
+      await queryDb(
+        `INSERT INTO comment_replies (comment_id, sender_id, recipient_id, content) 
+         VALUES ($1, $2, $3, $4)`,
+        [Number(commentId), senderId, receiverId, content]
+      );
+
+      return res.status(201).json({ message: "Reply added successfully." });
+    } catch (error) {
+      console.error("Error replying to comment:", error);
+      return res
+        .status(500)
+        .json({ error: "An error occurred while adding the reply." });
+    }
+  }
+
   async viewPost(req: Request, res: Response, next: NextFunction) {
     const { postId } = req.params;
 

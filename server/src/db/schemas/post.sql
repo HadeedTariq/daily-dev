@@ -23,6 +23,38 @@ CREATE TABLE post_tags (
     PRIMARY KEY (post_id, tag_id)
 );
 
+CREATE TABLE post_comments (
+    id SERIAL PRIMARY KEY,
+    post_id INT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    content TEXT NOT NULL CHECK (char_length(content) > 0),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    edited BOOLEAN DEFAULT FALSE
+);
+
+{ content,
+edited,
+user_details: { },
+replies :[
+        {
+            content,
+            edited,
+            sender_details: {},
+             recipient_details: {},
+        }
+    ] } CREATE TABLE comment_replies (
+    id SERIAL PRIMARY KEY,
+    comment_id INT NOT NULL REFERENCES post_comments(id) ON DELETE CASCADE,
+    sender_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    recipient_id INT REFERENCES users(id) ON DELETE CASCADE,
+    content TEXT NOT NULL CHECK (char_length(content) > 0),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    edited BOOLEAN DEFAULT FALSE
+);
+
 CREATE TABLE post_upvotes (
     id SERIAL PRIMARY KEY,
     post_id INT REFERENCES posts(id) ON DELETE CASCADE,
