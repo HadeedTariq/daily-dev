@@ -41,7 +41,9 @@ class PostController {
               'squad_handle', p_sq.squad_handle
           ) AS squad_details,
           JSON_BUILD_OBJECT(
-              'author_avatar', u.avatar
+              'author_avatar', u.avatar,
+              'author_name', u.name,
+              'author_username', u.username
           ) AS author_details,
           EXISTS (
               SELECT 1 
@@ -60,7 +62,7 @@ class PostController {
           p.id, p.title, p.thumbnail, p.created_at, 
           p_v.upvotes, p_vw.views, 
           p_sq.thumbnail, p_sq.squad_handle, 
-          u.avatar;
+          u.avatar,u.username,u.name;
   `;
 
       const { rows } = await queryDb(query, [req.body.user.id]);

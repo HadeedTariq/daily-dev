@@ -149,6 +149,8 @@ interface PostSquadDetails {
 
 interface AuthorDetails {
   author_avatar: string;
+  author_name: string;
+  author_username: string;
 }
 
 interface PostCards {
