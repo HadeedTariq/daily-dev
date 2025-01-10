@@ -30,21 +30,10 @@ CREATE TABLE post_comments (
     content TEXT NOT NULL CHECK (char_length(content) > 0),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    is_deleted BOOLEAN DEFAULT FALSE,
     edited BOOLEAN DEFAULT FALSE
 );
 
-{ content,
-edited,
-user_details: { },
-replies :[
-        {
-            content,
-            edited,
-            sender_details: {},
-             recipient_details: {},
-        }
-    ] } CREATE TABLE comment_replies (
+CREATE TABLE comment_replies (
     id SERIAL PRIMARY KEY,
     comment_id INT NOT NULL REFERENCES post_comments(id) ON DELETE CASCADE,
     sender_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,

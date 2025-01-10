@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import MarkdownEditor from "@uiw/react-markdown-editor";
 
 import UpvoteButton from "../components/posts/UpvoteButton";
+import CommentSection from "../components/posts/CommentSection";
 
 const PostPage = () => {
   const params = useParams();
@@ -90,6 +91,7 @@ const PostPage = () => {
           ))}
         </div>
       </footer>
+      <CommentSection postId={Number(post.id)} comments={[]} />
     </article>
   );
 };

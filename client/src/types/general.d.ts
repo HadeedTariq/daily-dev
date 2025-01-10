@@ -167,3 +167,37 @@ interface PostCards {
   squad_details: PostSquadDetails;
   author_details: AuthorDetails;
 }
+
+interface CommentReplies {
+  id: number;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  edited: boolean;
+  sender_details: {
+    name: string;
+    username: string;
+    avatar: string;
+    id: number;
+  };
+  recipient_details: {
+    name: string;
+    username: string;
+    avatar: string;
+    id: number;
+  };
+}
+interface Comment {
+  id: number;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  edited: boolean;
+  user_details: {
+    name: string;
+    username: string;
+    avatar: string;
+    id: number;
+  };
+  replies: CommentReplies[];
+}

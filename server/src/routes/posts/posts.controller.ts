@@ -98,7 +98,8 @@ class PostController {
           JSON_BUILD_OBJECT(
               'name', u.name,
               'username', u.username,
-              'avatar', u.avatar
+              'avatar', u.avatar,
+              'id', u.id
           ) AS user_details,
           COALESCE(
               JSON_AGG(
@@ -111,12 +112,14 @@ class PostController {
                       'sender_details', JSON_BUILD_OBJECT(
                           'name', s_d.name,
                           'username', s_d.username,
-                          'avatar', s_d.avatar
+                          'avatar', s_d.avatar,
+                          'id', s_d.id
                       ),
                       'recipient_details', JSON_BUILD_OBJECT(
                           'name', r_d.name,
                           'username', r_d.username,
-                          'avatar', r_d.avatar
+                          'avatar', r_d.avatar,
+                          'id', r_d.id
                       )
                   )
               ) FILTER (WHERE c_r.id IS NOT NULL), '[]'
