@@ -1,5 +1,5 @@
 import { HomePostCard } from "../components/posts/HomePostCard";
-import { useGetPosts } from "../hooks/useGetPosts";
+import { useGetPosts } from "../hooks/usePostsHandler";
 
 const Home = () => {
   const { data: posts, isLoading } = useGetPosts();

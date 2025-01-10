@@ -1,9 +1,11 @@
-"use client";
-
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import CommentItem from "./CommentItem";
-import { useMutation } from "@tanstack/react-query";
+import {
+  InvalidateQueryFilters,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { postApi } from "@/lib/axios";
 import { toast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -11,11 +13,14 @@ import { useState } from "react";
 type CommentSectionProps = {
   postId: number;
   comments: Comment[];
+  isCommentsLoading: boolean;
 };
 export default function CommentSection({
   comments,
   postId,
+  isCommentsLoading,
 }: CommentSectionProps) {
+  const queryClient = useQueryClient();
   const [newComment, setNewComment] = useState("");
   const { mutate: createComment, isPending: isCommentPending } = useMutation({
     mutationKey: [`create_comment_${postId}`],
@@ -27,6 +32,9 @@ export default function CommentSection({
     },
     onSuccess: () => {
       setNewComment("");
+      queryClient.invalidateQueries([
+        "getPostComments",
+      ] as InvalidateQueryFilters);
     },
     onError: (err: any) => {
       toast({
@@ -34,6 +42,8 @@ export default function CommentSection({
       });
     },
   });
+
+  if (isCommentsLoading) return <h1>Loading...</h1>;
 
   return (
     <div className="space-y-8">

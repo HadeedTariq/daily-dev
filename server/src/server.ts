@@ -28,27 +28,6 @@ import { deleteUnverifiedUsers } from "./db/connect";
 const logger = pino({ name: "server start" });
 
 // createTable(`
-// CREATE TABLE post_comments (
-//     id SERIAL PRIMARY KEY,
-//     post_id INT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
-//     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-//     content TEXT NOT NULL CHECK (char_length(content) > 0),
-//     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-//     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-//     is_deleted BOOLEAN DEFAULT FALSE,
-//     edited BOOLEAN DEFAULT FALSE
-// );
-
-// CREATE TABLE comment_replies (
-//     id SERIAL PRIMARY KEY,
-//     comment_id INT NOT NULL REFERENCES post_comments(id) ON DELETE CASCADE,
-//     sender_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-//     recipient_id INT REFERENCES users(id) ON DELETE CASCADE,
-//     content TEXT NOT NULL CHECK (char_length(content) > 0),
-//     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-//     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-//     edited BOOLEAN DEFAULT FALSE
-// );
 
 // `);
 

@@ -154,7 +154,7 @@ interface AuthorDetails {
 }
 
 interface PostCards {
-  id: string;
+  id: number;
   title: string;
   content: string;
   slug: string;

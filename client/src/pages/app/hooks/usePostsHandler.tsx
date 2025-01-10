@@ -20,3 +20,16 @@ export const useGetPosts = () => {
   });
   return queryData;
 };
+export const useGetPostComments = (postId: number | undefined) => {
+  const queryData = useQuery({
+    queryKey: ["getPostComments"],
+    queryFn: async () => {
+      const { data } = await postApi.get(`/get-post-comments/${postId}`);
+      return data.comments as Comment[];
+    },
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    enabled: postId !== undefined,
+  });
+  return queryData;
+};

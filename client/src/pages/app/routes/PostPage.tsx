@@ -1,5 +1,5 @@
 import { Link, Navigate, useParams } from "react-router-dom";
-import { useGetPosts } from "../hooks/useGetPosts";
+import { useGetPostComments, useGetPosts } from "../hooks/usePostsHandler";
 import { format } from "date-fns";
 import MarkdownEditor from "@uiw/react-markdown-editor";
 
@@ -12,6 +12,10 @@ const PostPage = () => {
   const { data: posts, isLoading } = useGetPosts();
 
   const post = posts?.find((p) => p.slug === params.post_slug);
+
+  const { data: comments, isLoading: isCommentsLoading } = useGetPostComments(
+    post?.id
+  );
 
   if (isLoading) return <h1>Loading...</h1>;
 
@@ -91,7 +95,11 @@ const PostPage = () => {
           ))}
         </div>
       </footer>
-      <CommentSection postId={Number(post.id)} comments={[]} />
+      <CommentSection
+        postId={Number(post.id)}
+        comments={comments || []}
+        isCommentsLoading={isCommentsLoading}
+      />
     </article>
   );
 };

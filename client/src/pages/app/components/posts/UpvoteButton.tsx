@@ -6,7 +6,7 @@ import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 
 interface UpvoteButtonProps {
-  postId: string;
+  postId: number;
   initialUpvotes: number;
   initialUserUpvoted: boolean;
 }

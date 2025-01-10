@@ -80,21 +80,22 @@ class PostController {
     const { postId } = req.params;
 
     if (!postId) {
-      return res.status(400).json({ error: "Post ID is required." });
+      return res.status(400).json({ message: "Post ID is required." });
     }
 
     try {
       const commentsQuery = `
       WITH current_post_comments AS (
-          SELECT * 
-          FROM post_comments 
-          WHERE post_id = $1
+        SELECT * 
+        FROM post_comments 
+        WHERE post_id = $1
       )
       SELECT 
           c.content,
           c.created_at,
           c.updated_at,
           c.edited,
+          c.id,
           JSON_BUILD_OBJECT(
               'name', u.name,
               'username', u.username,
@@ -129,7 +130,16 @@ class PostController {
       LEFT JOIN comment_replies c_r ON c.id = c_r.comment_id
       LEFT JOIN users s_d ON s_d.id = c_r.sender_id
       LEFT JOIN users r_d ON r_d.id = c_r.recipient_id
-      GROUP BY c.id;
+      GROUP BY 
+          c.id, 
+          c.content, 
+          c.created_at, 
+          c.updated_at, 
+          c.edited, 
+          u.id, 
+          u.name, 
+          u.username, 
+          u.avatar;
       `;
 
       const { rows: comments } = await queryDb(commentsQuery, [Number(postId)]);
@@ -139,7 +149,7 @@ class PostController {
       console.error("Error fetching post comments:", error);
       return res
         .status(500)
-        .json({ error: "An error occurred while fetching the comments." });
+        .json({ message: "An error occurred while fetching the comments." });
     }
   }
 
@@ -297,7 +307,7 @@ class PostController {
     const { postId } = req.params;
 
     if (!postId) {
-      return res.status(400).json({ error: "Post ID is required." });
+      return res.status(400).json({ message: "Post ID is required." });
     }
 
     try {
@@ -340,7 +350,7 @@ class PostController {
       console.error("Error upvoting post:", error);
       return res
         .status(500)
-        .json({ error: "An error occurred while upvoting the post." });
+        .json({ message: "An error occurred while upvoting the post." });
     }
   }
   async commentOnPost(req: Request, res: Response, next: NextFunction) {
@@ -350,7 +360,7 @@ class PostController {
     if (!postId || !content) {
       return res
         .status(400)
-        .json({ error: "Post ID and content are required." });
+        .json({ message: "Post ID and content are required." });
     }
 
     try {
@@ -367,7 +377,7 @@ class PostController {
       console.error("Error creating comment:", error);
       return res
         .status(500)
-        .json({ error: "An error occurred while adding the comment." });
+        .json({ message: "An error occurred while adding the comment." });
     }
   }
 
@@ -376,9 +386,9 @@ class PostController {
     const { content, receiverId } = req.body;
 
     if (!commentId || !content || !receiverId) {
-      return res
-        .status(400)
-        .json({ error: "Comment ID, content, and receiver ID are required." });
+      return res.status(400).json({
+        message: "Comment ID, content, and receiver ID are required.",
+      });
     }
 
     try {
@@ -386,13 +396,14 @@ class PostController {
       if (receiverId === senderId) {
         return res
           .status(404)
-          .json({ error: "You can't reply on your own comment" });
+          .json({ message: "You can't reply on your own comment" });
       }
+      console.log(Number(commentId), senderId, Number(receiverId), content);
 
       await queryDb(
         `INSERT INTO comment_replies (comment_id, sender_id, recipient_id, content) 
          VALUES ($1, $2, $3, $4)`,
-        [Number(commentId), senderId, receiverId, content]
+        [Number(commentId), senderId, Number(receiverId), content]
       );
 
       return res.status(201).json({ message: "Reply added successfully." });
@@ -400,7 +411,7 @@ class PostController {
       console.error("Error replying to comment:", error);
       return res
         .status(500)
-        .json({ error: "An error occurred while adding the reply." });
+        .json({ message: "An error occurred while adding the reply." });
     }
   }
 
@@ -408,7 +419,7 @@ class PostController {
     const { postId } = req.params;
 
     if (!postId) {
-      return res.status(400).json({ error: "Post ID is required." });
+      return res.status(400).json({ message: "Post ID is required." });
     }
 
     try {
@@ -440,7 +451,7 @@ class PostController {
       console.error("Error upvoting post:", error);
       return res
         .status(500)
-        .json({ error: "An error occurred while upvoting the post." });
+        .json({ message: "An error occurred while upvoting the post." });
     }
   }
 
