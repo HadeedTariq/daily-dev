@@ -16,6 +16,8 @@ class PostController {
     this.commentOnPost = this.commentOnPost.bind(this);
     this.replyToComment = this.replyToComment.bind(this);
     this.deletePost = this.deletePost.bind(this);
+    this.deleteComment = this.deleteComment.bind(this);
+    this.deleteCommentReply = this.deleteCommentReply.bind(this);
   }
 
   async getPostsTags(req: Request, res: Response, next: NextFunction) {
@@ -381,6 +383,50 @@ class PostController {
     }
   }
 
+  async deleteComment(req: Request, res: Response, next: NextFunction) {
+    const { commentId } = req.params;
+
+    if (!commentId) {
+      return res.status(400).json({ message: "Comment ID is required." });
+    }
+
+    try {
+      await queryDb(
+        `DELETE FROM post_comments WHERE id = $1 AND user_id = $2`,
+        [Number(commentId), req.body.user.id]
+      );
+
+      return res.status(200).json({ message: "Comment deleted successfully." });
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      return res
+        .status(500)
+        .json({ message: "An error occurred while deleting the comment." });
+    }
+  }
+  async deleteCommentReply(req: Request, res: Response, next: NextFunction) {
+    const { commentId, replyId } = req.params;
+
+    if (!commentId || !replyId) {
+      return res
+        .status(404)
+        .json({ message: "Comment and Reply Id is required" });
+    }
+
+    try {
+      await queryDb(
+        `DELETE FROM comment_replies WHERE id = $1 AND comment_id=$2 AND sender_id = $3`,
+        [Number(replyId), Number(commentId), req.body.user.id]
+      );
+
+      return res.status(200).json({ message: "Reply deleted successfully." });
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      return res
+        .status(500)
+        .json({ message: "An error occurred while deleting the reply." });
+    }
+  }
   async replyToComment(req: Request, res: Response, next: NextFunction) {
     const { commentId } = req.params;
     const { content, receiverId } = req.body;

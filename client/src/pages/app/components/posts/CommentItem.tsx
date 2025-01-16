@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,6 +21,7 @@ import { useFullApp } from "@/store/hooks/useFullApp";
 interface CommentItemProps {
   comment: Comment | CommentReplies;
   isReply?: boolean;
+  commentId?: number;
   isReplyPending?: boolean;
 }
 
@@ -31,15 +32,64 @@ function UserInfo({
   updatedAt,
   setIsReplying,
   isReply,
+  id,
+  parentId,
 }: {
   user: any;
   createdAt: string;
+  id: number;
   updatedAt: string;
   edited: boolean;
   isReply: boolean;
   setIsReplying: any;
+  parentId?: number;
 }) {
+  const queryClient = useQueryClient();
+
   const { user: currentUser } = useFullApp();
+
+  const { mutate: deleteComment, isPending } = useMutation({
+    mutationKey: [`delete_comment`],
+    mutationFn: async ({ commentId }: { commentId: number }) => {
+      const { data } = await postApi.delete(`/delete-comment/${commentId}`);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries([
+        "getPostComments",
+      ] as InvalidateQueryFilters);
+    },
+    onError: (err: any) => {
+      toast({
+        title: err.response.data.message || "Failed to delete a comment.",
+      });
+    },
+  });
+  const { mutate: deleteReply, isPending: isReplyDeleting } = useMutation({
+    mutationKey: [`delete_reply`],
+    mutationFn: async ({
+      commentId,
+      replyId,
+    }: {
+      commentId: number;
+      replyId: number;
+    }) => {
+      const { data } = await postApi.delete(
+        `/delete-reply/${commentId}/${replyId}`
+      );
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries([
+        "getPostComments",
+      ] as InvalidateQueryFilters);
+    },
+    onError: (err: any) => {
+      toast({
+        title: err.response.data.message || "Failed to delete a reply.",
+      });
+    },
+  });
   return (
     <div className="flex items-center space-x-2">
       <Avatar>
@@ -69,7 +119,14 @@ function UserInfo({
           <DropdownMenuContent>
             <DropdownMenuItem>Edit</DropdownMenuItem>
 
-            <DropdownMenuItem>Delete</DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={isReplyDeleting}
+              onClick={() => {
+                deleteReply({ commentId: Number(parentId), replyId: id });
+              }}
+            >
+              Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )}
@@ -80,7 +137,10 @@ function UserInfo({
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem
-              onClick={() => setIsReplying((last: boolean) => !last)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsReplying((last: boolean) => !last);
+              }}
             >
               Reply
             </DropdownMenuItem>
@@ -89,7 +149,14 @@ function UserInfo({
               <DropdownMenuItem>Edit</DropdownMenuItem>
             )}
             {currentUser?.id === user.id && (
-              <DropdownMenuItem>Delete</DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={isPending}
+                onClick={() => {
+                  deleteComment({ commentId: id });
+                }}
+              >
+                Delete
+              </DropdownMenuItem>
             )}
           </DropdownMenuContent>
         </DropdownMenu>
@@ -98,7 +165,13 @@ function UserInfo({
   );
 }
 
-export default function CommentItem({ comment, isReply }: CommentItemProps) {
+export default function CommentItem({
+  comment,
+  isReply,
+  commentId,
+}: CommentItemProps) {
+  const ref = useRef<HTMLDivElement | null>(null);
+
   const queryClient = useQueryClient();
   const [isReplying, setIsReplying] = useState(false);
   const [replyContent, setReplyContent] = useState("");
@@ -137,16 +210,32 @@ export default function CommentItem({ comment, isReply }: CommentItemProps) {
     ? (comment as CommentReplies).sender_details
     : (comment as Comment).user_details;
 
+  useEffect(() => {
+    function handleClickOutside(event: any) {
+      if (ref.current && !ref.current.contains(event.target)) {
+        setIsReplying(false);
+      }
+    }
+
+    document.addEventListener("click", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, []);
+
   return (
     <div className={`space-y-4 ${isReply ? "ml-8" : ""}`}>
       <div className="flex flex-col space-y-2">
         <UserInfo
+          id={comment.id}
           isReply={isReply as boolean}
           setIsReplying={setIsReplying}
           user={userDetails}
           createdAt={comment.created_at}
           updatedAt={comment.updated_at}
           edited={comment.edited}
+          parentId={isReply ? commentId : undefined}
         />
         <p className="mt-2">
           {isReply && (
@@ -158,7 +247,7 @@ export default function CommentItem({ comment, isReply }: CommentItemProps) {
         </p>
       </div>
       {isReplying && (
-        <div className="space-y-2">
+        <div className="space-y-2" ref={ref}>
           <Textarea
             value={replyContent}
             onChange={(e) => setReplyContent(e.target.value)}
@@ -182,7 +271,12 @@ export default function CommentItem({ comment, isReply }: CommentItemProps) {
       {!isReply &&
         (comment as Comment).replies &&
         (comment as Comment).replies.map((reply) => (
-          <CommentItem key={reply.id} comment={reply} isReply={true} />
+          <CommentItem
+            key={reply.id}
+            commentId={comment.id}
+            comment={reply}
+            isReply={true}
+          />
         ))}
     </div>
   );
