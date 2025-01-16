@@ -15,6 +15,8 @@ class PostController {
     this.viewPost = this.viewPost.bind(this);
     this.commentOnPost = this.commentOnPost.bind(this);
     this.replyToComment = this.replyToComment.bind(this);
+    this.updateComment = this.updateComment.bind(this);
+    this.updateReply = this.updateReply.bind(this);
     this.deletePost = this.deletePost.bind(this);
     this.deleteComment = this.deleteComment.bind(this);
     this.deleteCommentReply = this.deleteCommentReply.bind(this);
@@ -427,6 +429,74 @@ class PostController {
         .json({ message: "An error occurred while deleting the reply." });
     }
   }
+  async updateComment(req: Request, res: Response, next: NextFunction) {
+    const { content, commentId } = req.body;
+
+    if (!commentId || !content || content.trim().length === 0) {
+      return res
+        .status(400)
+        .json({ message: "Comment ID and valid content are required." });
+    }
+
+    try {
+      const userId = req.body.user.id;
+
+      const { rowCount } = await queryDb(
+        `UPDATE post_comments 
+         SET content = $1, updated_at = CURRENT_TIMESTAMP, edited = TRUE 
+         WHERE id = $2 AND user_id = $3`,
+        [content.trim(), Number(commentId), userId]
+      );
+
+      if (rowCount === 0) {
+        return res
+          .status(404)
+          .json({ message: "Comment not found or not authorized to update." });
+      }
+
+      return res.status(200).json({ message: "Comment updated successfully." });
+    } catch (error) {
+      console.error("Error updating comment:", error);
+      return res
+        .status(500)
+        .json({ message: "An error occurred while updating the comment." });
+    }
+  }
+
+  async updateReply(req: Request, res: Response, next: NextFunction) {
+    const { content, replyId } = req.body;
+
+    if (!replyId || !content || content.trim().length === 0) {
+      return res
+        .status(400)
+        .json({ message: "Reply ID and valid content are required." });
+    }
+
+    try {
+      const userId = req.body.user.id;
+
+      const { rowCount } = await queryDb(
+        `UPDATE comment_replies 
+         SET content = $1, updated_at = CURRENT_TIMESTAMP, edited = TRUE 
+         WHERE id = $2 AND sender_id = $3`,
+        [content.trim(), Number(replyId), userId]
+      );
+
+      if (rowCount === 0) {
+        return res
+          .status(404)
+          .json({ message: "Reply not found or not authorized to update." });
+      }
+
+      return res.status(200).json({ message: "Reply updated successfully." });
+    } catch (error) {
+      console.error("Error updating reply:", error);
+      return res
+        .status(500)
+        .json({ message: "An error occurred while updating the reply." });
+    }
+  }
+
   async replyToComment(req: Request, res: Response, next: NextFunction) {
     const { commentId } = req.params;
     const { content, receiverId } = req.body;

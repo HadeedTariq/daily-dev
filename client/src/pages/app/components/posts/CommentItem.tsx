@@ -34,6 +34,8 @@ function UserInfo({
   isReply,
   id,
   parentId,
+  setIsCommentEditing,
+  setIsReplyEditing,
 }: {
   user: any;
   createdAt: string;
@@ -42,6 +44,8 @@ function UserInfo({
   edited: boolean;
   isReply: boolean;
   setIsReplying: any;
+  setIsCommentEditing: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsReplyEditing: React.Dispatch<React.SetStateAction<boolean>>;
   parentId?: number;
 }) {
   const queryClient = useQueryClient();
@@ -117,7 +121,11 @@ function UserInfo({
             <MenuIcon />
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem>Edit</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => setIsReplyEditing((last) => !last)}
+            >
+              Edit
+            </DropdownMenuItem>
 
             <DropdownMenuItem
               disabled={isReplyDeleting}
@@ -146,7 +154,11 @@ function UserInfo({
             </DropdownMenuItem>
 
             {currentUser?.id === user.id && (
-              <DropdownMenuItem>Edit</DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setIsCommentEditing((last) => !last)}
+              >
+                Edit
+              </DropdownMenuItem>
             )}
             {currentUser?.id === user.id && (
               <DropdownMenuItem
@@ -174,7 +186,10 @@ export default function CommentItem({
 
   const queryClient = useQueryClient();
   const [isReplying, setIsReplying] = useState(false);
+  const [isCommentEditing, setIsCommentEditing] = useState(false);
+  const [isReplyEditing, setIsReplyEditing] = useState(false);
   const [replyContent, setReplyContent] = useState("");
+  const [editContent, setEditContent] = useState(comment.content);
   const { mutate: createReply, isPending: isReplyPending } = useMutation({
     mutationKey: [`create_reply`],
     mutationFn: async ({
@@ -206,6 +221,66 @@ export default function CommentItem({
     },
   });
 
+  const { mutate: updateComment, isPending: isCommentUpdationPending } =
+    useMutation({
+      mutationKey: [`update_comment`],
+      mutationFn: async ({
+        commentId,
+        content,
+      }: {
+        content: string;
+        commentId: number;
+      }) => {
+        const { data } = await postApi.put(`/update-comment`, {
+          content,
+          commentId,
+        });
+        return data;
+      },
+      onSuccess: () => {
+        setIsCommentEditing(false);
+        queryClient.invalidateQueries([
+          "getPostComments",
+        ] as InvalidateQueryFilters);
+      },
+      onError: (err: any) => {
+        console.log(err);
+
+        toast({
+          title: err.response.data.message || "Failed to update a comment.",
+        });
+      },
+    });
+
+  const { mutate: updateReply, isPending: isReplyUpdationPending } =
+    useMutation({
+      mutationKey: [`update_reply`],
+      mutationFn: async ({
+        replyId,
+        content,
+      }: {
+        content: string;
+        replyId: number;
+      }) => {
+        const { data } = await postApi.put(`/update-reply`, {
+          content,
+          replyId,
+        });
+        return data;
+      },
+      onSuccess: () => {
+        setIsReplyEditing(false);
+        queryClient.invalidateQueries([
+          "getPostComments",
+        ] as InvalidateQueryFilters);
+      },
+      onError: (err: any) => {
+        toast({
+          title: err.response.data.message || "Failed to update a reply.",
+        });
+      },
+    });
+
   const userDetails = isReply
     ? (comment as CommentReplies).sender_details
     : (comment as Comment).user_details;
@@ -216,9 +291,7 @@ export default function CommentItem({
         setIsReplying(false);
       }
     }
-
     document.addEventListener("click", handleClickOutside);
-
     return () => {
       document.removeEventListener("click", handleClickOutside);
     };
@@ -231,20 +304,72 @@ export default function CommentItem({
           id={comment.id}
           isReply={isReply as boolean}
           setIsReplying={setIsReplying}
+          setIsCommentEditing={setIsCommentEditing}
+          setIsReplyEditing={setIsReplyEditing}
           user={userDetails}
           createdAt={comment.created_at}
           updatedAt={comment.updated_at}
           edited={comment.edited}
           parentId={isReply ? commentId : undefined}
         />
-        <p className="mt-2">
-          {isReply && (
-            <span className="font-semibold text-blue-500">
-              @{(comment as CommentReplies).recipient_details.username}{" "}
-            </span>
-          )}
-          {comment.content}
-        </p>
+        {isReply ? (
+          <>
+            {isReplyEditing ? (
+              <div className="space-y-2">
+                <Textarea
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  placeholder="Update Reply"
+                  className="w-full"
+                />
+                <Button
+                  onClick={() =>
+                    updateReply({
+                      replyId: comment.id,
+                      content: editContent.trim(),
+                    })
+                  }
+                  disabled={isReplyUpdationPending}
+                >
+                  Update Reply
+                </Button>
+              </div>
+            ) : (
+              <p className="mt-2">
+                <span className="font-semibold text-blue-500">
+                  @{(comment as CommentReplies).recipient_details.username}{" "}
+                </span>
+                {comment.content}
+              </p>
+            )}
+          </>
+        ) : (
+          <>
+            {isCommentEditing ? (
+              <div className="space-y-2">
+                <Textarea
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  placeholder="Update Comment"
+                  className="w-full"
+                />
+                <Button
+                  onClick={() =>
+                    updateComment({
+                      commentId: comment.id,
+                      content: editContent.trim(),
+                    })
+                  }
+                  disabled={isCommentUpdationPending}
+                >
+                  Update Comment
+                </Button>
+              </div>
+            ) : (
+              <p className="mt-2">{comment.content}</p>
+            )}
+          </>
+        )}
       </div>
       {isReplying && (
         <div className="space-y-2" ref={ref}>
