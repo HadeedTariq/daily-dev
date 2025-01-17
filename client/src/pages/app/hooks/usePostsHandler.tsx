@@ -22,7 +22,7 @@ export const useGetPosts = () => {
 };
 export const useGetPostComments = (postId: number | undefined) => {
   const queryData = useQuery({
-    queryKey: ["getPostComments"],
+    queryKey: [`getPostComments_${postId}`],
     queryFn: async () => {
       const { data } = await postApi.get(`/get-post-comments/${postId}`);
       return data.comments as Comment[];

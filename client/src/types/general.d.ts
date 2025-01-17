@@ -193,6 +193,8 @@ interface Comment {
   created_at: string;
   updated_at: string;
   edited: boolean;
+  total_upvotes: number;
+  current_user_upvoted: boolean;
   user_details: {
     name: string;
     username: string;

@@ -19,6 +19,10 @@ router.post("/reply/:commentId", asyncHandler(postController.replyToComment));
 
 router.put("/update-comment", asyncHandler(postController.updateComment));
 router.put("/update-reply", asyncHandler(postController.updateReply));
+router.put(
+  "/upvote-comment/:commentId",
+  asyncHandler(postController.upvoteComment)
+);
 router.put("/:postId", asyncHandler(postController.editPost));
 router.put("/upvote/:postId", asyncHandler(postController.upvotePost));
 router.put("/view/:postId", asyncHandler(postController.viewPost));

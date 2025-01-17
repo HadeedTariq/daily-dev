@@ -17,12 +17,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MenuIcon } from "lucide-react";
 import { useFullApp } from "@/store/hooks/useFullApp";
+import CommentsUpvoteButton from "../comments/CommentsUpvoteButton";
 
 interface CommentItemProps {
   comment: Comment | CommentReplies;
   isReply?: boolean;
   commentId?: number;
   isReplyPending?: boolean;
+  postId: number;
 }
 
 function UserInfo({
@@ -181,6 +183,7 @@ export default function CommentItem({
   comment,
   isReply,
   commentId,
+  postId,
 }: CommentItemProps) {
   const ref = useRef<HTMLDivElement | null>(null);
 
@@ -366,7 +369,15 @@ export default function CommentItem({
                 </Button>
               </div>
             ) : (
-              <p className="mt-2">{comment.content}</p>
+              <>
+                <p className="mt-2">{comment.content}</p>
+                <CommentsUpvoteButton
+                  postId={postId}
+                  commentId={comment.id}
+                  initialUpvotes={Number((comment as Comment).total_upvotes)}
+                  initialUserUpvoted={(comment as Comment).current_user_upvoted}
+                />
+              </>
             )}
           </>
         )}
@@ -397,6 +408,7 @@ export default function CommentItem({
         (comment as Comment).replies &&
         (comment as Comment).replies.map((reply) => (
           <CommentItem
+            postId={postId}
             key={reply.id}
             commentId={comment.id}
             comment={reply}

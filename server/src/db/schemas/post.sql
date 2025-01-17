@@ -52,6 +52,15 @@ CREATE TABLE post_upvotes (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE comment_upvotes (
+    id SERIAL PRIMARY KEY,
+    comment_id INT REFERENCES post_comments(id) ON DELETE CASCADE,
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT unique_comment_user UNIQUE (comment_id, user_id)
+);
+
 CREATE TABLE post_views (
     id SERIAL PRIMARY KEY,
     post_id INT REFERENCES posts(id) ON DELETE CASCADE,

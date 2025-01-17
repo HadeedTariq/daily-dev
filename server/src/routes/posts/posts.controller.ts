@@ -17,6 +17,7 @@ class PostController {
     this.replyToComment = this.replyToComment.bind(this);
     this.updateComment = this.updateComment.bind(this);
     this.updateReply = this.updateReply.bind(this);
+    this.upvoteComment = this.upvoteComment.bind(this);
     this.deletePost = this.deletePost.bind(this);
     this.deleteComment = this.deleteComment.bind(this);
     this.deleteCommentReply = this.deleteCommentReply.bind(this);
@@ -90,63 +91,78 @@ class PostController {
     try {
       const commentsQuery = `
       WITH current_post_comments AS (
-        SELECT * 
-        FROM post_comments 
-        WHERE post_id = $1
-      )
-      SELECT 
-          c.content,
-          c.created_at,
-          c.updated_at,
-          c.edited,
-          c.id,
-          JSON_BUILD_OBJECT(
-              'name', u.name,
-              'username', u.username,
-              'avatar', u.avatar,
-              'id', u.id
-          ) AS user_details,
-          COALESCE(
-              JSON_AGG(
-                  JSON_BUILD_OBJECT(
-                      'id', c_r.id,
-                      'content', c_r.content,
-                      'created_at', c_r.created_at,
-                      'updated_at', c_r.updated_at,
-                      'edited', c_r.edited,
-                      'sender_details', JSON_BUILD_OBJECT(
-                          'name', s_d.name,
-                          'username', s_d.username,
-                          'avatar', s_d.avatar,
-                          'id', s_d.id
-                      ),
-                      'recipient_details', JSON_BUILD_OBJECT(
-                          'name', r_d.name,
-                          'username', r_d.username,
-                          'avatar', r_d.avatar,
-                          'id', r_d.id
+            SELECT * 
+            FROM post_comments 
+            WHERE post_id = $1
+        )
+        SELECT 
+              c.content,
+              c.created_at,
+              c.updated_at,
+              c.edited,
+              c.id,
+              JSON_BUILD_OBJECT(
+                  'name', u.name,
+                  'username', u.username,
+                  'avatar', u.avatar,
+                  'id', u.id
+              ) AS user_details,
+              EXISTS (
+                  SELECT 1 
+                  FROM comment_upvotes c_u_v 
+                  WHERE c_u_v.user_id = $2 
+                    AND c_u_v.comment_id = c.id
+              ) AS current_user_upvoted,
+              COALESCE(
+                  (SELECT COUNT(*) 
+                  FROM comment_upvotes c_u_v_n 
+                  WHERE c_u_v_n.comment_id = c.id), 
+                  0
+              ) AS total_upvotes,
+              COALESCE(
+                  JSON_AGG(
+                      JSON_BUILD_OBJECT(
+                          'id', c_r.id,
+                          'content', c_r.content,
+                          'created_at', c_r.created_at,
+                          'updated_at', c_r.updated_at,
+                          'edited', c_r.edited,
+                          'sender_details', JSON_BUILD_OBJECT(
+                              'name', s_d.name,
+                              'username', s_d.username,
+                              'avatar', s_d.avatar,
+                              'id', s_d.id
+                          ),
+                          'recipient_details', JSON_BUILD_OBJECT(
+                              'name', r_d.name,
+                              'username', r_d.username,
+                              'avatar', r_d.avatar,
+                              'id', r_d.id
+                          )
                       )
-                  )
-              ) FILTER (WHERE c_r.id IS NOT NULL), '[]'
-          ) AS replies
-      FROM current_post_comments c
-      INNER JOIN users u ON u.id = c.user_id
-      LEFT JOIN comment_replies c_r ON c.id = c_r.comment_id
-      LEFT JOIN users s_d ON s_d.id = c_r.sender_id
-      LEFT JOIN users r_d ON r_d.id = c_r.recipient_id
-      GROUP BY 
-          c.id, 
-          c.content, 
-          c.created_at, 
-          c.updated_at, 
-          c.edited, 
-          u.id, 
-          u.name, 
-          u.username, 
-          u.avatar;
+                  ) FILTER (WHERE c_r.id IS NOT NULL), '[]'
+              ) AS replies
+          FROM current_post_comments c
+          INNER JOIN users u ON u.id = c.user_id
+          LEFT JOIN comment_replies c_r ON c.id = c_r.comment_id
+          LEFT JOIN users s_d ON s_d.id = c_r.sender_id
+          LEFT JOIN users r_d ON r_d.id = c_r.recipient_id
+          GROUP BY 
+              c.id, 
+              c.content, 
+              c.created_at, 
+              c.updated_at, 
+              c.edited, 
+              u.id, 
+              u.name, 
+              u.username, 
+              u.avatar;
       `;
 
-      const { rows: comments } = await queryDb(commentsQuery, [Number(postId)]);
+      const { rows: comments } = await queryDb(commentsQuery, [
+        Number(postId),
+        req.body.user.id,
+      ]);
 
       return res.status(200).json({ comments });
     } catch (error) {
@@ -307,6 +323,43 @@ class PostController {
     }
   }
 
+  async upvoteComment(req: Request, res: Response, next: NextFunction) {
+    const { commentId } = req.params;
+
+    if (!commentId) {
+      return res.status(400).json({ message: "Comment ID is required." });
+    }
+
+    try {
+      const userId = req.body.user.id;
+
+      const { rows } = await queryDb(
+        `SELECT 1 FROM comment_upvotes WHERE comment_id = $1 AND user_id = $2`,
+        [Number(commentId), userId]
+      );
+
+      if (rows.length > 0) {
+        await queryDb(
+          `DELETE FROM comment_upvotes 
+           WHERE comment_id = $1 AND user_id = $2`,
+          [Number(commentId), userId]
+        );
+        return res.status(200).json({ message: "Upvote removed." });
+      }
+      await queryDb(
+        `INSERT INTO comment_upvotes (comment_id, user_id) 
+         VALUES ($1, $2)`,
+        [Number(commentId), userId]
+      );
+
+      return res.status(200).json({ message: "Comment upvoted successfully." });
+    } catch (error) {
+      console.error("Error upvoting comment:", error);
+      return res
+        .status(500)
+        .json({ message: "An error occurred while upvoting the comment." });
+    }
+  }
   async upvotePost(req: Request, res: Response, next: NextFunction) {
     const { postId } = req.params;
 

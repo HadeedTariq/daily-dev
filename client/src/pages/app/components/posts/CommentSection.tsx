@@ -66,7 +66,7 @@ export default function CommentSection({
         </Button>
       </form>
       {comments?.map((comment) => (
-        <CommentItem key={comment.id} comment={comment} />
+        <CommentItem key={comment.id} comment={comment} postId={postId} />
       ))}
     </div>
   );
