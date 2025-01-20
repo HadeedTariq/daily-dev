@@ -26,7 +26,7 @@ export function HomePostCard({
   id,
 }: PostCards) {
   return (
-    <Card className="w-[400px]">
+    <Card className="w-[400px] h-[500px]">
       <CardHeader className="relative p-0">
         <img
           src={thumbnail}

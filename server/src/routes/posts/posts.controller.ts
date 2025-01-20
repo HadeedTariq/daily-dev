@@ -2,6 +2,7 @@ import { queryDb } from "@/db/connect";
 import { NextFunction, Request, Response } from "express";
 import { DatabaseError } from "pg";
 import sanitizeHtml from "sanitize-html";
+import { faker } from "@faker-js/faker";
 
 class PostController {
   constructor() {
@@ -32,6 +33,7 @@ class PostController {
     res.status(200).json({ tags: rows });
   }
   async getPosts(req: Request, res: Response, next: NextFunction) {
+    const { pageSize, pageNumber } = req.query;
     try {
       const query = `
       SELECT 
@@ -70,10 +72,16 @@ class PostController {
           p.id, p.title, p.thumbnail, p.created_at, 
           p_v.upvotes, p_vw.views, 
           p_sq.thumbnail, p_sq.squad_handle, 
-          u.avatar,u.username,u.name;
+          u.avatar,u.username,u.name 
+          order by p.id 
+          limit $2 offset ($3 - 1) * $2;
   `;
 
-      const { rows } = await queryDb(query, [req.body.user.id]);
+      const { rows } = await queryDb(query, [
+        req.body.user.id,
+        pageSize ? pageSize : 8,
+        pageNumber ? pageNumber : 1,
+      ]);
 
       res.status(200).json({ posts: rows });
     } catch (error) {
@@ -196,8 +204,8 @@ class PostController {
     }
 
     const postQuery = `
-      INSERT INTO posts (title, content, thumbnail, author_id, squad_id)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO posts (title, content, thumbnail, author_id, squad_id, slug)
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING id;
     `;
 
@@ -205,6 +213,10 @@ class PostController {
       allowedTags: [],
       allowedAttributes: {},
     });
+    const slug = title
+      .toLowerCase()
+      .trim()
+      .replace(/[\s\W-]+/g, "-");
 
     const { rows: postRows } = await queryDb(postQuery, [
       title,
@@ -212,6 +224,7 @@ class PostController {
       thumbnail,
       Number(req.body.user.id),
       Number(squad),
+      slug,
     ]);
 
     const postId = postRows[0].id;

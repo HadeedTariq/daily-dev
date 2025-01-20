@@ -6,6 +6,7 @@ export type FullAppState = {
   currentSquad: Omit<SquadDetails, "squad_posts"> | null;
   tags: Tag[];
   posts: PostCards[];
+  stopFetchingPosts: boolean;
 };
 
 const initialState: FullAppState = {
@@ -14,6 +15,7 @@ const initialState: FullAppState = {
   currentSquad: null,
   tags: [],
   posts: [],
+  stopFetchingPosts: false,
 };
 
 const fullAppReducer = createSlice({
@@ -35,12 +37,21 @@ const fullAppReducer = createSlice({
     setTags: (state, { payload }: { payload: Tag[] }) => {
       state.tags = payload;
     },
-    setPosts: (state, { payload }: { payload: PostCards[] }) => {
-      state.posts = payload;
+    addNewPosts: (state, { payload }: { payload: PostCards[] }) => {
+      state.posts.push(...payload);
+    },
+    setStopFetchingPosts: (state) => {
+      state.stopFetchingPosts = true;
     },
   },
 });
 
-export const { setUser, setProfile, setCurrentSquad, setTags, setPosts } =
-  fullAppReducer.actions;
+export const {
+  setUser,
+  setProfile,
+  setCurrentSquad,
+  setTags,
+  addNewPosts,
+  setStopFetchingPosts,
+} = fullAppReducer.actions;
 export default fullAppReducer.reducer;

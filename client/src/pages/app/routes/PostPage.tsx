@@ -1,23 +1,22 @@
 import { Link, Navigate, useParams } from "react-router-dom";
-import { useGetPostComments, useGetPosts } from "../hooks/usePostsHandler";
+import { useGetPostComments } from "../hooks/usePostsHandler";
 import { format } from "date-fns";
 import MarkdownEditor from "@uiw/react-markdown-editor";
 
 import UpvoteButton from "../components/posts/UpvoteButton";
 import CommentSection from "../components/posts/CommentSection";
+import { useFullApp } from "@/store/hooks/useFullApp";
 
 const PostPage = () => {
   const params = useParams();
 
-  const { data: posts, isLoading } = useGetPosts();
+  const { posts } = useFullApp();
 
   const post = posts?.find((p) => p.slug === params.post_slug);
 
   const { data: comments, isLoading: isCommentsLoading } = useGetPostComments(
     post?.id
   );
-
-  if (isLoading) return <h1>Loading...</h1>;
 
   if (!post) return <Navigate to={"/"} />;
 
