@@ -187,7 +187,7 @@ interface CommentReplies {
     id: number;
   };
 }
-interface Comment {
+type Comments = {
   id: number;
   content: string;
   created_at: string;
@@ -202,4 +202,4 @@ interface Comment {
     id: number;
   };
   replies: CommentReplies[];
-}
+};

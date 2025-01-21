@@ -7,6 +7,7 @@ import { faker } from "@faker-js/faker";
 class PostController {
   constructor() {
     this.getPosts = this.getPosts.bind(this);
+    this.getPostBySlug = this.getPostBySlug.bind(this);
     this.getPostsTags = this.getPostsTags.bind(this);
     this.getPostComments = this.getPostComments.bind(this);
     this.createPost = this.createPost.bind(this);
@@ -88,9 +89,64 @@ class PostController {
       next(error);
     }
   }
+  async getPostBySlug(req: Request, res: Response, next: NextFunction) {
+    const { postId } = req.query;
+    if (!postId) {
+      return res.status(400).json({ message: "Post ID is required." });
+    }
+    try {
+      const query = `
+      SELECT 
+          p.id,
+          p.title,
+          p.thumbnail,
+          p.content,
+          p.slug,
+          p.created_at,
+          JSON_AGG(t.name) FILTER (WHERE t.id IS NOT NULL) AS tags,
+          p_v.upvotes AS upvotes,
+          p_vw.views AS views,
+          JSON_BUILD_OBJECT(
+              'squad_thumbnail', p_sq.thumbnail,
+              'squad_handle', p_sq.squad_handle
+          ) AS squad_details,
+          JSON_BUILD_OBJECT(
+              'author_avatar', u.avatar,
+              'author_name', u.name,
+              'author_username', u.username
+          ) AS author_details,
+          EXISTS (
+              SELECT 1 
+              FROM user_upvotes u_u_v 
+              WHERE u_u_v.user_id = $1 
+                AND u_u_v.post_id = p.id
+          ) AS current_user_upvoted
+      FROM posts p
+      LEFT JOIN post_tags p_t ON p.id = p_t.post_id
+      LEFT JOIN tags t ON p_t.tag_id = t.id
+      INNER JOIN post_upvotes p_v ON p.id = p_v.post_id
+      INNER JOIN post_views p_vw ON p.id = p_vw.post_id
+      INNER JOIN squads p_sq ON p.squad_id = p_sq.id
+      INNER JOIN users u ON p.author_id = u.id
+      GROUP BY 
+          p.id, p.title, p.thumbnail, p.created_at, 
+          p_v.upvotes, p_vw.views, 
+          p_sq.thumbnail, p_sq.squad_handle, 
+          u.avatar,u.username,u.name 
+         where p.id = $2
+  `;
+
+      const { rows } = await queryDb(query, [req.body.user.id, postId]);
+
+      res.status(200).json(rows[0]);
+    } catch (error) {
+      next(error);
+    }
+  }
 
   async getPostComments(req: Request, res: Response, next: NextFunction) {
     const { postId } = req.params;
+    const { pageSize, pageNumber } = req.query;
 
     if (!postId) {
       return res.status(400).json({ message: "Post ID is required." });
@@ -164,12 +220,16 @@ class PostController {
               u.id, 
               u.name, 
               u.username, 
-              u.avatar;
+              u.avatar
+          order by c.id 
+          limit $3 offset ($4 - 1) * $3;
       `;
 
       const { rows: comments } = await queryDb(commentsQuery, [
         Number(postId),
         req.body.user.id,
+        pageSize ? pageSize : 8,
+        pageNumber ? pageNumber : 1,
       ]);
 
       return res.status(200).json({ comments });

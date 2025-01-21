@@ -7,6 +7,7 @@ const router = Router();
 
 router.use(checkAuth);
 router.get("/", asyncHandler(postController.getPosts));
+router.get("/post-by-sulg", asyncHandler(postController.getPostBySlug));
 router.get("/tags", asyncHandler(postController.getPostsTags));
 router.get(
   "/get-post-comments/:postId",

@@ -1,5 +1,10 @@
 import { postApi } from "@/lib/axios";
-import { addNewPosts, setStopFetchingPosts } from "@/reducers/fullAppReducer";
+import {
+  addNewComments,
+  addNewPosts,
+  setStopFetchingPostComments,
+  setStopFetchingPosts,
+} from "@/reducers/fullAppReducer";
 import { useQuery } from "@tanstack/react-query";
 import { useDispatch } from "react-redux";
 
@@ -25,14 +30,27 @@ export const useGetNewPosts = (
   });
   return queryData;
 };
-export const useGetPostComments = (postId: number | undefined) => {
+export const useGetPostComments = (
+  postId: number | undefined,
+  pageSize: number = 8,
+  pageNumber: number = 1
+) => {
+  const dispatch = useDispatch();
+
   const queryData = useQuery({
-    queryKey: [`getPostComments_${postId}`],
+    queryKey: [`getPostComments_${postId}_${pageSize}_${pageNumber}`],
     queryFn: async () => {
-      const { data } = await postApi.get(`/get-post-comments/${postId}`);
-      return data.comments as Comment[];
+      const { data } = await postApi.get(
+        `/get-post-comments/${postId}?pageSize=${pageSize}&pageNumber=${pageNumber}`
+      );
+
+      if (data.comments.length < 1) {
+        dispatch(setStopFetchingPostComments(true));
+      }
+
+      dispatch(addNewComments(data.comments as Comments[]));
+      return data.comments as Comments[];
     },
-    refetchOnMount: false,
     refetchOnWindowFocus: false,
     enabled: postId !== undefined,
   });

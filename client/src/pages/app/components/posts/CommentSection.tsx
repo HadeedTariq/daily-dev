@@ -1,18 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import CommentItem from "./CommentItem";
-import {
-  InvalidateQueryFilters,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { postApi } from "@/lib/axios";
 import { toast } from "@/hooks/use-toast";
 import { useState } from "react";
 
 type CommentSectionProps = {
   postId: number;
-  comments: Comment[];
+  comments: Comments[];
   isCommentsLoading: boolean;
 };
 export default function CommentSection({
@@ -20,7 +16,6 @@ export default function CommentSection({
   postId,
   isCommentsLoading,
 }: CommentSectionProps) {
-  const queryClient = useQueryClient();
   const [newComment, setNewComment] = useState("");
   const { mutate: createComment, isPending: isCommentPending } = useMutation({
     mutationKey: [`create_comment_${postId}`],
@@ -32,9 +27,6 @@ export default function CommentSection({
     },
     onSuccess: () => {
       setNewComment("");
-      queryClient.invalidateQueries([
-        "getPostComments",
-      ] as InvalidateQueryFilters);
     },
     onError: (err: any) => {
       toast({

@@ -20,7 +20,7 @@ import { useFullApp } from "@/store/hooks/useFullApp";
 import CommentsUpvoteButton from "../comments/CommentsUpvoteButton";
 
 interface CommentItemProps {
-  comment: Comment | CommentReplies;
+  comment: Comments | CommentReplies;
   isReply?: boolean;
   commentId?: number;
   isReplyPending?: boolean;
@@ -286,7 +286,7 @@ export default function CommentItem({
 
   const userDetails = isReply
     ? (comment as CommentReplies).sender_details
-    : (comment as Comment).user_details;
+    : (comment as Comments).user_details;
 
   useEffect(() => {
     function handleClickOutside(event: any) {
@@ -374,8 +374,10 @@ export default function CommentItem({
                 <CommentsUpvoteButton
                   postId={postId}
                   commentId={comment.id}
-                  initialUpvotes={Number((comment as Comment).total_upvotes)}
-                  initialUserUpvoted={(comment as Comment).current_user_upvoted}
+                  initialUpvotes={Number((comment as Comments).total_upvotes)}
+                  initialUserUpvoted={
+                    (comment as Comments).current_user_upvoted
+                  }
                 />
               </>
             )}
@@ -405,8 +407,8 @@ export default function CommentItem({
         </div>
       )}
       {!isReply &&
-        (comment as Comment).replies &&
-        (comment as Comment).replies.map((reply) => (
+        (comment as Comments).replies &&
+        (comment as Comments).replies.map((reply) => (
           <CommentItem
             postId={postId}
             key={reply.id}
