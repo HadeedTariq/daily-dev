@@ -7,7 +7,8 @@ const router = Router();
 
 router.use(checkAuth);
 router.get("/", asyncHandler(postController.getPosts));
-router.get("/post-by-sulg", asyncHandler(postController.getPostBySlug));
+router.get("/get-my-posts", asyncHandler(postController.getMyPosts));
+router.get("/post-by-slug", asyncHandler(postController.getPostBySlug));
 router.get("/tags", asyncHandler(postController.getPostsTags));
 router.get(
   "/get-post-comments/:postId",
@@ -36,6 +37,6 @@ router.delete(
   "/delete-reply/:commentId/:replyId",
   asyncHandler(postController.deleteCommentReply)
 );
-router.delete("/:postId", asyncHandler(postController.deletePost));
+router.delete("/delete-post/:postId", asyncHandler(postController.deletePost));
 
 export { router as postRouter };

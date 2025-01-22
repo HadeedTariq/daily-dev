@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import MarkdownEditor from "@uiw/react-markdown-editor";
 
 import UpvoteButton from "../components/posts/UpvoteButton";
-import CommentSection from "../components/posts/CommentSection";
+
 import { useFullApp } from "@/store/hooks/useFullApp";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
@@ -13,6 +13,7 @@ import {
   setCurrentPost,
   setStopFetchingPostComments,
 } from "@/reducers/fullAppReducer";
+import { CommentSection } from "../components/posts/CommentSection";
 
 const PostPage = () => {
   const params = useParams();
@@ -54,7 +55,7 @@ const PostPage = () => {
 
   useEffect(() => {
     if (stopFetchingPostComments) {
-      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("s0croll", handleScroll);
     } else {
       window.addEventListener("scroll", handleScroll);
     }

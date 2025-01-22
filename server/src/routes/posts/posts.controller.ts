@@ -2,12 +2,12 @@ import { queryDb } from "@/db/connect";
 import { NextFunction, Request, Response } from "express";
 import { DatabaseError } from "pg";
 import sanitizeHtml from "sanitize-html";
-import { faker } from "@faker-js/faker";
 
 class PostController {
   constructor() {
     this.getPosts = this.getPosts.bind(this);
     this.getPostBySlug = this.getPostBySlug.bind(this);
+    this.getMyPosts = this.getMyPosts.bind(this);
     this.getPostsTags = this.getPostsTags.bind(this);
     this.getPostComments = this.getPostComments.bind(this);
     this.createPost = this.createPost.bind(this);
@@ -54,7 +54,8 @@ class PostController {
           JSON_BUILD_OBJECT(
               'author_avatar', u.avatar,
               'author_name', u.name,
-              'author_username', u.username
+              'author_username', u.username,
+              'author_id', u.id
           ) AS author_details,
           EXISTS (
               SELECT 1 
@@ -73,7 +74,7 @@ class PostController {
           p.id, p.title, p.thumbnail, p.created_at, 
           p_v.upvotes, p_vw.views, 
           p_sq.thumbnail, p_sq.squad_handle, 
-          u.avatar,u.username,u.name 
+          u.avatar,u.username,u.name,u.id 
           order by p.id 
           limit $2 offset ($3 - 1) * $2;
   `;
@@ -90,9 +91,9 @@ class PostController {
     }
   }
   async getPostBySlug(req: Request, res: Response, next: NextFunction) {
-    const { postId } = req.query;
-    if (!postId) {
-      return res.status(400).json({ message: "Post ID is required." });
+    const { postSlug } = req.query;
+    if (!postSlug) {
+      return res.status(400).json({ message: "Post Slug is required." });
     }
     try {
       const query = `
@@ -133,12 +134,45 @@ class PostController {
           p_v.upvotes, p_vw.views, 
           p_sq.thumbnail, p_sq.squad_handle, 
           u.avatar,u.username,u.name 
-         where p.id = $2
+         where p.slug = $2
   `;
 
-      const { rows } = await queryDb(query, [req.body.user.id, postId]);
+      const { rows } = await queryDb(query, [req.body.user.id, postSlug]);
 
       res.status(200).json(rows[0]);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getMyPosts(req: Request, res: Response, next: NextFunction) {
+    try {
+      const query = `
+      WITH user_posts AS (
+        SELECT  
+            p.id,
+            p.thumbnail,
+            p.title,
+            p.content,
+            p.slug,
+            p.created_at,
+            p.squad_id
+        FROM posts p
+        WHERE p.author_id = $1
+      )
+      SELECT 
+            p.*,
+            JSON_BUILD_OBJECT(
+                'squad_thumbnail', p_sq.thumbnail,
+                'squad_handle', p_sq.squad_handle
+            ) AS squad_details
+        FROM user_posts p
+        INNER JOIN squads p_sq ON p.squad_id = p_sq.id;
+  `;
+
+      const { rows } = await queryDb(query, [req.body.user.id]);
+
+      res.status(200).json({ posts: rows });
     } catch (error) {
       next(error);
     }
@@ -702,9 +736,12 @@ class PostController {
 
     try {
       const deletePostQuery = `
-        DELETE FROM posts WHERE id = $1 RETURNING *;
+        DELETE FROM posts WHERE id = $1 AND author_id = $2 returning id;
       `;
-      const { rows } = await queryDb(deletePostQuery, [postId]);
+      const { rows } = await queryDb(deletePostQuery, [
+        postId,
+        req.body.user.id,
+      ]);
 
       if (rows.length === 0) {
         return res.status(404).json({ message: "Post not found." });

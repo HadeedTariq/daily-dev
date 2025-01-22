@@ -1,29 +1,31 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Link } from "react-router-dom";
+import { postApi } from "@/lib/axios";
+import { useQuery } from "@tanstack/react-query";
 
+import { ProfilePostCard } from "../components/profile/ProfilePostCard";
+export type UserPost = {
+  id: number;
+  thumbnail: string;
+  title: string;
+  content: string;
+  slug: string;
+  created_at: string;
+  squad_id: number;
+  squad_details: PostSquadDetails;
+};
 export default function MyPosts() {
+  const { data: posts, isLoading } = useQuery({
+    queryKey: ["getMyPosts"],
+    queryFn: async () => {
+      const { data } = await postApi.get("/get-my-posts");
+      return data.posts as UserPost[];
+    },
+  });
+  if (isLoading) return <h1>Loading...</h1>;
   return (
-    <div className="space-y-4">
-      <Link to={"/post/create"}>
-        <Button>New Post</Button>
-      </Link>
-      <Card>
-        <CardHeader>
-          <CardTitle>My First Post</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p>This is the content of my first post.</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Another Post</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p>Here's another post I made.</p>
-        </CardContent>
-      </Card>
-    </div>
+    <main className="flex mx-auto px-4 py-8 flex-wrap gap-x-8 gap-y-8 justify-center">
+      {posts?.map((post) => (
+        <ProfilePostCard key={post.id} {...post} />
+      ))}
+    </main>
   );
 }
