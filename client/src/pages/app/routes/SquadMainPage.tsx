@@ -14,7 +14,6 @@ export default function SquadMainPage() {
   if (isLoading || isPending) {
     return <h1>Loading...</h1>;
   }
-  console.log(squadData);
 
   if (!squadData) {
     return (

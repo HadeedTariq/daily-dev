@@ -24,18 +24,12 @@ import { profileRouter } from "./routes/profile/profile.routes";
 import { postRouter } from "./routes/posts/posts.routes";
 import { squadRouter } from "./routes/squads/squad.routes";
 import { deleteUnverifiedUsers } from "./db/connect";
+import { followersRouter } from "./routes/followers/followers.routes";
 
 const logger = pino({ name: "server start" });
 
 // createTable(`
-//       CREATE TABLE comment_upvotes (
-//           id SERIAL PRIMARY KEY,
-//           comment_id INT REFERENCES post_comments(id) ON DELETE CASCADE,
-//           user_id INT REFERENCES users(id) ON DELETE CASCADE,
-//           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-//           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-//           CONSTRAINT unique_comment_user UNIQUE (comment_id, user_id)
-//       );
+//   update user_stats set followers = 11, following = 11 where user_id = 2
 // `);
 
 const app: Express = express();
@@ -105,6 +99,7 @@ app.use("/auth", authRouter);
 app.use("/profile", profileRouter);
 app.use("/posts", postRouter);
 app.use("/squad", squadRouter);
+app.use("/follower", followersRouter);
 // Swagger UI
 app.use(openAPIRouter);
 

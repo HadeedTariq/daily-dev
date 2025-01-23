@@ -17,5 +17,9 @@ const squadApi = axios.create({
   baseURL: `${url}/squad`,
   withCredentials: true,
 });
+const followerApi = axios.create({
+  baseURL: `${url}/follower`,
+  withCredentials: true,
+});
 
-export { authApi, profileApi, postApi, squadApi };
+export { authApi, profileApi, postApi, squadApi, followerApi };

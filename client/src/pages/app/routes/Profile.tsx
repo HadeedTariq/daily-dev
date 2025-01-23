@@ -13,8 +13,21 @@ import ShareProfile from "../components/ShareProfile";
 import { ProfileHeader } from "../components/ProfileHeader";
 import SquadGrid from "../components/SquadGrid";
 import { useGetJoinedSquads } from "../hooks/useGetJoinedSquads";
+import { useState } from "react";
+import { FollowersDialog } from "../components/profile/FollowersDialog";
+import { FollowingsDialog } from "../components/profile/FollowingsDialog";
 
 export default function Profile() {
+  const [isFollowersDialogOpen, setIsFollowersDialogOpen] = useState(false);
+
+  const handleFollowersClick = () => {
+    setIsFollowersDialogOpen(true);
+  };
+  const [isFollowingsDialogOpen, setIsFollowingsDialogOpen] = useState(false);
+
+  const handleFollowingsClick = () => {
+    setIsFollowingsDialogOpen(true);
+  };
   const dispatch = useDispatch();
   const { isLoading, data: profile } = useQuery({
     queryKey: ["getProfile"],
@@ -76,11 +89,29 @@ export default function Profile() {
             <div>
               <h3 className="font-semibold mb-2">Stats</h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
-                <div>Followers: {profile.user_stats.followers}</div>
-                <div>Following: {profile.user_stats.following}</div>
-                <div>Reputation: {profile.user_stats.reputation}</div>
-                <div>Views: {profile.user_stats.views}</div>
-                <div>Upvotes: {profile.user_stats.upvotes}</div>
+                <p
+                  className="cursor-pointer"
+                  onClick={() => handleFollowersClick()}
+                >
+                  Followers: {profile.user_stats.followers}
+                </p>
+                <FollowersDialog
+                  isOpen={isFollowersDialogOpen}
+                  onClose={() => setIsFollowersDialogOpen(false)}
+                />
+                <p
+                  className="cursor-pointer"
+                  onClick={() => handleFollowingsClick()}
+                >
+                  Followings: {profile.user_stats.following}
+                </p>
+                <FollowingsDialog
+                  isOpen={isFollowingsDialogOpen}
+                  onClose={() => setIsFollowingsDialogOpen(false)}
+                />
+                <p>Reputation: {profile.user_stats.reputation}</p>
+                <p>Views: {profile.user_stats.views}</p>
+                <p>Upvotes: {profile.user_stats.upvotes}</p>
               </div>
             </div>
             <div className="my-2">

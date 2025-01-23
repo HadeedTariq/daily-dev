@@ -26,6 +26,7 @@ import PostPage from "./pages/app/routes/PostPage";
 
 function App() {
   const { user } = useFullApp();
+
   const dispatch = useDispatch();
   const { mutate: updateUserStreak } = useMutation({
     mutationKey: ["updateUserStreak"],

@@ -35,6 +35,9 @@ class PostController {
   }
   async getPosts(req: Request, res: Response, next: NextFunction) {
     const { pageSize, pageNumber } = req.query;
+    const { rows } = await queryDb("select * from users", []);
+    console.log(rows);
+
     try {
       const query = `
       SELECT 
