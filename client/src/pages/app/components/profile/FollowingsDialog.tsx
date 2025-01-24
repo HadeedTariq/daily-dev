@@ -9,8 +9,14 @@ import { followerApi } from "@/lib/axios";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import { ScrollArea } from "@radix-ui/react-scroll-area";
-import { useQuery } from "@tanstack/react-query";
+import {
+  InvalidateQueryFilters,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
 type Follower = {
   id: number;
   username: string;
@@ -27,6 +33,7 @@ export const FollowingsDialog = ({
   isOpen,
   onClose,
 }: FollowingsDialogProps) => {
+  const queryClient = useQueryClient();
   const { data: followings, isLoading } = useQuery({
     queryKey: ["getMyFollowings"],
     queryFn: async () => {
@@ -34,6 +41,26 @@ export const FollowingsDialog = ({
       return data as Follower[];
     },
   });
+
+  const { mutate: unFollowUser, isPending } = useMutation({
+    mutationKey: ["unfollowUser"],
+    mutationFn: async (followedId: number) => {
+      const { data } = await followerApi.put(`/unfollow`, { followedId });
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries([
+        "getMyFollowings",
+      ] as InvalidateQueryFilters);
+    },
+    onError: (err: any) => {
+      toast({
+        title: err.response.data.message || "Failed to unfollow a user",
+        variant: "destructive",
+      });
+    },
+  });
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] overflow-y-scroll">
@@ -70,7 +97,14 @@ export const FollowingsDialog = ({
                       </div>
                     </div>
                   </div>
-                  <Button variant={"destructive"} size={"sm"}>
+                  <Button
+                    variant={"destructive"}
+                    size={"sm"}
+                    onClick={() => {
+                      unFollowUser(follower.id);
+                    }}
+                    disabled={isPending}
+                  >
                     UnFollow
                   </Button>
                 </div>

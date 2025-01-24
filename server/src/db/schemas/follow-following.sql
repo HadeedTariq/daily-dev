@@ -6,11 +6,13 @@ CREATE TABLE followers (
     CONSTRAINT chk_follower_self_follow CHECK (follower_id != followed_id)
 );
 
+CREATE TYPE action_type AS ENUM ('follow', 'unfollow');
+
 CREATE TABLE follow_notifications (
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     actor_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    action_type VARCHAR(10) NOT NULL CHECK (action_type IN ('follow', 'unfollow')),
+    action_type action_type NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     is_read BOOLEAN DEFAULT FALSE NOT NULL,
     UNIQUE (user_id, actor_id, action_type)

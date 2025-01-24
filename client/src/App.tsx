@@ -23,6 +23,7 @@ import SquadsHandler from "./pages/app/routes/MySquads";
 import SquadMainPage from "./pages/app/routes/SquadMainPage";
 import SquadEditPage from "./pages/app/routes/SquadEditPage";
 import PostPage from "./pages/app/routes/PostPage";
+import MyNotification from "./pages/app/routes/profile/MyNotification";
 
 function App() {
   const { user } = useFullApp();
@@ -70,6 +71,7 @@ function App() {
           <Route path="posts" element={<MyPosts />} />
           <Route path="replies" element={<MyReplies />} />
           <Route path="upvotes" element={<MyUpvotes />} />
+          <Route path="notifications" element={<MyNotification />} />
           <Route path="squads">
             <Route index element={<SquadsHandler />} />
           </Route>

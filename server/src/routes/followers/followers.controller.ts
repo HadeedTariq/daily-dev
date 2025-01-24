@@ -1,6 +1,5 @@
 import { queryDb, runIndependentTransaction } from "@/db/connect";
 import { NextFunction, Request, Response } from "express";
-import sanitizeHtml from "sanitize-html";
 
 class FollowersController {
   constructor() {
@@ -9,6 +8,7 @@ class FollowersController {
     this.getFollowing = this.getFollowing.bind(this);
     this.getNotifications = this.getNotifications.bind(this);
     this.unfollowUser = this.unfollowUser.bind(this);
+    this.updateNotificationStatus = this.updateNotificationStatus.bind(this);
   }
   async followUser(req: Request, res: Response, next: NextFunction) {
     try {
@@ -39,17 +39,6 @@ class FollowersController {
           .json({ message: "Already following this user." });
       }
 
-      const { rows: userExists } = await queryDb(
-        "SELECT 1 FROM users WHERE id = $1",
-        [Number(followedId)]
-      );
-
-      if (userExists.length === 0) {
-        return res
-          .status(404)
-          .json({ message: "User to follow does not exist." });
-      }
-
       await runIndependentTransaction([
         {
           query:
@@ -61,6 +50,11 @@ class FollowersController {
             "UPDATE user_stats SET followers = followers + 1 WHERE user_id = $1",
           params: [Number(followedId)],
         },
+        {
+          query:
+            "INSERT INTO follow_notifications (user_id, actor_id, action_type) VALUES ($1, $2, $3)",
+          params: [Number(followedId), followerId, "follow"],
+        },
       ]);
 
       res.status(201).json({ message: "User followed successfully." });
@@ -68,41 +62,74 @@ class FollowersController {
       if (error.constraint === "followers_follower_id_fkey") {
         return res.status(400).json({ message: "Follower does not exist." });
       }
+      if (error.code === "23503") {
+        console.error(
+          "Foreign key violation: The followed user does not exist."
+        );
+
+        res.status(400).json({
+          message: "The followed user does not exist.",
+        });
+      }
 
       next(error);
     }
   }
 
-  // Unfollow a user
   async unfollowUser(req: Request, res: Response, next: NextFunction) {
     try {
-      const { followerId, followedId } = req.body;
+      const { followedId } = req.body;
 
-      // Input validation
-      if (!followerId || !followedId) {
+      if (!followedId || isNaN(followedId)) {
         return res
           .status(400)
-          .json({ message: "followerId and followedId are required." });
+          .json({ message: "Valid followedId is required." });
       }
 
-      // Sanitize input
-      const sanitizedFollowerId = sanitizeHtml(followerId.toString());
-      const sanitizedFollowedId = sanitizeHtml(followedId.toString());
+      const followerId = Number(req.body.user.id);
 
-      // Delete follow record
-      const result = await queryDb(
-        "DELETE FROM followers WHERE follower_id = $1 AND followed_id = $2",
-        [sanitizedFollowerId, sanitizedFollowedId]
+      if (followerId === Number(followedId)) {
+        return res
+          .status(400)
+          .json({ message: "Users cannot follow and unfollow themselves." });
+      }
+
+      const { rows: existingFollow } = await queryDb(
+        "SELECT 1 FROM followers WHERE follower_id = $1 AND followed_id = $2",
+        [followerId, Number(followedId)]
       );
 
-      if (result.rowCount === 0) {
+      if (existingFollow.length < 1) {
         return res
-          .status(404)
-          .json({ message: "Follow relationship not found." });
+          .status(400)
+          .json({ message: "You doesn't follow this user" });
       }
 
-      res.status(200).json({ message: "User unfollowed successfully." });
-    } catch (error) {
+      await runIndependentTransaction([
+        {
+          query:
+            "DELETE FROM followers WHERE follower_id =$1 AND followed_id=$2",
+          params: [followerId, Number(followedId)],
+        },
+        {
+          query:
+            "UPDATE user_stats SET following = following - 1 WHERE user_id = $1",
+          params: [followerId],
+        },
+        {
+          query:
+            "INSERT INTO follow_notifications (user_id, actor_id, action_type) VALUES ($1, $2, $3)",
+          params: [Number(followedId), followerId, "unfollow"],
+        },
+      ]);
+
+      res.status(201).json({ message: "User un-followed successfully." });
+    } catch (error: any) {
+      if (error.code === "23503") {
+        return res.status(400).json({
+          message: "The user you're trying to unfollow does not exist.",
+        });
+      }
       next(error);
     }
   }
@@ -154,32 +181,63 @@ class FollowersController {
       next(error);
     }
   }
-
-  // Get follow/unfollow notifications
-  async getNotifications(req: Request, res: Response, next: NextFunction) {
+  async updateNotificationStatus(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
     try {
-      const { userId } = req.params;
+      const userId = req.body.user.id;
 
-      // Input validation
-      if (!userId) {
-        return res.status(400).json({ message: "userId is required." });
+      const query = `
+        UPDATE follow_notifications
+        SET is_read = True
+        WHERE  user_id = $1
+        RETURNING id;
+      `;
+
+      const { rows } = await queryDb(query, [userId]);
+
+      if (rows.length === 0) {
+        return res.status(404).json({
+          message: "Notification not found or does not belong to the user.",
+        });
       }
 
-      // Sanitize input
-      const sanitizedUserId = sanitizeHtml(userId);
+      return res.status(200).json({
+        message: "Notification status updated successfully.",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 
-      // Query notifications
-      const notifications = await queryDb(
-        `SELECT n.id, n.follower_id, u.username AS follower_name, u.profile_picture, 
-                n.action, n.created_at, n.is_read
-         FROM follow_unfollow_notifications n
-         INNER JOIN users u ON n.follower_id = u.id
-         WHERE n.user_id = $1
-         ORDER BY n.created_at DESC`,
-        [sanitizedUserId]
+  async getNotifications(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.body.user.id;
+
+      const { rows: notifications } = await queryDb(
+        `
+        WITH user_notifications AS (
+            SELECT * 
+            FROM follow_notifications f_n
+            WHERE f_n.user_id = $1
+        )
+          SELECT
+              n.*,
+              JSON_BUILD_OBJECT(
+                  'username', u.username,
+                  'avatar', u.avatar,
+                  'name', u.name
+              ) AS actor_details
+          FROM user_notifications n
+          INNER JOIN users u ON u.id = n.actor_id;
+
+        `,
+        [userId]
       );
 
-      res.status(200).json({ notifications });
+      res.status(200).json(notifications);
     } catch (error) {
       next(error);
     }

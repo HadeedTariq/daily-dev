@@ -12,6 +12,9 @@ class UserController {
     this.registerUser = this.registerUser.bind(this);
     this.createUser = this.createUser.bind(this);
     this.loginUser = this.loginUser.bind(this);
+    this.authenticateUser = this.authenticateUser.bind(this);
+    this.authenticateByResfreshToken =
+      this.authenticateByResfreshToken.bind(this);
     this.authenticate_github = this.authenticate_github.bind(this);
   }
   async createUser(req: Request, res: Response, next: NextFunction) {

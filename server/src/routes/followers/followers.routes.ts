@@ -7,12 +7,16 @@ const router = Router();
 
 router.use(checkAuth);
 router.post("/follow", asyncHandler(followersController.followUser));
-router.delete("/unfollow", asyncHandler(followersController.unfollowUser));
+router.put("/unfollow", asyncHandler(followersController.unfollowUser));
 router.get("/my-followers", asyncHandler(followersController.getFollowers));
 router.get("/my-followings", asyncHandler(followersController.getFollowing));
 router.get(
-  "/:userId/notifications",
+  "/notifications",
   asyncHandler(followersController.getNotifications)
+);
+router.put(
+  "/read-notifications",
+  asyncHandler(followersController.updateNotificationStatus)
 );
 
 export { router as followersRouter };

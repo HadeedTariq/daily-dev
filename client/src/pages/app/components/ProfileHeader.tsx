@@ -4,8 +4,9 @@ const navItems = [
   { name: "Readme", path: "" },
   { name: "Posts", path: "posts" },
   { name: "Squads", path: "squads" },
-  { name: "Replies", path: "replies" },
-  { name: "Upvotes", path: "upvotes" },
+  { name: "Notifications", path: "notifications" },
+  // { name: "Replies", path: "replies" },
+  // { name: "Upvotes", path: "upvotes" },
 ];
 
 export function ProfileHeader() {

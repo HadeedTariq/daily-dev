@@ -29,7 +29,7 @@ import { followersRouter } from "./routes/followers/followers.routes";
 const logger = pino({ name: "server start" });
 
 // createTable(`
-//   update user_stats set followers = 11, following = 11 where user_id = 2
+
 // `);
 
 const app: Express = express();
