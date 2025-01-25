@@ -6,6 +6,7 @@ class FollowersController {
     this.followUser = this.followUser.bind(this);
     this.getFollowers = this.getFollowers.bind(this);
     this.getFollowing = this.getFollowing.bind(this);
+    this.getFollowingsPosts = this.getFollowingsPosts.bind(this);
     this.getNotifications = this.getNotifications.bind(this);
     this.unfollowUser = this.unfollowUser.bind(this);
     this.updateNotificationStatus = this.updateNotificationStatus.bind(this);
@@ -44,6 +45,11 @@ class FollowersController {
           query:
             "INSERT INTO followers (follower_id, followed_id) VALUES ($1, $2)",
           params: [followerId, Number(followedId)],
+        },
+        {
+          query:
+            "UPDATE user_stats SET following = following + 1 WHERE user_id = $1",
+          params: [followerId],
         },
         {
           query:
@@ -118,6 +124,11 @@ class FollowersController {
         },
         {
           query:
+            "UPDATE user_stats SET followers = followers - 1 WHERE user_id = $1",
+          params: [Number(followedId)],
+        },
+        {
+          query:
             "INSERT INTO follow_notifications (user_id, actor_id, action_type) VALUES ($1, $2, $3)",
           params: [Number(followedId), followerId, "unfollow"],
         },
@@ -140,14 +151,28 @@ class FollowersController {
 
       const { rows: followers } = await queryDb(
         `
-          WITH user_followers AS (
-            SELECT follower_id, followed_id
+       WITH user_followers AS (
+            SELECT 
+                follower_id, 
+                followed_id
             FROM followers
             WHERE followed_id = $1
-          )
-          SELECT u.id, u.username, u.name, u.avatar
+        )
+          SELECT 
+              u.id, 
+              u.username, 
+              u.name, 
+              u.avatar,
+              EXISTS (
+                  SELECT 1 
+                  FROM followers f_f
+                  WHERE f_f.follower_id = $1 
+                    AND f_f.followed_id = uf.follower_id
+              ) AS current_user_follow
           FROM user_followers uf
-          INNER JOIN users u ON u.id = uf.follower_id
+          INNER JOIN users u 
+              ON u.id = uf.follower_id;
+
         `,
         [userId]
       );
@@ -158,6 +183,88 @@ class FollowersController {
     }
   }
 
+  async getFollowingsPosts(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.body.user.id;
+      const { pageSize, pageNumber } = req.query;
+
+      const { rows: followingsPosts } = await queryDb(
+        `
+         WITH user_followings AS (
+              SELECT 
+                  follower_id, 
+                  followed_id
+              FROM followers
+              WHERE follower_id = $1
+          ),
+          user_followings_posts AS (
+              SELECT 
+                  p.id,
+                  p.title,
+                  p.thumbnail,
+                  p.content,
+                  p.slug,
+                  p.created_at,
+                  p.squad_id,
+                  p.author_id
+              FROM posts p
+              INNER JOIN user_followings u_f ON p.author_id = u_f.followed_id
+          )
+          SELECT 
+              p.id,
+              p.title,
+              p.thumbnail,
+              p.content,
+              p.slug,
+              p.created_at,
+              JSON_AGG(t.name) FILTER (WHERE t.id IS NOT NULL) AS tags,
+              p_v.upvotes AS upvotes,
+              p_vw.views AS views,
+              JSON_BUILD_OBJECT(
+                  'squad_thumbnail', p_sq.thumbnail,
+                  'squad_handle', p_sq.squad_handle
+              ) AS squad_details,
+              JSON_BUILD_OBJECT(
+                  'author_avatar', u.avatar,
+                  'author_name', u.name,
+                  'author_username', u.username,
+                  'author_id', u.id
+              ) AS author_details,
+              EXISTS (
+                  SELECT 1 
+                  FROM user_upvotes u_u_v 
+                  WHERE u_u_v.user_id = $1 
+                    AND u_u_v.post_id = p.id
+              ) AS current_user_upvoted
+          FROM user_followings_posts p
+          LEFT JOIN post_tags p_t 
+              ON p.id = p_t.post_id
+          LEFT JOIN tags t 
+              ON p_t.tag_id = t.id
+          INNER JOIN post_upvotes p_v 
+              ON p.id = p_v.post_id
+          INNER JOIN post_views p_vw 
+              ON p.id = p_vw.post_id
+          INNER JOIN squads p_sq 
+              ON p.squad_id = p_sq.id
+          INNER JOIN users u 
+              ON p.author_id = u.id
+          GROUP BY 
+              p.id, p.title, p.thumbnail, p.content, p.slug, p.created_at, 
+              p_v.upvotes, p_vw.views, 
+              p_sq.thumbnail, p_sq.squad_handle, 
+              u.avatar, u.username, u.name, u.id
+          ORDER BY p.id 
+          LIMIT $2 OFFSET ($3 - 1) * $2;
+        `,
+        [userId, pageSize ? pageSize : 8, pageNumber ? pageNumber : 1]
+      );
+
+      res.status(200).json({ posts: followingsPosts });
+    } catch (error) {
+      next(error);
+    }
+  }
   async getFollowing(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.body.user.id;

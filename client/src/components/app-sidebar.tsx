@@ -1,16 +1,11 @@
-"use client";
-
 import * as React from "react";
 import {
-  AudioWaveform,
   BookOpen,
-  Bot,
   Command,
   Frame,
   GalleryVerticalEnd,
   Map,
   PieChart,
-  Settings2,
   SquareTerminal,
   Bookmark,
   Clock,
@@ -42,6 +37,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
+import { Link } from "react-router-dom";
 
 // This is sample data.
 const data = {
@@ -50,8 +46,8 @@ const data = {
     avatar: "/avatars/hadeedtariq.jpg",
   },
   mainMenu: [
-    { title: "My feed", icon: BookOpen, url: "#" },
-    { title: "Following", icon: Users, url: "#" },
+    { title: "My feed", icon: BookOpen, url: "/" },
+    { title: "Following", icon: Users, url: "/followings" },
     { title: "Explore", icon: Globe, url: "#" },
     { title: "Bookmarks", icon: Bookmark, url: "#" },
     { title: "History", icon: Clock, url: "#" },
@@ -95,10 +91,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             {data.mainMenu.map((item) => (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild>
-                  <a href={item.url}>
+                  <Link to={item.url}>
                     <item.icon className="mr-2 h-4 w-4" />
                     <span>{item.title}</span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
@@ -112,10 +108,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               {data.squads.map((squad) => (
                 <SidebarMenuItem key={squad.title}>
                   <SidebarMenuButton asChild>
-                    <a href={squad.url}>
+                    <Link to={squad.url}>
                       <squad.icon className="mr-2 h-4 w-4" />
                       <span>{squad.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -130,10 +126,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               {data.customFeeds.map((feed) => (
                 <SidebarMenuItem key={feed.title}>
                   <SidebarMenuButton asChild>
-                    <a href={feed.url}>
+                    <Link to={feed.url}>
                       <feed.icon className="mr-2 h-4 w-4" />
                       <span>{feed.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -148,10 +144,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               {data.discover.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <a href={item.url}>
+                    <Link to={item.url}>
                       <item.icon className="mr-2 h-4 w-4" />
                       <span>{item.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -163,18 +159,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <a href="#">
+              <Link to="#">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 <span>Submit a link</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <a href="#">
+              <Link to="#">
                 <FileText className="mr-2 h-4 w-4" />
                 <span>Resources</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

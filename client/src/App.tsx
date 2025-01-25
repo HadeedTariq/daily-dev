@@ -24,6 +24,7 @@ import SquadMainPage from "./pages/app/routes/SquadMainPage";
 import SquadEditPage from "./pages/app/routes/SquadEditPage";
 import PostPage from "./pages/app/routes/PostPage";
 import MyNotification from "./pages/app/routes/profile/MyNotification";
+import FollowingPosts from "./pages/app/routes/FollowingPosts";
 
 function App() {
   const { user } = useFullApp();
@@ -66,6 +67,7 @@ function App() {
     <Routes>
       <Route path="/" element={<NavBar />}>
         <Route index element={<Home />} />
+        <Route path="followings" element={<FollowingPosts />} />
         <Route path="profile" element={<Profile />}>
           <Route index element={<ReadmeHandler />} />
           <Route path="posts" element={<MyPosts />} />

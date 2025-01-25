@@ -1,7 +1,9 @@
-import { postApi } from "@/lib/axios";
+import { followerApi, postApi } from "@/lib/axios";
 import {
   addNewComments,
+  addNewFollowingPosts,
   addNewPosts,
+  setStopFetchingFollowingPosts,
   setStopFetchingPostComments,
   setStopFetchingPosts,
 } from "@/reducers/fullAppReducer";
@@ -42,6 +44,49 @@ export const useGetNewPosts = (initialPageSize: number = 8) => {
 
   const infiniteQuery = useInfiniteQuery({
     queryKey: ["infinitePosts", initialPageSize],
+    queryFn: fetchPosts,
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) => {
+      return lastPage.posts.length > 0 ? allPages.length + 1 : undefined;
+    },
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    staleTime: 5000,
+    gcTime: 10 * 60 * 1000,
+  });
+
+  return {
+    ...infiniteQuery,
+    posts: infiniteQuery.data?.pages.flatMap((page) => page.posts) || [],
+  };
+};
+
+export const useGetFollowingsPosts = (initialPageSize: number = 8) => {
+  const dispatch = useDispatch();
+
+  const fetchPosts = async ({ pageParam = 1 }: QueryFunctionContext) => {
+    try {
+      const { data } = await followerApi.get<PostResponse>(
+        `/followings-posts?pageSize=${initialPageSize}&pageNumber=${pageParam}`
+      );
+
+      dispatch(addNewFollowingPosts(data.posts));
+
+      if (data.posts.length === 0) {
+        dispatch(setStopFetchingFollowingPosts());
+      }
+
+      return {
+        posts: data.posts,
+      };
+    } catch (error) {
+      dispatch(setStopFetchingFollowingPosts());
+      throw error;
+    }
+  };
+
+  const infiniteQuery = useInfiniteQuery({
+    queryKey: ["infiniteFollowingPosts", initialPageSize],
     queryFn: fetchPosts,
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {

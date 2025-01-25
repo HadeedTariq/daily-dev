@@ -120,6 +120,7 @@ type SquadMember = {
     email: string;
     avatar: string | null;
     profession: string | null;
+    current_user_follow: boolean;
   };
 };
 
