@@ -18,7 +18,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 
-import { squadApi } from "@/lib/axios";
+import { squadApi, followerApi } from "@/lib/axios";
 
 type MembersDialogProps = {
   isOpen: boolean;
@@ -98,6 +98,43 @@ export const MembersDialog = ({
     },
   });
 
+  const { mutate: unFollowUser, isPending: isUnFollowing } = useMutation({
+    mutationKey: ["unfollowUser"],
+    mutationFn: async (followedId: number) => {
+      const { data } = await followerApi.put(`/unfollow`, { followedId });
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries([
+        `squad-${squadHandle}`,
+      ] as InvalidateQueryFilters);
+    },
+    onError: (err: any) => {
+      toast({
+        title: err.response.data.message || "Failed to unfollow a user",
+        variant: "destructive",
+      });
+    },
+  });
+  const { mutate: followUser, isPending: isFollowingPending } = useMutation({
+    mutationKey: ["followUser"],
+    mutationFn: async (followedId: number) => {
+      const { data } = await followerApi.put(`/follow`, { followedId });
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries([
+        `squad-${squadHandle}`,
+      ] as InvalidateQueryFilters);
+    },
+    onError: (err: any) => {
+      toast({
+        title: err.response.data.message || "Failed to follow a user",
+        variant: "destructive",
+      });
+    },
+  });
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] overflow-y-scroll">
@@ -128,7 +165,7 @@ export const MembersDialog = ({
                       .join("")}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex flex-col">
+                <div className="flex flex-col w-full">
                   <div className="font-semibold text-foreground group-hover:text-primary transition-colors duration-200 ease-in-out">
                     <p>{member.userDetails.name}</p>
                     {isUserAdmin && (
@@ -198,10 +235,36 @@ export const MembersDialog = ({
 
                   <Badge
                     variant="outline"
-                    className="mt-1 group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-200 ease-in-out"
+                    className="mt-1 group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-200 ease-in-out w-full"
                   >
                     {member.role}
                   </Badge>
+                  {user?.id !== member.userDetails.userId &&
+                    (member.userDetails.current_user_follow ? (
+                      <Button
+                        variant={"destructive"}
+                        size={"sm"}
+                        className="mt-2 w-full"
+                        onClick={() => {
+                          unFollowUser(member.userDetails.userId);
+                        }}
+                        disabled={isUnFollowing}
+                      >
+                        UnFollow
+                      </Button>
+                    ) : (
+                      <Button
+                        variant={"default"}
+                        size={"sm"}
+                        className="mt-2 w-full"
+                        onClick={() => {
+                          followUser(member.userDetails.userId);
+                        }}
+                        disabled={isFollowingPending}
+                      >
+                        Follow
+                      </Button>
+                    ))}
                 </div>
               </div>
             ))}
