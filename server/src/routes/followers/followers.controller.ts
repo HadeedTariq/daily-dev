@@ -5,7 +5,9 @@ class FollowersController {
   constructor() {
     this.followUser = this.followUser.bind(this);
     this.getFollowers = this.getFollowers.bind(this);
+    this.getUserFollowers = this.getUserFollowers.bind(this);
     this.getFollowing = this.getFollowing.bind(this);
+    this.getUserFollowing = this.getUserFollowing.bind(this);
     this.getFollowingsPosts = this.getFollowingsPosts.bind(this);
     this.getNotifications = this.getNotifications.bind(this);
     this.unfollowUser = this.unfollowUser.bind(this);
@@ -145,6 +147,47 @@ class FollowersController {
     }
   }
 
+  async getUserFollowers(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { userId } = req.query;
+      if (!userId || isNaN(userId as any)) {
+        return res.status(400).json({ message: "User ID is required." });
+      }
+
+      const { rows: followers } = await queryDb(
+        `
+       WITH user_followers AS (
+            SELECT 
+                follower_id, 
+                followed_id
+            FROM followers
+            WHERE followed_id = $1
+        )
+          SELECT 
+              u.id, 
+              u.username, 
+              u.name, 
+              u.avatar,
+              EXISTS (
+                  SELECT 1 
+                  FROM followers f_f
+                  WHERE f_f.follower_id = $2 
+                    AND f_f.followed_id = uf.follower_id
+              ) AS current_user_follow
+          FROM user_followers uf
+          INNER JOIN users u 
+              ON u.id = uf.follower_id;
+
+        `,
+        [Number(userId), req.body.user.id]
+      );
+
+      res.status(200).json(followers);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getFollowers(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.body.user.id;
@@ -261,6 +304,38 @@ class FollowersController {
       );
 
       res.status(200).json({ posts: followingsPosts });
+    } catch (error) {
+      next(error);
+    }
+  }
+  async getUserFollowing(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { userId } = req.query;
+      if (!userId || isNaN(userId as any)) {
+        return res.status(400).json({ message: "User ID is required." });
+      }
+
+      const { rows: followings } = await queryDb(
+        `
+          WITH user_followings AS (
+            SELECT follower_id, followed_id
+            FROM followers
+            WHERE follower_id = $1
+          )
+          SELECT u.id, u.username, u.name, u.avatar,
+           EXISTS (
+                  SELECT 1 
+                  FROM followers f_f
+                  WHERE f_f.follower_id = $2 
+                    AND f_f.followed_id = uf.followed_id
+              ) AS current_user_follow
+          FROM user_followings uf
+          INNER JOIN users u ON u.id = uf.followed_id
+        `,
+        [Number(userId), req.body.user.id]
+      );
+
+      res.status(200).json(followings);
     } catch (error) {
       next(error);
     }

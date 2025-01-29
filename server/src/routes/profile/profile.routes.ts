@@ -13,6 +13,10 @@ router.get(
   "/get-my-joined-squads",
   asyncHandler(profileController.getMyJoinedSquads)
 );
+router.get(
+  "/get-user-joined-squads",
+  asyncHandler(profileController.getUserJoinedSquads)
+);
 router.put("/edit", asyncHandler(profileController.editProfile));
 router.post("/readme-handler", asyncHandler(profileController.readmeHandler));
 router.put("/update-streak", asyncHandler(profileController.updateStreak));

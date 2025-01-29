@@ -99,8 +99,8 @@ export function ReadmeHandler() {
           </div>
         </DialogContent>
       </Dialog>
-      <ReadmeRendrer />
-      <ReadingStreak />
+      <ReadmeRendrer readme={profile?.about.readme} />
+      <ReadingStreak profile={profile} />
     </div>
   );
 }

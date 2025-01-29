@@ -3,6 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 export type FullAppState = {
   user: User | null;
   profile: UserProfile | null;
+  currentUserProfile: UserProfile | null;
   currentSquad: Omit<SquadDetails, "squad_posts"> | null;
   tags: Tag[];
   posts: PostCards[];
@@ -26,6 +27,7 @@ const initialState: FullAppState = {
   stopFetchingFollowingPosts: false,
   currentPost: null,
   stopFetchingPostComments: false,
+  currentUserProfile: null,
 };
 
 const fullAppReducer = createSlice({
@@ -37,6 +39,9 @@ const fullAppReducer = createSlice({
     },
     setProfile: (state, { payload }: { payload: UserProfile }) => {
       state.profile = payload;
+    },
+    setCurrentUserProfile: (state, { payload }: { payload: UserProfile }) => {
+      state.currentUserProfile = payload;
     },
     setCurrentSquad: (
       state,
@@ -88,5 +93,6 @@ export const {
   setStopFetchingPostComments,
   setCurrentPost,
   emptyCurrenPostComments,
+  setCurrentUserProfile,
 } = fullAppReducer.actions;
 export default fullAppReducer.reducer;

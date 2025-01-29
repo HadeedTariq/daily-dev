@@ -8,6 +8,7 @@ class PostController {
     this.getPosts = this.getPosts.bind(this);
     this.getPostBySlug = this.getPostBySlug.bind(this);
     this.getMyPosts = this.getMyPosts.bind(this);
+    this.getUserPosts = this.getUserPosts.bind(this);
     this.getPostsTags = this.getPostsTags.bind(this);
     this.getPostComments = this.getPostComments.bind(this);
     this.createPost = this.createPost.bind(this);
@@ -35,8 +36,8 @@ class PostController {
   }
   async getPosts(req: Request, res: Response, next: NextFunction) {
     const { pageSize, pageNumber } = req.query;
-    const { rows } = await queryDb("select * from users", []);
-    console.log(rows);
+    // const { rows } = await queryDb("select * from users", []);
+    // console.log(rows);
 
     try {
       const query = `
@@ -148,6 +149,42 @@ class PostController {
     }
   }
 
+  async getUserPosts(req: Request, res: Response, next: NextFunction) {
+    const { userId } = req.query;
+    if (!userId || isNaN(userId as any)) {
+      return res.status(400).json({ message: "User ID is required." });
+    }
+    try {
+      const query = `
+      WITH user_posts AS (
+        SELECT  
+            p.id,
+            p.thumbnail,
+            p.title,
+            p.content,
+            p.slug,
+            p.created_at,
+            p.squad_id
+        FROM posts p
+        WHERE p.author_id = $1
+      )
+      SELECT 
+            p.*,
+            JSON_BUILD_OBJECT(
+                'squad_thumbnail', p_sq.thumbnail,
+                'squad_handle', p_sq.squad_handle
+            ) AS squad_details
+        FROM user_posts p
+        INNER JOIN squads p_sq ON p.squad_id = p_sq.id;
+  `;
+
+      const { rows } = await queryDb(query, [Number(userId)]);
+
+      res.status(200).json({ posts: rows });
+    } catch (error) {
+      next(error);
+    }
+  }
   async getMyPosts(req: Request, res: Response, next: NextFunction) {
     try {
       const query = `

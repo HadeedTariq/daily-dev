@@ -26,6 +26,8 @@ import PostPage from "./pages/app/routes/PostPage";
 import MyNotification from "./pages/app/routes/profile/MyNotification";
 import FollowingPosts from "./pages/app/routes/FollowingPosts";
 import UserProfile from "./pages/app/routes/user-profile/UserProfile";
+import { UserProfileReadmeHandler } from "./pages/app/routes/user-profile/UserProfileReadmeHandler";
+import { UserPosts } from "./pages/app/routes/user-profile/UserPosts";
 
 function App() {
   const { user } = useFullApp();
@@ -80,14 +82,8 @@ function App() {
           </Route>
         </Route>
         <Route path="user-profile/:username" element={<UserProfile />}>
-          <Route index element={<ReadmeHandler />} />
-          <Route path="posts" element={<MyPosts />} />
-          <Route path="replies" element={<MyReplies />} />
-          <Route path="upvotes" element={<MyUpvotes />} />
-          <Route path="notifications" element={<MyNotification />} />
-          <Route path="squads">
-            <Route index element={<SquadsHandler />} />
-          </Route>
+          <Route index element={<UserProfileReadmeHandler />} />
+          <Route path="posts" element={<UserPosts />} />
         </Route>
         <Route path="post/create" element={<CreatePost />} />
         <Route path="posts/:post_slug" element={<PostPage />} />

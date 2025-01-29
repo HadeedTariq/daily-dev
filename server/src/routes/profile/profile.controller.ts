@@ -12,6 +12,7 @@ class ProfileController {
     this.readmeHandler = this.readmeHandler.bind(this);
     this.updateStreak = this.updateStreak.bind(this);
     this.getMyJoinedSquads = this.getMyJoinedSquads.bind(this);
+    this.getUserJoinedSquads = this.getUserJoinedSquads.bind(this);
   }
   async getUserProfile(req: Request, res: Response, next: NextFunction) {
     const { username } = req.params;
@@ -32,30 +33,72 @@ class ProfileController {
           WHERE 
               a_u.username = $1
       )
-      SELECT 
-          u.name,
-          u.username,
-          u.avatar,
-          u.email,
-          u.created_at,
-          u.profession,
-          row_to_json(ab) AS about,
-          row_to_json(sl) AS social_links,
-          row_to_json(ust) AS user_stats,
-          row_to_json(stk) AS streaks
-      FROM 
-          actual_user u
-      LEFT JOIN 
-          about ab ON u.id = ab.user_id
-      LEFT JOIN 
-          social_links sl ON u.id = sl.user_id
-      LEFT JOIN 
-          user_stats ust ON u.id = ust.user_id
-      LEFT JOIN 
-          streaks stk ON u.id = stk.user_id;
+        SELECT 
+            u.name,
+            u.id,
+            u.username,
+            u.avatar,
+            u.email,
+            u.created_at,
+            u.profession,
+            EXISTS (
+                  SELECT 1 
+                  FROM followers f_f
+                  WHERE f_f.follower_id = $2 
+                    AND f_f.followed_id = u.id
+              ) AS current_user_follow,
+            json_build_object(
+                'id', ab.id,
+                'bio', ab.bio,
+                'company', ab.company,
+                'job_title', ab.job_title,
+                'created_at', ab.created_at,
+                'readme', ab.readme
+            ) AS about,
+            json_build_object(
+                'id', sl.id,
+                'github', sl.github,
+                'linkedin', sl.linkedin,
+                'website', sl.website,
+                'x', sl.x,
+                'youtube', sl.youtube,
+                'stack_overflow', sl.stack_overflow,
+                'reddit', sl.reddit,
+                'roadmap_sh', sl.roadmap_sh,
+                'codepen', sl.codepen,
+                'mastodon', sl.mastodon,
+                'threads', sl.threads,
+                'created_at', sl.created_at
+            ) AS social_links,
+            json_build_object(
+                'id', ust.id,
+                'followers', ust.followers,
+                'following', ust.following,
+                'reputation', ust.reputation,
+                'views', ust.views,
+                'upvotes', ust.upvotes
+            ) AS user_stats,
+            json_build_object(
+                'id', stk.id,
+                'streak_start', stk.streak_start,
+                'streak_end', stk.streak_end,
+                'updated_at', stk.updated_at,
+                'streak_length', stk.streak_length,
+                'longest_streak', stk.longest_streak
+            ) AS streaks
+        FROM 
+            actual_user u
+        LEFT JOIN 
+            about ab ON u.id = ab.user_id
+        LEFT JOIN 
+            social_links sl ON u.id = sl.user_id
+        LEFT JOIN 
+            user_stats ust ON u.id = ust.user_id
+        LEFT JOIN 
+            streaks stk ON u.id = stk.user_id;
   `;
 
-      const { rows } = await queryDb(query, [username]);
+      const { rows } = await queryDb(query, [username, req.body.user.id]);
 
       if (rows.length === 0) {
         return next({ status: 404, message: "User not found" });
@@ -63,6 +106,8 @@ class ProfileController {
 
       res.status(200).json({ profile: rows[0] });
     } catch (error: any) {
+      console.log(error);
+
       if (error instanceof DatabaseError) {
         return next({ status: 500, message: "Database query error" });
       }
@@ -116,6 +161,42 @@ class ProfileController {
     }
   }
 
+  async getUserJoinedSquads(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { userId } = req.query;
+      if (!userId || isNaN(userId as any)) {
+        return res.status(400).json({ message: "User ID is required." });
+      }
+      const query = `
+          WITH user_squads AS (
+              SELECT squad_id 
+              FROM squad_members 
+              WHERE user_id = $1
+          )
+          SELECT 
+              s.id AS squad_id, 
+              s.name AS squad_name, 
+              s.squad_handle AS squad_handle,
+              s.thumbnail AS squad_thumbnail
+          FROM user_squads us
+          JOIN squads s ON us.squad_id = s.id;
+    `;
+
+      const { rows: squads } = await queryDb(query, [Number(userId)]);
+      if (squads.length === 0) {
+        return res.status(200).json({
+          message: "User have not joined any squads yet.",
+          squads: [],
+        });
+      }
+
+      res.status(200).json({
+        squads,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
   async getMyJoinedSquads(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.body.user.id;

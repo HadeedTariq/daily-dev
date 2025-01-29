@@ -29,7 +29,10 @@ export const ProfilePostCard = ({
   squad_details,
   slug,
   id,
-}: UserPost) => {
+  loginUser = true,
+}: UserPost & {
+  loginUser?: boolean;
+}) => {
   const queryClient = useQueryClient();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -50,24 +53,26 @@ export const ProfilePostCard = ({
   });
   return (
     <Card className="w-[400px] h-[500px]" key={id}>
-      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
-            <span className="sr-only">Open menu</span>
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem>
-            <Edit className="mr-2 h-4 w-4" />
-            <span>Edit post</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => deletePost()} disabled={isPending}>
-            <Trash className="mr-2 h-4 w-4" />
-            <span>Delete post</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {loginUser && (
+        <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem>
+              <Edit className="mr-2 h-4 w-4" />
+              <span>Edit post</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => deletePost()} disabled={isPending}>
+              <Trash className="mr-2 h-4 w-4" />
+              <span>Delete post</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
       <CardHeader className="relative p-0">
         <img
           src={thumbnail}

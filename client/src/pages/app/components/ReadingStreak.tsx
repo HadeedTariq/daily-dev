@@ -1,7 +1,8 @@
-import { useFullApp } from "@/store/hooks/useFullApp";
+type ReadingStreakProps = {
+  profile: UserProfile | null;
+};
 
-const ReadingStreak = () => {
-  const { profile } = useFullApp();
+const ReadingStreak = ({ profile }: ReadingStreakProps) => {
   function getDaysDifference() {
     const createdDate: any = new Date(profile?.created_at as string);
 

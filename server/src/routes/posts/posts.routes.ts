@@ -8,6 +8,7 @@ const router = Router();
 router.use(checkAuth);
 router.get("/", asyncHandler(postController.getPosts));
 router.get("/get-my-posts", asyncHandler(postController.getMyPosts));
+router.get("/get-user-posts", asyncHandler(postController.getUserPosts));
 router.get("/post-by-slug", asyncHandler(postController.getPostBySlug));
 router.get("/tags", asyncHandler(postController.getPostsTags));
 router.get(

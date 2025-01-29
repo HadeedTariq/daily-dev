@@ -2,22 +2,34 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 
-import { useQuery } from "@tanstack/react-query";
-import { profileApi } from "@/lib/axios";
+import {
+  InvalidateQueryFilters,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { followerApi, profileApi } from "@/lib/axios";
 import { SocialLinks } from "../../components/SocialLinks";
-import { Button } from "@/components/ui/button";
-import { Link, Navigate, Outlet, useParams } from "react-router-dom";
+
+import { Navigate, Outlet, useParams } from "react-router-dom";
 
 import ShareProfile from "../../components/ShareProfile";
-import { ProfileHeader } from "../../components/ProfileHeader";
+
 import SquadGrid from "../../components/SquadGrid";
-import { useGetJoinedSquads } from "../../hooks/useGetJoinedSquads";
+import { useGetUserJoinedSquads } from "../../hooks/useGetJoinedSquads";
 import { useState } from "react";
-import { FollowersDialog } from "../../components/profile/FollowersDialog";
-import { FollowingsDialog } from "../../components/profile/FollowingsDialog";
 import { useFullApp } from "@/store/hooks/useFullApp";
+import { useDispatch } from "react-redux";
+import { setCurrentUserProfile } from "@/reducers/fullAppReducer";
+import { UserProfileHeader } from "../../components/user-profile/UserProfileHeader";
+import { UserFollowersDialog } from "../../components/user-profile/UserFollowersDialog";
+import { UserFollowingsDialog } from "../../components/user-profile/UserFollowingsDialog";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
 
 export default function UserProfile() {
+  const queryClient = useQueryClient();
+
   const [isFollowersDialogOpen, setIsFollowersDialogOpen] = useState(false);
   const { username } = useParams();
   const { user } = useFullApp();
@@ -25,6 +37,8 @@ export default function UserProfile() {
   const handleFollowersClick = () => {
     setIsFollowersDialogOpen(true);
   };
+  const dispatch = useDispatch();
+
   const [isFollowingsDialogOpen, setIsFollowingsDialogOpen] = useState(false);
 
   const handleFollowingsClick = () => {
@@ -41,12 +55,50 @@ export default function UserProfile() {
     queryKey: [`getProfile_${username}`],
     queryFn: async () => {
       const { data } = await profileApi.get(`/user/${username}`);
-      return data.profile as UserProfile;
+      dispatch(setCurrentUserProfile(data.profile));
+      return data.profile as UserProfile & { current_user_follow: boolean };
     },
   });
 
   const { data: joinedSquads, isLoading: isSquadLoading } =
-    useGetJoinedSquads();
+    useGetUserJoinedSquads(profile?.id);
+
+  const { mutate: unFollowUser, isPending } = useMutation({
+    mutationKey: ["unfollowUser"],
+    mutationFn: async (followedId: number) => {
+      const { data } = await followerApi.put(`/unfollow`, { followedId });
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries([
+        `getProfile_${username}`,
+      ] as InvalidateQueryFilters);
+    },
+    onError: (err: any) => {
+      toast({
+        title: err.response.data.message || "Failed to unfollow a user",
+        variant: "destructive",
+      });
+    },
+  });
+  const { mutate: followUser, isPending: isFollowingPending } = useMutation({
+    mutationKey: ["followUser"],
+    mutationFn: async (followedId: number) => {
+      const { data } = await followerApi.put(`/follow`, { followedId });
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries([
+        `getProfile_${username}`,
+      ] as InvalidateQueryFilters);
+    },
+    onError: (err: any) => {
+      toast({
+        title: err.response.data.message || "Failed to follow a user",
+        variant: "destructive",
+      });
+    },
+  });
 
   if (error || isError || failureCount > 1) return <Navigate to={"/"} />;
   if (isLoading) return <div>Loading...</div>;
@@ -59,16 +111,44 @@ export default function UserProfile() {
     <div className="flex flex-row  w-full">
       <header className="bg-background border-b w-full">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <ProfileHeader />
+          <UserProfileHeader />
         </div>
-        <Outlet />
+        <Outlet
+          context={{
+            userId: profile.id,
+          }}
+        />
       </header>
       <div className="absolute top-10 right-0 h-full w-full max-w-md p-4 overflow-y-auto">
         <Card className="h-full">
-          <div className="flex flex-row items-center w-full gap-4 p-3">
-            <h1 className="text-xl">Profile</h1>
-
-            <ShareProfile />
+          <div className="flex justify-between items-center p-3">
+            <div className="flex flex-row items-center w-full gap-4 p-3">
+              <h1 className="text-xl">Profile</h1>
+              <ShareProfile />
+            </div>
+            {profile.current_user_follow ? (
+              <Button
+                variant={"destructive"}
+                size={"sm"}
+                onClick={() => {
+                  unFollowUser(profile.id);
+                }}
+                disabled={isPending}
+              >
+                UnFollow
+              </Button>
+            ) : (
+              <Button
+                variant={"default"}
+                size={"sm"}
+                onClick={() => {
+                  followUser(profile.id);
+                }}
+                disabled={isFollowingPending}
+              >
+                Follow
+              </Button>
+            )}
           </div>
           <CardHeader className="flex flex-row items-center gap-4">
             <Avatar className="h-20 w-20">
@@ -107,7 +187,8 @@ export default function UserProfile() {
                 >
                   Followers: {profile.user_stats.followers}
                 </p>
-                <FollowersDialog
+                <UserFollowersDialog
+                  userId={profile.id}
                   isOpen={isFollowersDialogOpen}
                   onClose={() => setIsFollowersDialogOpen(false)}
                 />
@@ -117,7 +198,8 @@ export default function UserProfile() {
                 >
                   Followings: {profile.user_stats.following}
                 </p>
-                <FollowingsDialog
+                <UserFollowingsDialog
+                  userId={profile.id}
                   isOpen={isFollowingsDialogOpen}
                   onClose={() => setIsFollowingsDialogOpen(false)}
                 />
@@ -132,9 +214,6 @@ export default function UserProfile() {
                 <SocialLinks {...profile.social_links} />
               </div>
             </div>
-            <Link to={"/editProfile"} className="py-3">
-              <Button>Edit Profile</Button>
-            </Link>
             <div className="text-xs mt-3 text-muted-foreground">
               Member since: {new Date(profile.created_at).toLocaleDateString()}
             </div>

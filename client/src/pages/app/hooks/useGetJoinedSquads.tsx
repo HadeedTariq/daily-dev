@@ -11,3 +11,16 @@ export const useGetJoinedSquads = () => {
   });
   return query;
 };
+export const useGetUserJoinedSquads = (userId: number | undefined) => {
+  const query = useQuery({
+    queryKey: [`getUserJoinedSquads_${userId}`],
+    queryFn: async () => {
+      const { data } = await profileApi.get(
+        `/get-user-joined-squads?userId=${userId}`
+      );
+      return data.squads as JoinedSquad[];
+    },
+    enabled: userId !== undefined,
+  });
+  return query;
+};
