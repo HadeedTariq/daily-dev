@@ -7,10 +7,68 @@ import { DatabaseError } from "pg";
 class ProfileController {
   constructor() {
     this.getProfile = this.getProfile.bind(this);
+    this.getUserProfile = this.getUserProfile.bind(this);
     this.editProfile = this.editProfile.bind(this);
     this.readmeHandler = this.readmeHandler.bind(this);
     this.updateStreak = this.updateStreak.bind(this);
     this.getMyJoinedSquads = this.getMyJoinedSquads.bind(this);
+  }
+  async getUserProfile(req: Request, res: Response, next: NextFunction) {
+    const { username } = req.params;
+
+    try {
+      const query = `
+      WITH actual_user AS (
+          SELECT 
+              a_u.name,
+              a_u.username,
+              a_u.avatar,
+              a_u.email,
+              a_u.created_at,
+              a_u.profession,
+              a_u.id
+          FROM 
+              users a_u 
+          WHERE 
+              a_u.username = $1
+      )
+      SELECT 
+          u.name,
+          u.username,
+          u.avatar,
+          u.email,
+          u.created_at,
+          u.profession,
+          row_to_json(ab) AS about,
+          row_to_json(sl) AS social_links,
+          row_to_json(ust) AS user_stats,
+          row_to_json(stk) AS streaks
+      FROM 
+          actual_user u
+      LEFT JOIN 
+          about ab ON u.id = ab.user_id
+      LEFT JOIN 
+          social_links sl ON u.id = sl.user_id
+      LEFT JOIN 
+          user_stats ust ON u.id = ust.user_id
+      LEFT JOIN 
+          streaks stk ON u.id = stk.user_id;
+  `;
+
+      const { rows } = await queryDb(query, [username]);
+
+      if (rows.length === 0) {
+        return next({ status: 404, message: "User not found" });
+      }
+
+      res.status(200).json({ profile: rows[0] });
+    } catch (error: any) {
+      if (error instanceof DatabaseError) {
+        return next({ status: 500, message: "Database query error" });
+      }
+
+      next(error);
+    }
   }
   async getProfile(req: Request, res: Response, next: NextFunction) {
     const { user: authUser } = req.body;

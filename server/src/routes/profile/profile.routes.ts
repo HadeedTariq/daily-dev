@@ -8,6 +8,7 @@ import { profileController } from "./profile.controller";
 const router = Router();
 router.use(checkAuth);
 router.get("/", asyncHandler(profileController.getProfile));
+router.get("/user/:username", asyncHandler(profileController.getUserProfile));
 router.get(
   "/get-my-joined-squads",
   asyncHandler(profileController.getMyJoinedSquads)
