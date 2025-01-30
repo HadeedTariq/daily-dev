@@ -123,29 +123,30 @@ export const UserFollowingsDialog = ({
                       </div>
                     </div>
                   </div>
-                  {follower.current_user_follow ? (
-                    <Button
-                      variant={"destructive"}
-                      size={"sm"}
-                      onClick={() => {
-                        unFollowUser(follower.id);
-                      }}
-                      disabled={isPending}
-                    >
-                      UnFollow
-                    </Button>
-                  ) : (
-                    <Button
-                      variant={"default"}
-                      size={"sm"}
-                      onClick={() => {
-                        followUser(follower.id);
-                      }}
-                      disabled={isFollowingPending}
-                    >
-                      Follow
-                    </Button>
-                  )}
+                  {follower.id !== user?.id &&
+                    (follower.current_user_follow ? (
+                      <Button
+                        variant={"destructive"}
+                        size={"sm"}
+                        onClick={() => {
+                          unFollowUser(follower.id);
+                        }}
+                        disabled={isPending}
+                      >
+                        UnFollow
+                      </Button>
+                    ) : (
+                      <Button
+                        variant={"default"}
+                        size={"sm"}
+                        onClick={() => {
+                          followUser(follower.id);
+                        }}
+                        disabled={isFollowingPending}
+                      >
+                        Follow
+                      </Button>
+                    ))}
                 </div>
               ))}
             </div>

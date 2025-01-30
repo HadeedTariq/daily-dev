@@ -17,6 +17,7 @@ import {
 } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { useFullApp } from "@/store/hooks/useFullApp";
 type Follower = {
   id: number;
   username: string;
@@ -36,6 +37,7 @@ export const UserFollowersDialog = ({
   onClose,
   userId,
 }: UserFollowersDialogProps) => {
+  const { user } = useFullApp();
   const queryClient = useQueryClient();
 
   const { data: followers, isLoading } = useQuery({
@@ -118,29 +120,30 @@ export const UserFollowersDialog = ({
                       </div>
                     </div>
                   </div>
-                  {follower.current_user_follow ? (
-                    <Button
-                      variant={"destructive"}
-                      size={"sm"}
-                      onClick={() => {
-                        unFollowUser(follower.id);
-                      }}
-                      disabled={isPending}
-                    >
-                      UnFollow
-                    </Button>
-                  ) : (
-                    <Button
-                      variant={"default"}
-                      size={"sm"}
-                      onClick={() => {
-                        followUser(follower.id);
-                      }}
-                      disabled={isFollowingPending}
-                    >
-                      Follow
-                    </Button>
-                  )}
+                  {follower.id !== user?.id &&
+                    (follower.current_user_follow ? (
+                      <Button
+                        variant={"destructive"}
+                        size={"sm"}
+                        onClick={() => {
+                          unFollowUser(follower.id);
+                        }}
+                        disabled={isPending}
+                      >
+                        UnFollow
+                      </Button>
+                    ) : (
+                      <Button
+                        variant={"default"}
+                        size={"sm"}
+                        onClick={() => {
+                          followUser(follower.id);
+                        }}
+                        disabled={isFollowingPending}
+                      >
+                        Follow
+                      </Button>
+                    ))}
                 </div>
               ))}
             </div>
