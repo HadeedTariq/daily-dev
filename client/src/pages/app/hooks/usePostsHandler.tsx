@@ -18,13 +18,16 @@ interface PostResponse {
   posts: PostCards[];
 }
 
-export const useGetNewPosts = (initialPageSize: number = 8) => {
+export const useGetNewPosts = (
+  initialPageSize: number = 8,
+  sortingOrder: string
+) => {
   const dispatch = useDispatch();
 
   const fetchPosts = async ({ pageParam = 1 }: QueryFunctionContext) => {
     try {
       const { data } = await postApi.get<PostResponse>(
-        `?pageSize=${initialPageSize}&pageNumber=${pageParam}`
+        `?pageSize=${initialPageSize}&pageNumber=${pageParam}&sortingOrder=${sortingOrder}`
       );
 
       dispatch(addNewPosts(data.posts));
@@ -43,7 +46,7 @@ export const useGetNewPosts = (initialPageSize: number = 8) => {
   };
 
   const infiniteQuery = useInfiniteQuery({
-    queryKey: ["infinitePosts", initialPageSize],
+    queryKey: [`infinitePosts_${sortingOrder}`, initialPageSize],
     queryFn: fetchPosts,
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {

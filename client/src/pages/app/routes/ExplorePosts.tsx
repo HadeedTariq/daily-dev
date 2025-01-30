@@ -3,12 +3,13 @@ import { HomePostCard } from "../components/posts/HomePostCard";
 import { useGetNewPosts } from "../hooks/usePostsHandler";
 import { useEffect } from "react";
 import { useInView } from "react-intersection-observer";
+import SortingElements from "../components/posts/SortingOrder";
 
-const Home = () => {
+const ExplorePosts = () => {
   const { posts, stopFetchingPosts } = useFullApp();
 
   const { fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
-    useGetNewPosts(8, "id");
+    useGetNewPosts(8, "popular");
 
   const { ref, inView } = useInView({
     threshold: 0.1,
@@ -28,6 +29,7 @@ const Home = () => {
 
   return (
     <>
+      <SortingElements />
       <main className="flex mx-auto px-4 py-8 flex-wrap gap-x-8 gap-y-8 justify-center">
         {posts?.map((post, index) => (
           <HomePostCard
@@ -47,4 +49,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default ExplorePosts;

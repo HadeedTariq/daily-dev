@@ -48,34 +48,34 @@ const data = {
   mainMenu: [
     { title: "My feed", icon: BookOpen, url: "/" },
     { title: "Following", icon: Users, url: "/followings" },
-    { title: "Explore", icon: Globe, url: "#" },
-    { title: "Bookmarks", icon: Bookmark, url: "#" },
-    { title: "History", icon: Clock, url: "#" },
-    { title: "Network", icon: Network, url: "#" },
-    { title: "Find Squads", icon: Search, url: "#" },
+    { title: "Explore", icon: Globe, url: "/explore" },
+    // { title: "Bookmarks", icon: Bookmark, url: "#" },
+    // { title: "History", icon: Clock, url: "#" },
+    // { title: "Network", icon: Network, url: "#" },
+    // { title: "Find Squads", icon: Search, url: "#" },
   ],
   squads: [
-    { title: "daily.dev World", icon: GalleryVerticalEnd, url: "#" },
-    { title: "Dev Squad", icon: Users, url: "#" },
-    { title: "Engineering Leadership", icon: Command, url: "#" },
-    { title: "NextJS", icon: Frame, url: "#" },
-    { title: "Node.js developers", icon: SquareTerminal, url: "#" },
-    { title: "Open Source", icon: GitPullRequest, url: "#" },
-    { title: "roadmap.sh", icon: Map, url: "#" },
+    // { title: "daily.dev World", icon: GalleryVerticalEnd, url: "#" },
+    // { title: "Dev Squad", icon: Users, url: "#" },
+    // { title: "Engineering Leadership", icon: Command, url: "#" },
+    // { title: "NextJS", icon: Frame, url: "#" },
+    // { title: "Node.js developers", icon: SquareTerminal, url: "#" },
+    // { title: "Open Source", icon: GitPullRequest, url: "#" },
+    // { title: "roadmap.sh", icon: Map, url: "#" },
   ],
   customFeeds: [
-    { title: "Cloud", icon: Cloud, url: "#" },
-    { title: "Tips", icon: Lightbulb, url: "#" },
-    { title: "MERN", icon: Database, url: "#" },
-    { title: "Backend", icon: SquareTerminal, url: "#" },
-    { title: "Database", icon: Database, url: "#" },
-    { title: "Dsa", icon: Code, url: "#" },
+    // { title: "Cloud", icon: Cloud, url: "#" },
+    // { title: "Tips", icon: Lightbulb, url: "#" },
+    // { title: "MERN", icon: Database, url: "#" },
+    // { title: "Backend", icon: SquareTerminal, url: "#" },
+    // { title: "Database", icon: Database, url: "#" },
+    // { title: "Dsa", icon: Code, url: "#" },
   ],
   discover: [
-    { title: "Tags", icon: Bookmark, url: "#" },
-    { title: "Sources", icon: Globe, url: "#" },
-    { title: "Leaderboard", icon: PieChart, url: "#" },
-    { title: "Discussions", icon: MessageSquare, url: "#" },
+    // { title: "Tags", icon: Bookmark, url: "#" },
+    // { title: "Sources", icon: Globe, url: "#" },
+    // { title: "Leaderboard", icon: PieChart, url: "#" },
+    // { title: "Discussions", icon: MessageSquare, url: "#" },
   ],
 };
 
@@ -88,7 +88,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <SidebarGroup>
           <SidebarMenu>
-            {data.mainMenu.map((item) => (
+            {data.mainMenu?.map((item: any) => (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild>
                   <Link to={item.url}>
@@ -105,7 +105,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarGroupLabel>Squads</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {data.squads.map((squad) => (
+              {data.squads?.map((squad: any) => (
                 <SidebarMenuItem key={squad.title}>
                   <SidebarMenuButton asChild>
                     <Link to={squad.url}>
@@ -123,7 +123,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarGroupLabel>Custom feeds</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {data.customFeeds.map((feed) => (
+              {data.customFeeds?.map((feed: any) => (
                 <SidebarMenuItem key={feed.title}>
                   <SidebarMenuButton asChild>
                     <Link to={feed.url}>
@@ -141,7 +141,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarGroupLabel>Discover</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {data.discover.map((item) => (
+              {data.discover?.map((item: any) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <Link to={item.url}>

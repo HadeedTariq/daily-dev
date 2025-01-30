@@ -35,53 +35,144 @@ class PostController {
     res.status(200).json({ tags: rows });
   }
   async getPosts(req: Request, res: Response, next: NextFunction) {
-    const { pageSize, pageNumber } = req.query;
+    const { pageSize, pageNumber, sortingOrder } = req.query;
     // const { rows } = await queryDb("select * from users", []);
     // console.log(rows);
 
     try {
-      const query = `
-      SELECT 
-          p.id,
-          p.title,
-          p.thumbnail,
-          p.content,
-          p.slug,
-          p.created_at,
-          JSON_AGG(t.name) FILTER (WHERE t.id IS NOT NULL) AS tags,
-          p_v.upvotes AS upvotes,
-          p_vw.views AS views,
-          JSON_BUILD_OBJECT(
-              'squad_thumbnail', p_sq.thumbnail,
-              'squad_handle', p_sq.squad_handle
-          ) AS squad_details,
-          JSON_BUILD_OBJECT(
-              'author_avatar', u.avatar,
-              'author_name', u.name,
-              'author_username', u.username,
-              'author_id', u.id
-          ) AS author_details,
-          EXISTS (
-              SELECT 1 
-              FROM user_upvotes u_u_v 
-              WHERE u_u_v.user_id = $1 
-                AND u_u_v.post_id = p.id
-          ) AS current_user_upvoted
-      FROM posts p
-      LEFT JOIN post_tags p_t ON p.id = p_t.post_id
-      LEFT JOIN tags t ON p_t.tag_id = t.id
-      INNER JOIN post_upvotes p_v ON p.id = p_v.post_id
-      INNER JOIN post_views p_vw ON p.id = p_vw.post_id
-      INNER JOIN squads p_sq ON p.squad_id = p_sq.id
-      INNER JOIN users u ON p.author_id = u.id
-      GROUP BY 
-          p.id, p.title, p.thumbnail, p.created_at, 
-          p_v.upvotes, p_vw.views, 
-          p_sq.thumbnail, p_sq.squad_handle, 
-          u.avatar,u.username,u.name,u.id 
-          order by p.id 
-          limit $2 offset ($3 - 1) * $2;
-  `;
+      let query = "";
+      if (sortingOrder === "id" || sortingOrder === "") {
+        query = `
+        SELECT 
+            p.id,
+            p.title,
+            p.thumbnail,
+            p.content,
+            p.slug,
+            p.created_at,
+            JSON_AGG(t.name) FILTER (WHERE t.id IS NOT NULL) AS tags,
+            p_v.upvotes AS upvotes,
+            p_vw.views AS views,
+            JSON_BUILD_OBJECT(
+                'squad_thumbnail', p_sq.thumbnail,
+                'squad_handle', p_sq.squad_handle
+            ) AS squad_details,
+            JSON_BUILD_OBJECT(
+                'author_avatar', u.avatar,
+                'author_name', u.name,
+                'author_username', u.username,
+                'author_id', u.id
+            ) AS author_details,
+            EXISTS (
+                SELECT 1 
+                FROM user_upvotes u_u_v 
+                WHERE u_u_v.user_id = $1 
+                  AND u_u_v.post_id = p.id
+            ) AS current_user_upvoted
+        FROM posts p
+        LEFT JOIN post_tags p_t ON p.id = p_t.post_id
+        LEFT JOIN tags t ON p_t.tag_id = t.id
+        INNER JOIN post_upvotes p_v ON p.id = p_v.post_id
+        INNER JOIN post_views p_vw ON p.id = p_vw.post_id
+        INNER JOIN squads p_sq ON p.squad_id = p_sq.id
+        INNER JOIN users u ON p.author_id = u.id
+        GROUP BY 
+            p.id, p.title, p.thumbnail, p.created_at, 
+            p_v.upvotes, p_vw.views, 
+            p_sq.thumbnail, p_sq.squad_handle, 
+            u.avatar,u.username,u.name,u.id 
+            order by p.id 
+            limit $2 offset ($3 - 1) * $2;
+    `;
+      }
+      if (sortingOrder === "upvotes") {
+        query = `
+        SELECT 
+            p.id,
+            p.title,
+            p.thumbnail,
+            p.content,
+            p.slug,
+            p.created_at,
+            JSON_AGG(t.name) FILTER (WHERE t.id IS NOT NULL) AS tags,
+            p_v.upvotes AS upvotes,
+            p_vw.views AS views,
+            JSON_BUILD_OBJECT(
+                'squad_thumbnail', p_sq.thumbnail,
+                'squad_handle', p_sq.squad_handle
+            ) AS squad_details,
+            JSON_BUILD_OBJECT(
+                'author_avatar', u.avatar,
+                'author_name', u.name,
+                'author_username', u.username,
+                'author_id', u.id
+            ) AS author_details,
+            EXISTS (
+                SELECT 1 
+                FROM user_upvotes u_u_v 
+                WHERE u_u_v.user_id = $1 
+                  AND u_u_v.post_id = p.id
+            ) AS current_user_upvoted
+        FROM posts p
+        LEFT JOIN post_tags p_t ON p.id = p_t.post_id
+        LEFT JOIN tags t ON p_t.tag_id = t.id
+        INNER JOIN post_upvotes p_v ON p.id = p_v.post_id
+        INNER JOIN post_views p_vw ON p.id = p_vw.post_id
+        INNER JOIN squads p_sq ON p.squad_id = p_sq.id
+        INNER JOIN users u ON p.author_id = u.id
+        GROUP BY 
+            p.id, p.title, p.thumbnail, p.created_at, 
+            p_v.upvotes, p_vw.views, 
+            p_sq.thumbnail, p_sq.squad_handle, 
+            u.avatar,u.username,u.name,u.id 
+            order by  p_v.upvotes desc
+            limit $2 offset ($3 - 1) * $2;
+    `;
+      }
+      if (sortingOrder === "popular") {
+        query = `
+        SELECT 
+            p.id,
+            p.title,
+            p.thumbnail,
+            p.content,
+            p.slug,
+            p.created_at,
+            JSON_AGG(t.name) FILTER (WHERE t.id IS NOT NULL) AS tags,
+            p_v.upvotes AS upvotes,
+            p_vw.views AS views,
+            JSON_BUILD_OBJECT(
+                'squad_thumbnail', p_sq.thumbnail,
+                'squad_handle', p_sq.squad_handle
+            ) AS squad_details,
+            JSON_BUILD_OBJECT(
+                'author_avatar', u.avatar,
+                'author_name', u.name,
+                'author_username', u.username,
+                'author_id', u.id
+            ) AS author_details,
+            EXISTS (
+                SELECT 1 
+                FROM user_upvotes u_u_v 
+                WHERE u_u_v.user_id = $1 
+                  AND u_u_v.post_id = p.id
+            ) AS current_user_upvoted
+        FROM posts p
+        LEFT JOIN post_tags p_t ON p.id = p_t.post_id
+        LEFT JOIN tags t ON p_t.tag_id = t.id
+        INNER JOIN post_upvotes p_v ON p.id = p_v.post_id
+        INNER JOIN post_views p_vw ON p.id = p_vw.post_id
+        INNER JOIN squads p_sq ON p.squad_id = p_sq.id
+        INNER JOIN users u ON p.author_id = u.id
+        GROUP BY 
+            p.id, p.title, p.thumbnail, p.created_at, 
+            p_v.upvotes, p_vw.views, 
+            p_sq.thumbnail, p_sq.squad_handle, 
+            u.avatar,u.username,u.name,u.id 
+            order by  p_vw.views desc
+            limit $2 offset ($3 - 1) * $2;
+    `;
+      }
 
       const { rows } = await queryDb(query, [
         req.body.user.id,

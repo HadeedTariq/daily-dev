@@ -28,6 +28,7 @@ import FollowingPosts from "./pages/app/routes/FollowingPosts";
 import UserProfile from "./pages/app/routes/user-profile/UserProfile";
 import { UserProfileReadmeHandler } from "./pages/app/routes/user-profile/UserProfileReadmeHandler";
 import { UserPosts } from "./pages/app/routes/user-profile/UserPosts";
+import ExplorePosts from "./pages/app/routes/ExplorePosts";
 
 function App() {
   const { user } = useFullApp();
@@ -70,6 +71,7 @@ function App() {
     <Routes>
       <Route path="/" element={<NavBar />}>
         <Route index element={<Home />} />
+        <Route path="explore" element={<ExplorePosts />} />
         <Route path="followings" element={<FollowingPosts />} />
         <Route path="profile" element={<Profile />}>
           <Route index element={<ReadmeHandler />} />
