@@ -8,7 +8,7 @@ const Home = () => {
   const { posts, stopFetchingPosts } = useFullApp();
 
   const { fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
-    useGetNewPosts(8, "id");
+    useGetNewPosts(8, "id", true);
 
   const { ref, inView } = useInView({
     threshold: 0.1,
@@ -25,6 +25,12 @@ const Home = () => {
     stopFetchingPosts,
     fetchNextPage,
   ]);
+
+  useEffect(() => {
+    return () => {
+      window.scrollTo(0, 0);
+    };
+  }, []);
 
   return (
     <>

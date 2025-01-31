@@ -3,6 +3,7 @@ import {
   addNewComments,
   addNewFollowingPosts,
   addNewPosts,
+  addNewSortedPosts,
   setStopFetchingFollowingPosts,
   setStopFetchingPostComments,
   setStopFetchingPosts,
@@ -20,7 +21,8 @@ interface PostResponse {
 
 export const useGetNewPosts = (
   initialPageSize: number = 8,
-  sortingOrder: string
+  sortingOrder: string,
+  main = true
 ) => {
   const dispatch = useDispatch();
 
@@ -29,8 +31,11 @@ export const useGetNewPosts = (
       const { data } = await postApi.get<PostResponse>(
         `?pageSize=${initialPageSize}&pageNumber=${pageParam}&sortingOrder=${sortingOrder}`
       );
-
-      dispatch(addNewPosts(data.posts));
+      if (main) {
+        dispatch(addNewPosts(data.posts));
+      } else {
+        dispatch(addNewSortedPosts(data.posts));
+      }
 
       if (data.posts.length === 0) {
         dispatch(setStopFetchingPosts());
@@ -46,14 +51,14 @@ export const useGetNewPosts = (
   };
 
   const infiniteQuery = useInfiniteQuery({
-    queryKey: [`infinitePosts_${sortingOrder}`, initialPageSize],
+    queryKey: [`infinitePosts_${sortingOrder}_${initialPageSize}`],
     queryFn: fetchPosts,
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {
       return lastPage.posts.length > 0 ? allPages.length + 1 : undefined;
     },
-    refetchOnMount: false,
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
     staleTime: 5000,
     gcTime: 10 * 60 * 1000,
   });

@@ -7,6 +7,7 @@ export type FullAppState = {
   currentSquad: Omit<SquadDetails, "squad_posts"> | null;
   tags: Tag[];
   posts: PostCards[];
+  sortedPosts: PostCards[];
   stopFetchingPosts: boolean;
   followingPosts: PostCards[];
   stopFetchingFollowingPosts: boolean;
@@ -21,6 +22,7 @@ const initialState: FullAppState = {
   currentSquad: null,
   tags: [],
   posts: [],
+  sortedPosts: [],
   followingPosts: [],
   currentPostComments: [],
   stopFetchingPosts: false,
@@ -52,8 +54,14 @@ const fullAppReducer = createSlice({
     setTags: (state, { payload }: { payload: Tag[] }) => {
       state.tags = payload;
     },
+    setPostsEmpty: (state) => {
+      state.posts = [];
+    },
     addNewPosts: (state, { payload }: { payload: PostCards[] }) => {
       state.posts.push(...payload);
+    },
+    addNewSortedPosts: (state, { payload }: { payload: PostCards[] }) => {
+      state.sortedPosts.push(...payload);
     },
     addNewFollowingPosts: (state, { payload }: { payload: PostCards[] }) => {
       state.followingPosts.push(...payload);
@@ -86,6 +94,7 @@ export const {
   setCurrentSquad,
   setTags,
   addNewPosts,
+  addNewSortedPosts,
   setStopFetchingPosts,
   addNewFollowingPosts,
   setStopFetchingFollowingPosts,
@@ -94,5 +103,6 @@ export const {
   setCurrentPost,
   emptyCurrenPostComments,
   setCurrentUserProfile,
+  setPostsEmpty,
 } = fullAppReducer.actions;
 export default fullAppReducer.reducer;
