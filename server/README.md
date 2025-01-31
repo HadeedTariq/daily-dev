@@ -1,73 +1,212 @@
-# 🚀 Express TypeScript Boilerplate 2024
+# **Daily Dev Clone**
 
-[![Build](https://github.com/edwinhern/express-typescript-2024/actions/workflows/build.yml/badge.svg)](https://github.com/edwinhern/express-typescript-2024/actions/workflows/build.yml)
-[![Test](https://github.com/edwinhern/express-typescript-2024/actions/workflows/test.yml/badge.svg)](https://github.com/edwinhern/express-typescript-2024/actions/workflows/test.yml)
-[![Code Quality](https://github.com/edwinhern/express-typescript-2024/actions/workflows/code-quality.yml/badge.svg)](https://github.com/edwinhern/express-typescript-2024/actions/workflows/code-quality.yml)
-[![Docker Image CI](https://github.com/edwinhern/express-typescript-2024/actions/workflows/docker-image.yml/badge.svg)](https://github.com/edwinhern/express-typescript-2024/actions/workflows/docker-image.yml)
+**A Full-Stack Social Platform for Developers**
 
-``` code
-Hey There! 🙌 
-🤾 that ⭐️ button if you like this boilerplate. 
-```
+This is a feature-rich social platform designed for developers to share posts, join squads, collaborate, and grow their network. It includes authentication, profile management, post creation, squad collaboration, and more.
 
-## 🌟 Introduction
+---
 
-Welcome to the Express TypeScript Boilerplate 2024 – a streamlined, efficient, and scalable foundation for building powerful backend services with modern tools and practices in Express.js and TypeScript.
+## **Features**
 
-## 💡 Motivation
+### **Authentication**
 
-This boilerplate aims to:
+- **Register**: User registration with email verification.
+- **Verify**: Email verification for account activation.
+- **Login**: Secure login functionality.
+- **OAuth**: Integration with GitHub for seamless authentication.
+- **Frontend**: User-friendly authentication UI.
 
-- ✨ Reduce setup time for new projects
-- 📊 Ensure code consistency and quality
-- ⚡  Facilitate rapid development
-- 🛡️ Encourage best practices in security, testing, and performance
+---
 
-## 🚀 Features
+### **Profile**
 
-- 📁 Modular Structure: Organized by feature for easy navigation and scalability
-- 💨 Faster Execution with tsx: Rapid TypeScript execution with `tsx` and type checking with `tsc`
-- 🌐 Stable Node Environment: Latest LTS Node version in `.nvmrc`
-- 🔧 Simplified Environment Variables: Managed with Envalid
-- 🔗 Path Aliases: Cleaner code with shortcut imports
-- 🔄 Renovate Integration: Automatic updates for dependencies
-- 🔒 Security: Helmet for HTTP header security and CORS setup
-- 📊 Logging: Efficient logging with `pino-http`
-- 🧪 Comprehensive Testing: Setup with Vitest and Supertest
-- 🔑 Code Quality Assurance: Husky and lint-staged for consistent quality
-- ✅ Unified Code Style: `Biomejs` for consistent coding standards
-- 📃 API Response Standardization: `ServiceResponse` class for consistent API responses
-- 🐳 Docker Support: Ready for containerization and deployment
-- 📝 Input Validation with Zod: Strongly typed request validation using `Zod`
-- 🧩 Swagger UI: Interactive API documentation generated from Zod schemas
+- **Create About and Social Links**: Users can add personal details and social media links.
+- **Profile Page**: Frontend profile page with user details.
+- **Backend Functionalities**: APIs for profile management.
+- **Edit Profile**: Users can update their profile information.
+- **Share Profile**: Shareable profile links.
 
-## 🛠️ Getting Started
+---
 
-### Video Demo
+### **ReadMe**
 
-For a visual guide, watch the [video demo](https://github.com/user-attachments/assets/b1698dac-d582-45a0-8d61-31131732b74e) to see the setup and running of the project.
+- **ReadMe Editor**: A rich text editor for creating and editing ReadMe content.
+- **Tables**:
+  - **Streak**: Streak logic for tracking user activity.
+  - **Posts**: Table for managing posts.
+  - **Tags**: Table for post tags.
 
-### Step-by-Step Guide
+---
 
-#### Step 1: 🚀 Initial Setup
+### **Posts**
 
-- Clone the repository: `git clone https://github.com/edwinhern/express-typescript-2024.git`
-- Navigate: `cd express-typescript-2024`
-- Install dependencies: `npm ci`
+- **Post Creation**: Users can create and publish posts.
+- **Reading Streak**: Streak tracking for post engagement.
+- **Streak Counting**: Logic to calculate and display streaks.
+- **Tables**:
+  - **Squads**: Table for managing squads.
+  - **Squad Members**: Table for squad members.
 
-#### Step 2: ⚙️ Environment Configuration
+---
 
-- Create `.env`: Copy `.env.template` to `.env`
-- Update `.env`: Fill in necessary environment variables
+### **Squads**
 
-#### Step 3: 🏃‍♂️ Running the Project
+- **Squad Creation**: Users can create squads.
+- **Role Management**: Only one admin per squad; roles can be updated.
+- **Sidebar**: Squad-specific sidebar for navigation.
+- **Registration Fix**: Improved squad registration functionality.
+- **Squad Details Page**:
+  - **Edit Page**: Edit squad details.
+  - **Delete Squad**: Admin can delete squads.
+  - **Squad Page**: Squad profile page.
+  - **Moderator Section**: Manage squad moderators.
+  - **Member Section**: Manage squad members.
+  - **Join/Leave Squad**: Users can join or leave squads.
+  - **Admin Controls**: Admins can promote/demote members and moderators.
+- **Squad Profile Page**: Public squad profile.
+- **Schema Finalization**: Squad database schema finalized.
+- **Public Squad Member Adding**: Add members to public squads.
+- **Dummy Data**: Added non-energy hours dummy data.
+- **Post Creation in Squads**: Users can create posts only in squads they’ve joined.
+- **Profile Integration**: Show squads a user has joined on their profile.
 
-- Development Mode: `npm run dev`
-- Building: `npm run build`
-- Production Mode: Set `.env` to `NODE_ENV="production"` then `npm run build && npm run start`
+---
 
-## 🤝 Feedback and Contributions
+### **Posts (Detailed)**
 
-We'd love to hear your feedback and suggestions for further improvements. Feel free to contribute and join us in making backend development cleaner and faster!
+- **Posts Home Page**: Display all posts.
+- **Views**: Track post views .
+- **Upvotes**: Post upvoting functionality (non-scalable).
+- **Comments**:
+  - **Replies**: Nested comment replies.
+  - **Upvotes**: Comment upvoting.
+  - **Deletion**: Delete comments and replies.
+  - **Cascading**: Cascading deletion for replies.
+- **Infinite Scrolling**:
+  - **Post Fetching**: Infinite scroll for posts.
+  - **Comment Fetching**: Infinite scroll for comments.
 
-🎉 Happy coding!
+---
+
+### **Followers/Following**
+
+- **Schema**: Notification schema for followers/following.
+- **Functionality**: Follow/unfollow users.
+- **Notifications**: Notifications for follow/unfollow actions.
+- **Profile Integration**: Display followers/following on profiles.
+- **Following Posts**: Page for posts from followed users.
+- **Squad Integration**: Follow/unfollow within squads.
+
+---
+
+### **Other Features**
+
+- **Other User Profile Page**: View other users’ profiles.
+- **Explore Page**: Sort and explore posts based on various factors.
+
+---
+
+## **API Endpoints**
+
+### **Authentication**
+
+- `POST /auth/register`: Register a new user.
+- `POST /auth/verify`: Verify user email.
+- `POST /auth/login`: User login.
+- `POST /auth/oauth/github`: GitHub OAuth integration.
+
+---
+
+### **Posts**
+
+- `GET /posts`: Get all posts.
+- `GET /posts/me`: Get my posts.
+- `GET /posts/user/:userId`: Get posts by a specific user.
+- `GET /posts/:slug`: Get post by slug.
+- `GET /posts/tags`: Get post tags.
+- `POST /posts`: Create a post.
+- `POST /posts/tags`: Create a tag.
+- `POST /posts/:postId/comments`: Comment on a post.
+- `POST /posts/comments/:commentId/replies`: Reply to a comment.
+- `PUT /posts/comments/:commentId`: Update a comment.
+- `PUT /posts/replies/:replyId`: Update a reply.
+- `POST /posts/comments/:commentId/upvote`: Upvote a comment.
+- `PUT /posts/:postId`: Edit a post.
+- `POST /posts/:postId/upvote`: Upvote a post.
+- `GET /posts/:postId/views`: View a post.
+- `DELETE /posts/comments/:commentId`: Delete a comment.
+- `DELETE /posts/replies/:replyId`: Delete a reply.
+- `DELETE /posts/:postId`: Delete a post.
+
+---
+
+### **Profile**
+
+- `GET /profile`: Get my profile.
+- `GET /profile/:username`: Get user profile by username.
+- `GET /profile/squads`: Get my joined squads.
+- `GET /profile/:username/squads`: Get user’s joined squads.
+- `PUT /profile`: Edit profile.
+- `PUT /profile/readme`: Handle ReadMe updates.
+- `PUT /profile/streak`: Update streak.
+
+---
+
+### **Squads**
+
+- `POST /squads`: Create a squad.
+- `GET /squads/me`: Get my squads.
+- `GET /squads/:squadId`: Get squad details.
+- `GET /squads`: Get all squads.
+- `POST /squads/:squadId/join`: Join a squad.
+- `POST /squads/:squadId/leave`: Leave a squad.
+- `PUT /squads/:squadId`: Edit squad (Admin).
+- `PUT /squads/:squadId/admin`: Make a squad admin (Admin).
+- `PUT /squads/:squadId/moderator`: Make a squad moderator (Admin).
+- `PUT /squads/:squadId/member`: Make a squad member (Admin).
+- `DELETE /squads/:squadId/member`: Remove a squad member (Admin).
+- `DELETE /squads/:squadId`: Delete a squad (Admin).
+
+---
+
+### **Followers/Following**
+
+- `POST /follow/:userId`: Follow a user.
+- `POST /unfollow/:userId`: Unfollow a user.
+- `GET /followers/me`: Get my followers.
+- `GET /followers/:userId`: Get user’s followers.
+- `GET /followings/me`: Get my followings.
+- `GET /followings/:userId`: Get user’s followings.
+- `GET /followings/posts`: Get followings’ posts.
+- `GET /notifications`: Get notifications.
+- `PUT /notifications/:notificationId/read`: Mark notifications as read.
+
+---
+
+## **Tech Stack**
+
+- **Frontend**: React, JavaScript
+- **Backend**: Node.js, Express
+- **Database**: (PostgreSQL)
+- **Authentication**: OAuth (GitHub), JWT
+
+---
+
+## **Installation**
+
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Set up environment variables:  
+   Create a `.env` file and add required variables (e.g., database credentials, API keys).
+4. Run the app:
+   ```bash
+   npm start
+   ```
+
+---
