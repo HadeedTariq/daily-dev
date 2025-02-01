@@ -1,7 +1,8 @@
-import { queryDb } from "@/db/connect";
+import { pool, queryDb } from "@/db/connect";
 import { NextFunction, Request, Response } from "express";
 import { DatabaseError } from "pg";
 import sanitizeHtml from "sanitize-html";
+import nlp from "compromise";
 
 class PostController {
   constructor() {
@@ -26,6 +27,20 @@ class PostController {
     this.deleteCommentReply = this.deleteCommentReply.bind(this);
   }
 
+  getTagsFromDb = async () => {
+    const res = await queryDb("SELECT name FROM tags", []);
+    return res.rows.map((row) => row.name);
+  };
+
+  detectTags = (content: string, predefinedTags: string[]) => {
+    const doc = nlp(content);
+    const keywords = doc.topics().out("array");
+
+    return keywords.filter((keyword: any) =>
+      predefinedTags.includes(keyword.toLowerCase())
+    );
+  };
+
   async getPostsTags(req: Request, res: Response, next: NextFunction) {
     const query = `
         SELECT * 
@@ -36,8 +51,8 @@ class PostController {
   }
   async getPosts(req: Request, res: Response, next: NextFunction) {
     const { pageSize, pageNumber, sortingOrder } = req.query;
-    // const { rows } = await queryDb("select * from users", []);
-    // console.log(rows);
+    const { rows: posts } = await queryDb("select * from posts", []);
+    posts.forEach((post) => {});
 
     try {
       let query = "";
@@ -428,54 +443,71 @@ class PostController {
         .json({ message: "You are not a member of this squad." });
     }
 
-    const postQuery = `
-      INSERT INTO posts (title, content, thumbnail, author_id, squad_id, slug)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING id;
-    `;
-
     const sanitizedContent = sanitizeHtml(content, {
       allowedTags: [],
       allowedAttributes: {},
     });
+
     const slug = title
       .toLowerCase()
       .trim()
       .replace(/[\s\W-]+/g, "-");
 
-    const { rows: postRows } = await queryDb(postQuery, [
-      title,
-      sanitizedContent,
-      thumbnail,
-      Number(req.body.user.id),
-      Number(squad),
-      slug,
-    ]);
+    const client = await pool.connect();
 
-    const postId = postRows[0].id;
+    try {
+      await client.query("BEGIN");
 
-    const postTagValues = tags
-      .map((tag: { id: number }) => `(${postId}, ${tag.id})`)
-      .join(", ");
+      const postQuery = `
+      INSERT INTO posts (title, content, thumbnail, author_id, squad_id, slug)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING id;
+  `;
 
-    const insertPostTagsQuery = `
+      const { rows: postRows } = await client.query(postQuery, [
+        title,
+        sanitizedContent,
+        thumbnail,
+        Number(req.body.user.id),
+        Number(squad),
+        slug,
+      ]);
+
+      const postId = postRows[0].id;
+
+      const postTagValues = tags
+        .map((tag: { id: number }) => `(${postId}, ${tag.id})`)
+        .join(", ");
+
+      const insertPostTagsQuery = `
       INSERT INTO post_tags (post_id, tag_id)
       VALUES ${postTagValues};
     `;
 
-    await queryDb(insertPostTagsQuery);
+      await client.query(insertPostTagsQuery);
 
-    await queryDb(
-      `INSERT INTO post_upvotes (post_id, upvotes) VALUES ($1, $2)`,
-      [postId, 0]
-    );
+      await client.query(
+        `INSERT INTO post_upvotes (post_id, upvotes) VALUES ($1, $2)`,
+        [postId, 0]
+      );
 
-    await queryDb(`INSERT INTO post_views (post_id, upvotes) VALUES ($1, $2)`, [
-      postId,
-      0,
-    ]);
+      await client.query(
+        `INSERT INTO post_views (post_id, views) VALUES ($1, $2)`,
+        [postId, 0]
+      );
 
-    res.status(201).json({ message: "Post created successfully." });
+      await client.query("COMMIT");
+      res.status(201).json({ message: "Post created successfully." });
+    } catch (error) {
+      await client.query("ROLLBACK");
+      console.error("Transaction failed and rolled back:", error);
+      res
+        .status(500)
+        .json({ message: "An error occurred while creating the post." });
+    } finally {
+      client.release();
+      console.log("Database client released");
+    }
   }
 
   async createTag(req: Request, res: Response, next: NextFunction) {

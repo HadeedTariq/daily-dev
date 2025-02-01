@@ -1,108 +1,183 @@
-# **Daily Dev Clone**
+## **Backend Documentation**
 
-**A Full-Stack Social Platform for Developers**
+### **Overview**
 
-This is a feature-rich social platform designed for developers to share posts, join squads, collaborate, and grow their network. It includes authentication, profile management, post creation, squad collaboration, and more.
+The backend of **Daily Dev Clone** is built using **Node.js** and **Express**, providing RESTful APIs for authentication, profile management, post creation, squad collaboration, and more. It uses **PostgreSQL** for database management and **JWT** for authentication.
 
 ---
 
-## **Features**
+### **Features**
 
-### **Authentication**
+#### **Authentication**
 
 - **Register**: User registration with email verification.
 - **Verify**: Email verification for account activation.
-- **Login**: Secure login functionality.
-- **OAuth**: Integration with GitHub for seamless authentication.
-- **Frontend**: User-friendly authentication UI.
+- **Login**: Secure login functionality with JWT.
+- **OAuth**: GitHub OAuth integration.
+
+#### **Profile**
+
+- **Profile Management**: APIs for creating, updating, and fetching user profiles.
+- **ReadMe Editor**: Backend support for ReadMe content storage and retrieval.
+- **Streak Tracking**: Logic to calculate and update user streaks.
+
+#### **Posts**
+
+- **Post Creation**: APIs for creating, editing, and deleting posts.
+- **Comments**: APIs for adding, updating, and deleting comments and replies.
+- **Upvotes**: APIs for upvoting posts and comments.
+- **Views**: Track post views.
+
+#### **Squads**
+
+- **Squad Creation**: APIs for creating and managing squads.
+- **Role Management**: APIs for updating squad roles (admin, moderator, member).
+- **Post Creation in Squads**: APIs for creating posts within squads.
+- **Join/Leave Squad**: APIs for joining or leaving squads.
+
+#### **Followers/Following**
+
+- **Follow/Unfollow**: APIs for following and unfollowing users.
+- **Notifications**: APIs for fetching and marking notifications as read.
 
 ---
 
-### **Profile**
+### **Tech Stack**
 
-- **Create About and Social Links**: Users can add personal details and social media links.
-- **Profile Page**: Frontend profile page with user details.
-- **Backend Functionalities**: APIs for profile management.
-- **Edit Profile**: Users can update their profile information.
-- **Share Profile**: Shareable profile links.
-
----
-
-### **ReadMe**
-
-- **ReadMe Editor**: A rich text editor for creating and editing ReadMe content.
-- **Tables**:
-  - **Streak**: Streak logic for tracking user activity.
-  - **Posts**: Table for managing posts.
-  - **Tags**: Table for post tags.
+- **Framework**: Express.js
+- **Language**: TypeScript
+- **Database**: PostgreSQL
+- **Authentication**: JWT, GitHub OAuth
+- **Caching**: Redis
+- **API Documentation**: Swagger
 
 ---
 
-### **Posts**
+### **Folder Structure**
 
-- **Post Creation**: Users can create and publish posts.
-- **Reading Streak**: Streak tracking for post engagement.
-- **Streak Counting**: Logic to calculate and display streaks.
-- **Tables**:
-  - **Squads**: Table for managing squads.
-  - **Squad Members**: Table for squad members.
-
----
-
-### **Squads**
-
-- **Squad Creation**: Users can create squads.
-- **Role Management**: Only one admin per squad; roles can be updated.
-- **Sidebar**: Squad-specific sidebar for navigation.
-- **Registration Fix**: Improved squad registration functionality.
-- **Squad Details Page**:
-  - **Edit Page**: Edit squad details.
-  - **Delete Squad**: Admin can delete squads.
-  - **Squad Page**: Squad profile page.
-  - **Moderator Section**: Manage squad moderators.
-  - **Member Section**: Manage squad members.
-  - **Join/Leave Squad**: Users can join or leave squads.
-  - **Admin Controls**: Admins can promote/demote members and moderators.
-- **Squad Profile Page**: Public squad profile.
-- **Schema Finalization**: Squad database schema finalized.
-- **Public Squad Member Adding**: Add members to public squads.
-- **Dummy Data**: Added non-energy hours dummy data.
-- **Post Creation in Squads**: Users can create posts only in squads they’ve joined.
-- **Profile Integration**: Show squads a user has joined on their profile.
+```
+src/
+├── types/           # TypeScript types and interfaces
+├── utils/           # Utility functions and helpers
+├── common/          # Common utilities (error handling, constants)
+├── db/              # Database connection and query logic
+├── api/             # Business logic for different API modules
+├── api-docs/        # Swagger API documentation
+├── routes/          # API route handlers
+└── index.ts         # Server entry point
+```
 
 ---
 
-### **Posts (Detailed)**
+### **Installation**
 
-- **Posts Home Page**: Display all posts.
-- **Views**: Track post views .
-- **Upvotes**: Post upvoting functionality (non-scalable).
-- **Comments**:
-  - **Replies**: Nested comment replies.
-  - **Upvotes**: Comment upvoting.
-  - **Deletion**: Delete comments and replies.
-  - **Cascading**: Cascading deletion for replies.
-- **Infinite Scrolling**:
-  - **Post Fetching**: Infinite scroll for posts.
-  - **Comment Fetching**: Infinite scroll for comments.
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/HadeedTariq/daily-dev
+   ```
+2. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
+4. Set up environment variables:
+   Create a `.env` file and add the following:
+
+   ```env
+   # Common Settings
+   COMMON_RATE_LIMIT_MAX_REQUESTS=100
+   COMMON_RATE_LIMIT_WINDOW_MS=60000
+   CORS_ORIGIN=*
+
+   # Server Configuration
+   HOST=localhost
+   NODE_ENV=development
+   PORT=3000
+   SERVER_DOMAIN=http://localhost:3000
+
+   # Authentication Secrets
+   JWT_SECRET=your_jwt_secret
+   JWT_REFRESH_TOKEN_SECRET=your_refresh_token_secret
+   JWT_ACCESS_TOKEN_SECRET=your_access_token_secret
+
+   # GitHub OAuth
+   GITHUB_CLIENT_ID=your_github_client_id
+   GITHUB_CLIENT_SECRET=your_github_client_secret
+
+   # Session Secret
+   SESSION_SECRET=your_session_secret
+
+   # Password Hashing
+   PASSWORD_SALT=10
+
+   # Email Configuration
+   NODE_MAILER_USER=your_email@example.com
+   NODE_MAILER_PASSWORD=your_email_password
+
+   # Database Configuration (Aiven PostgreSQL)
+   DATABASE_URL=postgres://user:password@localhost:5432/your_database  # I use Aiven as a database
+   DATABASE_HOST=localhost
+   DATABASE_PORT=5432
+   DATABASE_USER=your_db_user
+   DATABASE_PASSWORD=your_db_password
+
+   # Redis Configuration
+   REDIS_URL=redis://localhost:6379
+   ```
+
+5. Start the server:
+   ```bash
+   npm run dev
+   ```
 
 ---
 
-### **Followers/Following**
+### **API Documentation**
 
-- **Schema**: Notification schema for followers/following.
-- **Functionality**: Follow/unfollow users.
-- **Notifications**: Notifications for follow/unfollow actions.
-- **Profile Integration**: Display followers/following on profiles.
-- **Following Posts**: Page for posts from followed users.
-- **Squad Integration**: Follow/unfollow within squads.
+The backend APIs are documented using **Swagger**. To access the API docs:
+
+1. Start the server.
+2. Navigate to `http://localhost:3000/api`.
 
 ---
 
-### **Other Features**
+### **Database Schema**
 
-- **Other User Profile Page**: View other users’ profiles.
-- **Explore Page**: Sort and explore posts based on various factors.
+The database schema consists of the following tables:
+
+#### **Users & Authentication**
+
+- `users`: Stores user information.
+- `social_links`: Stores user social media links.
+- `about`: Stores user profile details.
+- `user_stats`: Tracks user activity and achievements.
+- `streaks`: Stores user streak data.
+- `user_views`: Tracks user profile views.
+- `user_upvotes`: Tracks upvotes given by users.
+
+#### **Posts & Interactions**
+
+- `posts`: Stores user posts.
+- `tags`: Stores tags for categorization.
+- `post_tags`: Many-to-many relation between posts and tags.
+- `post_comments`: Stores comments on posts.
+- `comment_replies`: Stores replies to comments.
+- `post_upvotes`: Tracks upvotes on posts.
+- `comment_upvotes`: Tracks upvotes on comments.
+- `post_views`: Tracks the number of views on posts.
+
+#### **Squads & Collaboration**
+
+- `squads`: Stores squad details.
+- `squad_members`: Tracks users who joined squads.
+
+#### **Social Features**
+
+- `followers`: Tracks user followers.
+- `follow_notifications`: Stores notifications related to follows.
 
 ---
 
@@ -180,33 +255,5 @@ This is a feature-rich social platform designed for developers to share posts, j
 - `GET /followings/posts`: Get followings’ posts.
 - `GET /notifications`: Get notifications.
 - `PUT /notifications/:notificationId/read`: Mark notifications as read.
-
----
-
-## **Tech Stack**
-
-- **Frontend**: React, JavaScript
-- **Backend**: Node.js, Express
-- **Database**: (PostgreSQL)
-- **Authentication**: OAuth (GitHub), JWT
-
----
-
-## **Installation**
-
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Set up environment variables:  
-   Create a `.env` file and add required variables (e.g., database credentials, API keys).
-4. Run the app:
-   ```bash
-   npm start
-   ```
 
 ---

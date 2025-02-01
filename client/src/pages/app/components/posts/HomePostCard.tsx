@@ -65,7 +65,7 @@ export const HomePostCard = forwardRef<HTMLDivElement, PostCards>(
           </div>
           <h3 className="text-lg font-semibold mb-2">{title}</h3>
           <div className="flex flex-wrap gap-2 mb-4">
-            {tags.map((tag) => (
+            {tags?.map((tag) => (
               <Badge key={tag} variant="secondary">
                 {tag}
               </Badge>

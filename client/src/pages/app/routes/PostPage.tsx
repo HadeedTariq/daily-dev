@@ -134,7 +134,7 @@ const PostPage = () => {
               </span>
             </div>
             <div className="flex flex-wrap gap-2">
-              {post.tags.map((tag) => (
+              {post.tags?.map((tag) => (
                 <span
                   key={tag}
                   className="bg-gray-200 text-gray-800 px-2 py-1 rounded-full text-sm"

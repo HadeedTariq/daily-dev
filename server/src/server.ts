@@ -29,7 +29,7 @@ import { followersRouter } from "./routes/followers/followers.routes";
 const logger = pino({ name: "server start" });
 
 // createTable(`
-//   delete from follow_notifications where id > 1
+
 // `);
 
 const app: Express = express();
