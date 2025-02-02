@@ -3,6 +3,7 @@ CREATE TABLE posts (
     title VARCHAR(255) NOT NULL,
     slug VARCHAR(255) NOT NULL,
     thumbnail VARCHAR(500) NOT NULL,
+    tags TEXT [],
     content TEXT NOT NULL,
     squad_id INT NOT NULL,
     author_id INT NOT NULL,
@@ -15,12 +16,6 @@ CREATE TABLE posts (
 CREATE TABLE tags (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) UNIQUE NOT NULL
-);
-
-CREATE TABLE post_tags (
-    post_id INT REFERENCES posts(id) ON DELETE CASCADE,
-    tag_id INT REFERENCES tags(id) ON DELETE CASCADE,
-    PRIMARY KEY (post_id, tag_id)
 );
 
 CREATE TABLE post_comments (

@@ -3,6 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import { DatabaseError } from "pg";
 import sanitizeHtml from "sanitize-html";
 import nlp from "compromise";
+import removeMd from "remove-markdown";
 
 class PostController {
   constructor() {
@@ -34,11 +35,23 @@ class PostController {
 
   detectTags = (content: string, predefinedTags: string[]) => {
     const doc = nlp(content);
-    const keywords = doc.topics().out("array");
+    const nouns = doc.nouns().out("array");
+    const adjectives = doc.adjectives().out("array");
+    const acronyms = doc.acronyms().out("array");
+    const adverbs = doc.adverbs().out("array");
+    const tags = [
+      ...new Set([...nouns, ...adjectives, ...acronyms, ...adverbs]),
+    ];
 
-    return keywords.filter((keyword: any) =>
-      predefinedTags.includes(keyword.toLowerCase())
-    );
+    return tags.reduce((acc: string[], keyword: any) => {
+      const tag = predefinedTags.includes(
+        keyword.toLowerCase().split(" ").join("-")
+      );
+      if (tag) {
+        acc.push(keyword.toLowerCase().split(" ").join("-"));
+      }
+      return acc;
+    }, []);
   };
 
   async getPostsTags(req: Request, res: Response, next: NextFunction) {
@@ -52,8 +65,25 @@ class PostController {
   async getPosts(req: Request, res: Response, next: NextFunction) {
     const { pageSize, pageNumber, sortingOrder } = req.query;
     const { rows: posts } = await queryDb("select * from posts", []);
-    posts.forEach((post) => {});
+    const pTags = await this.getTagsFromDb();
 
+    const queries: {
+      query: string;
+      values: any[];
+    }[] = [];
+    posts.forEach((post) => {
+      const content = removeMd(post.content);
+      const t = this.detectTags(content, pTags).slice(0, 2);
+      queries.push({
+        query: `update posts set tags=$1 where id = $2`,
+        values: [t, post.id],
+      });
+    });
+
+    // queries.forEach(async (d) => {
+    //   await queryDb(d.query, d.values);
+    //   console.log("run");
+    // });
     try {
       let query = "";
       if (sortingOrder === "id" || sortingOrder === "") {

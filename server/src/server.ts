@@ -27,9 +27,8 @@ import { deleteUnverifiedUsers } from "./db/connect";
 import { followersRouter } from "./routes/followers/followers.routes";
 
 const logger = pino({ name: "server start" });
-
 // createTable(`
-
+//   alter table posts add column tags TEXT[]
 // `);
 
 const app: Express = express();
