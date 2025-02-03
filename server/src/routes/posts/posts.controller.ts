@@ -28,13 +28,63 @@ class PostController {
     this.deleteCommentReply = this.deleteCommentReply.bind(this);
   }
 
-  getTagsFromDb = async () => {
-    const res = await queryDb("SELECT name FROM tags", []);
-    return res.rows.map((row) => row.name);
+  getTags = async () => {
+    const res = [
+      "software-engineering",
+      "backend-development",
+      "frontend-development",
+      "full-stack-development",
+      "web-development",
+      "mobile-development",
+      "cloud-computing",
+      "artificial-intelligence",
+      "machine-learning",
+      "data-science",
+      "data-engineering",
+      "devops",
+      "agile-methodology",
+      "scrum",
+      "test-driven-development",
+      "unit-testing",
+      "integration-testing",
+      "continuous-integration",
+      "continuous-deployment",
+      "version-control",
+      "git",
+      "docker",
+      "kubernetes",
+      "microservices",
+      "restful-api",
+      "graphql",
+      "nodejs",
+      "express",
+      "reactjs",
+      "vuejs",
+      "angular",
+      "typescript",
+      "python",
+      "java",
+      "ruby-on-rails",
+      "cplusplus",
+      "go-programming-language",
+      "cloud-native",
+      "serverless-architecture",
+      "cybersecurity",
+      "blockchain-technology",
+      "database-management",
+      "sql",
+      "nosql",
+      "mongodb",
+      "postgresql",
+      "mysql",
+      "data-structures",
+      "algorithms",
+    ];
+    return res;
   };
 
   detectTags = (content: string, predefinedTags: string[]) => {
-    const doc = nlp(content);
+    const doc = nlp(removeMd(content));
     const nouns = doc.nouns().out("array");
     const adjectives = doc.adjectives().out("array");
     const acronyms = doc.acronyms().out("array");
@@ -64,26 +114,7 @@ class PostController {
   }
   async getPosts(req: Request, res: Response, next: NextFunction) {
     const { pageSize, pageNumber, sortingOrder } = req.query;
-    const { rows: posts } = await queryDb("select * from posts", []);
-    const pTags = await this.getTagsFromDb();
 
-    const queries: {
-      query: string;
-      values: any[];
-    }[] = [];
-    posts.forEach((post) => {
-      const content = removeMd(post.content);
-      const t = this.detectTags(content, pTags).slice(0, 2);
-      queries.push({
-        query: `update posts set tags=$1 where id = $2`,
-        values: [t, post.id],
-      });
-    });
-
-    // queries.forEach(async (d) => {
-    //   await queryDb(d.query, d.values);
-    //   console.log("run");
-    // });
     try {
       let query = "";
       if (sortingOrder === "id" || sortingOrder === "") {
@@ -94,8 +125,8 @@ class PostController {
             p.thumbnail,
             p.content,
             p.slug,
+            p.tags,
             p.created_at,
-            JSON_AGG(t.name) FILTER (WHERE t.id IS NOT NULL) AS tags,
             p_v.upvotes AS upvotes,
             p_vw.views AS views,
             JSON_BUILD_OBJECT(
@@ -115,8 +146,6 @@ class PostController {
                   AND u_u_v.post_id = p.id
             ) AS current_user_upvoted
         FROM posts p
-        LEFT JOIN post_tags p_t ON p.id = p_t.post_id
-        LEFT JOIN tags t ON p_t.tag_id = t.id
         INNER JOIN post_upvotes p_v ON p.id = p_v.post_id
         INNER JOIN post_views p_vw ON p.id = p_vw.post_id
         INNER JOIN squads p_sq ON p.squad_id = p_sq.id
@@ -138,8 +167,8 @@ class PostController {
             p.thumbnail,
             p.content,
             p.slug,
+             p.tags,
             p.created_at,
-            JSON_AGG(t.name) FILTER (WHERE t.id IS NOT NULL) AS tags,
             p_v.upvotes AS upvotes,
             p_vw.views AS views,
             JSON_BUILD_OBJECT(
@@ -159,8 +188,6 @@ class PostController {
                   AND u_u_v.post_id = p.id
             ) AS current_user_upvoted
         FROM posts p
-        LEFT JOIN post_tags p_t ON p.id = p_t.post_id
-        LEFT JOIN tags t ON p_t.tag_id = t.id
         INNER JOIN post_upvotes p_v ON p.id = p_v.post_id
         INNER JOIN post_views p_vw ON p.id = p_vw.post_id
         INNER JOIN squads p_sq ON p.squad_id = p_sq.id
@@ -182,8 +209,8 @@ class PostController {
             p.thumbnail,
             p.content,
             p.slug,
+            p.tags,
             p.created_at,
-            JSON_AGG(t.name) FILTER (WHERE t.id IS NOT NULL) AS tags,
             p_v.upvotes AS upvotes,
             p_vw.views AS views,
             JSON_BUILD_OBJECT(
@@ -203,8 +230,6 @@ class PostController {
                   AND u_u_v.post_id = p.id
             ) AS current_user_upvoted
         FROM posts p
-        LEFT JOIN post_tags p_t ON p.id = p_t.post_id
-        LEFT JOIN tags t ON p_t.tag_id = t.id
         INNER JOIN post_upvotes p_v ON p.id = p_v.post_id
         INNER JOIN post_views p_vw ON p.id = p_vw.post_id
         INNER JOIN squads p_sq ON p.squad_id = p_sq.id

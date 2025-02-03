@@ -182,7 +182,7 @@ class UserController {
     const hashPassword = await this.hashPassword(password);
     await queryDb(
       "INSERT INTO users ( name, username, profession, email,user_password) VALUES ($1,$2,$3,$4,$5)",
-      [name, username, profession, email, hashPassword]
+      [name, username.split(" ").join("-"), profession, email, hashPassword]
     );
     const { error } = await this.sendMail(email, magicLink);
 
@@ -258,7 +258,13 @@ class UserController {
 
     const { rows: authUser } = await queryDb(
       "INSERT INTO users (name, username, email,avatar,is_verified) VALUES ($1,$2,$3,$4,$5) RETURNING id",
-      [user.name, user.username, user.email, user.avatar, true]
+      [
+        user.name,
+        user.username.split(" ").join("-"),
+        user.email,
+        user.avatar,
+        true,
+      ]
     );
 
     user.id = authUser[0].id;

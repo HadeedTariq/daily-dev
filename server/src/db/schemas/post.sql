@@ -39,6 +39,8 @@ CREATE TABLE comment_replies (
     edited BOOLEAN DEFAULT FALSE
 );
 
+CREATE UNIQUE INDEX idx_post_upvotes_post_id ON post_upvotes (post_id);
+
 CREATE TABLE post_upvotes (
     id SERIAL PRIMARY KEY,
     post_id INT REFERENCES posts(id) ON DELETE CASCADE,

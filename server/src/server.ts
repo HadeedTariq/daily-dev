@@ -23,17 +23,15 @@ import {
 import { profileRouter } from "./routes/profile/profile.routes";
 import { postRouter } from "./routes/posts/posts.routes";
 import { squadRouter } from "./routes/squads/squad.routes";
-import { deleteUnverifiedUsers } from "./db/connect";
+
 import { followersRouter } from "./routes/followers/followers.routes";
 
 const logger = pino({ name: "server start" });
 // createTable(`
-//   alter table posts add column tags TEXT[]
+
 // `);
 
 const app: Express = express();
-
-// deleteUnverifiedUsers();
 
 // Set the application to trust the reverse proxy
 app.set("trust proxy", true);
