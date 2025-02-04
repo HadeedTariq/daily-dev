@@ -58,6 +58,8 @@ CREATE TABLE comment_upvotes (
     CONSTRAINT unique_comment_user UNIQUE (comment_id, user_id)
 );
 
+CREATE UNIQUE INDEX idx_post_views_post_id ON post_views (post_id);
+
 CREATE TABLE post_views (
     id SERIAL PRIMARY KEY,
     post_id INT REFERENCES posts(id) ON DELETE CASCADE,

@@ -6,31 +6,20 @@ import { useInView } from "react-intersection-observer";
 import { useGetFollowingsPosts } from "../hooks/usePostsHandler";
 
 const FollowingPosts = () => {
-  const { followingPosts, stopFetchingFollowingPosts } = useFullApp();
+  const { followingPosts } = useFullApp();
 
   const { fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
     useGetFollowingsPosts(8);
 
   const { ref, inView } = useInView({
-    threshold: 0.1,
+    threshold: 1,
   });
 
   useEffect(() => {
-    if (
-      inView &&
-      hasNextPage &&
-      !isFetchingNextPage &&
-      !stopFetchingFollowingPosts
-    ) {
+    if (inView && hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
-  }, [
-    inView,
-    hasNextPage,
-    isFetchingNextPage,
-    stopFetchingFollowingPosts,
-    fetchNextPage,
-  ]);
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return (
     <>
@@ -46,9 +35,7 @@ const FollowingPosts = () => {
 
       {(isLoading || isFetchingNextPage) && <div>Loading...</div>}
 
-      {stopFetchingFollowingPosts && (
-        <div className="text-center my-4">No posts to load</div>
-      )}
+      {!hasNextPage && <div className="text-center my-4">No posts to load</div>}
     </>
   );
 };

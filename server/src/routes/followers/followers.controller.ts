@@ -249,6 +249,7 @@ class FollowersController {
                   p.slug,
                   p.created_at,
                   p.squad_id,
+                  p.tags,
                   p.author_id
               FROM posts p
               INNER JOIN user_followings u_f ON p.author_id = u_f.followed_id
@@ -258,9 +259,9 @@ class FollowersController {
               p.title,
               p.thumbnail,
               p.content,
+              p.tags,
               p.slug,
               p.created_at,
-              JSON_AGG(t.name) FILTER (WHERE t.id IS NOT NULL) AS tags,
               p_v.upvotes AS upvotes,
               p_vw.views AS views,
               JSON_BUILD_OBJECT(
@@ -280,10 +281,6 @@ class FollowersController {
                     AND u_u_v.post_id = p.id
               ) AS current_user_upvoted
           FROM user_followings_posts p
-          LEFT JOIN post_tags p_t 
-              ON p.id = p_t.post_id
-          LEFT JOIN tags t 
-              ON p_t.tag_id = t.id
           INNER JOIN post_upvotes p_v 
               ON p.id = p_v.post_id
           INNER JOIN post_views p_vw 
@@ -292,11 +289,6 @@ class FollowersController {
               ON p.squad_id = p_sq.id
           INNER JOIN users u 
               ON p.author_id = u.id
-          GROUP BY 
-              p.id, p.title, p.thumbnail, p.content, p.slug, p.created_at, 
-              p_v.upvotes, p_vw.views, 
-              p_sq.thumbnail, p_sq.squad_handle, 
-              u.avatar, u.username, u.name, u.id
           ORDER BY p.id 
           LIMIT $2 OFFSET ($3 - 1) * $2;
         `,

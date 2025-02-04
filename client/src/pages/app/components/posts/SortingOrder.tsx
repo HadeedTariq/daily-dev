@@ -1,12 +1,16 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
 type SortOption = "upvotes" | "popular";
 
-export default function SortingElements() {
-  const [activeSort, setActiveSort] = useState<SortOption>("upvotes");
+type SortingElementsProps = {
+  activeSort: SortOption;
+  setActiveSort: (sort: SortOption) => void;
+};
 
+export default function SortingElements({
+  activeSort,
+  setActiveSort,
+}: SortingElementsProps) {
   return (
     <div className="flex space-x-4">
       <Button

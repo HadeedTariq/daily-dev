@@ -5,36 +5,55 @@ import { useEffect } from "react";
 import { useInView } from "react-intersection-observer";
 import SortingElements from "../components/posts/SortingOrder";
 import { ExplorePostCard } from "../components/posts/ExplorePostCard";
-
+import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { emptySortedPosts } from "@/reducers/fullAppReducer";
+type SortOption = "upvotes" | "popular";
 const ExplorePosts = () => {
-  const { sortedPosts: posts, stopFetchingPosts } = useFullApp();
+  const [activeSort, setActiveSort] = useState<SortOption>("upvotes");
+  const dispatch = useDispatch();
 
-  const { fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
-    useGetNewPosts(8, "popular", false);
+  const { sortedPosts: posts } = useFullApp();
+
+  const {
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isFetching,
+    isFetched,
+    isPending,
+  } = useGetNewPosts(8, activeSort, false);
 
   const { ref, inView } = useInView({
-    threshold: 0.1,
+    threshold: 1,
   });
 
   useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage && !stopFetchingPosts) {
+    if (
+      inView &&
+      hasNextPage &&
+      isFetched &&
+      !isFetching &&
+      !isPending &&
+      !isLoading &&
+      !isFetchingNextPage
+    ) {
       fetchNextPage();
     }
-  }, [
-    inView,
-    hasNextPage,
-    isFetchingNextPage,
-    stopFetchingPosts,
-    fetchNextPage,
-  ]);
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
   useEffect(() => {
+    dispatch(emptySortedPosts());
     return () => {
       window.scrollTo(0, 0);
     };
-  }, []);
+  }, [activeSort]);
   return (
     <>
-      <SortingElements />
+      <SortingElements
+        activeSort={activeSort}
+        setActiveSort={(sort) => setActiveSort(sort)}
+      />
       <main className="flex mx-auto px-4 py-8 flex-wrap gap-x-8 gap-y-8 justify-center">
         {posts?.map((post, index) => (
           <ExplorePostCard
@@ -47,7 +66,7 @@ const ExplorePosts = () => {
 
       {(isLoading || isFetchingNextPage) && <div>Loading...</div>}
 
-      {stopFetchingPosts && (
+      {!hasNextPage && (
         <div className="text-center my-4">No more posts to load</div>
       )}
     </>

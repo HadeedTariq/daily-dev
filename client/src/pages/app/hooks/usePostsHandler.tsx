@@ -4,9 +4,7 @@ import {
   addNewFollowingPosts,
   addNewPosts,
   addNewSortedPosts,
-  setStopFetchingFollowingPosts,
   setStopFetchingPostComments,
-  setStopFetchingPosts,
 } from "@/reducers/fullAppReducer";
 import {
   QueryFunctionContext,
@@ -37,15 +35,10 @@ export const useGetNewPosts = (
         dispatch(addNewSortedPosts(data.posts));
       }
 
-      if (data.posts.length === 0) {
-        dispatch(setStopFetchingPosts());
-      }
-
       return {
         posts: data.posts,
       };
     } catch (error) {
-      dispatch(setStopFetchingPosts());
       throw error;
     }
   };
@@ -80,15 +73,10 @@ export const useGetFollowingsPosts = (initialPageSize: number = 8) => {
 
       dispatch(addNewFollowingPosts(data.posts));
 
-      if (data.posts.length === 0) {
-        dispatch(setStopFetchingFollowingPosts());
-      }
-
       return {
         posts: data.posts,
       };
     } catch (error) {
-      dispatch(setStopFetchingFollowingPosts());
       throw error;
     }
   };

@@ -28,7 +28,19 @@ import { followersRouter } from "./routes/followers/followers.routes";
 
 const logger = pino({ name: "server start" });
 // createTable(`
-
+// WITH CTE AS (
+//     SELECT
+//         id,
+//         post_id,
+//         ROW_NUMBER() OVER (PARTITION BY post_id ORDER BY created_at) AS row_num
+//     FROM post_views
+// )
+// DELETE FROM post_views
+// WHERE id IN (
+//     SELECT id
+//     FROM CTE
+//     WHERE row_num > 1
+// );
 // `);
 
 const app: Express = express();

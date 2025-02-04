@@ -5,26 +5,25 @@ import { useEffect } from "react";
 import { useInView } from "react-intersection-observer";
 
 const Home = () => {
-  const { posts, stopFetchingPosts } = useFullApp();
+  const { posts } = useFullApp();
 
-  const { fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
-    useGetNewPosts(8, "id", true);
+  const {
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isPending,
+  } = useGetNewPosts(8, "id", true);
 
   const { ref, inView } = useInView({
-    threshold: 0.1,
+    threshold: 1,
   });
 
   useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage && !stopFetchingPosts) {
+    if (inView && hasNextPage && !isPending && !isFetchingNextPage) {
       fetchNextPage();
     }
-  }, [
-    inView,
-    hasNextPage,
-    isFetchingNextPage,
-    stopFetchingPosts,
-    fetchNextPage,
-  ]);
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   useEffect(() => {
     return () => {
@@ -46,7 +45,7 @@ const Home = () => {
 
       {(isLoading || isFetchingNextPage) && <div>Loading...</div>}
 
-      {stopFetchingPosts && (
+      {!hasNextPage && (
         <div className="text-center my-4">No more posts to load</div>
       )}
     </>

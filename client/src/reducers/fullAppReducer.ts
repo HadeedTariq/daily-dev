@@ -8,9 +8,7 @@ export type FullAppState = {
   tags: Tag[];
   posts: PostCards[];
   sortedPosts: PostCards[];
-  stopFetchingPosts: boolean;
   followingPosts: PostCards[];
-  stopFetchingFollowingPosts: boolean;
   currentPostComments: Comments[];
   stopFetchingPostComments: boolean;
   currentPost: PostCards | null;
@@ -25,8 +23,6 @@ const initialState: FullAppState = {
   sortedPosts: [],
   followingPosts: [],
   currentPostComments: [],
-  stopFetchingPosts: false,
-  stopFetchingFollowingPosts: false,
   currentPost: null,
   stopFetchingPostComments: false,
   currentUserProfile: null,
@@ -63,14 +59,11 @@ const fullAppReducer = createSlice({
     addNewSortedPosts: (state, { payload }: { payload: PostCards[] }) => {
       state.sortedPosts.push(...payload);
     },
+    emptySortedPosts: (state) => {
+      state.sortedPosts = [];
+    },
     addNewFollowingPosts: (state, { payload }: { payload: PostCards[] }) => {
       state.followingPosts.push(...payload);
-    },
-    setStopFetchingFollowingPosts: (state) => {
-      state.stopFetchingFollowingPosts = true;
-    },
-    setStopFetchingPosts: (state) => {
-      state.stopFetchingPosts = true;
     },
     setStopFetchingPostComments: (state, { payload }: { payload: boolean }) => {
       state.stopFetchingPostComments = payload;
@@ -95,13 +88,12 @@ export const {
   setTags,
   addNewPosts,
   addNewSortedPosts,
-  setStopFetchingPosts,
   addNewFollowingPosts,
-  setStopFetchingFollowingPosts,
   addNewComments,
   setStopFetchingPostComments,
   setCurrentPost,
   emptyCurrenPostComments,
+  emptySortedPosts,
   setCurrentUserProfile,
   setPostsEmpty,
 } = fullAppReducer.actions;
