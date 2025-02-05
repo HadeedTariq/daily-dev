@@ -16,14 +16,17 @@ class FollowersController {
   async followUser(req: Request, res: Response, next: NextFunction) {
     try {
       const { followedId } = req.body;
+      let { followerId } = req.body;
+      console.log(Date.now().toLocaleString());
 
       if (!followedId || isNaN(followedId)) {
         return res
           .status(400)
           .json({ message: "Valid followedId is required." });
       }
+      followerId = Number(followerId);
 
-      const followerId = Number(req.body.user.id);
+      // const followerId = Number(req.body.user.id);
 
       if (followerId === Number(followedId)) {
         return res
@@ -67,6 +70,8 @@ class FollowersController {
 
       res.status(201).json({ message: "User followed successfully." });
     } catch (error: any) {
+      console.log(error.message);
+
       if (error.constraint === "followers_follower_id_fkey") {
         return res.status(400).json({ message: "Follower does not exist." });
       }
@@ -177,7 +182,6 @@ class FollowersController {
           FROM user_followers uf
           INNER JOIN users u 
               ON u.id = uf.follower_id;
-
         `,
         [Number(userId), req.body.user.id]
       );
@@ -229,7 +233,7 @@ class FollowersController {
   async getFollowingsPosts(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.body.user.id;
-      const { pageSize, pageNumber } = req.query;
+      const { pageSize, lastId } = req.query;
 
       const { rows: followingsPosts } = await queryDb(
         `
@@ -289,10 +293,11 @@ class FollowersController {
               ON p.squad_id = p_sq.id
           INNER JOIN users u 
               ON p.author_id = u.id
-          ORDER BY p.id 
-          LIMIT $2 OFFSET ($3 - 1) * $2;
+          where p.id > $3
+          ORDER BY p.id asc
+          LIMIT $2;
         `,
-        [userId, pageSize ? pageSize : 8, pageNumber ? pageNumber : 1]
+        [userId, pageSize ? Number(pageSize) : 8, lastId ? Number(lastId) : 0]
       );
 
       res.status(200).json({ posts: followingsPosts });

@@ -65,10 +65,12 @@ export const useGetNewPosts = (
 export const useGetFollowingsPosts = (initialPageSize: number = 8) => {
   const dispatch = useDispatch();
 
-  const fetchPosts = async ({ pageParam = 1 }: QueryFunctionContext) => {
+  const fetchPosts = async ({ pageParam = 0 }: QueryFunctionContext) => {
+    console.log(pageParam);
+
     try {
       const { data } = await followerApi.get<PostResponse>(
-        `/followings-posts?pageSize=${initialPageSize}&pageNumber=${pageParam}`
+        `/followings-posts?pageSize=${initialPageSize}&lastId=${pageParam}`
       );
 
       dispatch(addNewFollowingPosts(data.posts));
@@ -85,8 +87,10 @@ export const useGetFollowingsPosts = (initialPageSize: number = 8) => {
     queryKey: ["infiniteFollowingPosts", initialPageSize],
     queryFn: fetchPosts,
     initialPageParam: 1,
-    getNextPageParam: (lastPage, allPages) => {
-      return lastPage.posts.length > 0 ? allPages.length + 1 : undefined;
+    getNextPageParam: (lastPage) => {
+      const post = lastPage.posts[lastPage.posts.length - 1];
+
+      return lastPage.posts.length > 0 ? post?.id : undefined;
     },
     refetchOnMount: false,
     refetchOnWindowFocus: false,
