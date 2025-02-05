@@ -131,8 +131,8 @@ class FollowersController {
         },
         {
           query:
-            "INSERT INTO follow_notifications (user_id, actor_id, action_type) VALUES ($1, $2, $3)",
-          params: [Number(followedId), followerId, "unfollow"],
+            "DELETE FROM follow_notifications WHERE user_id = $1 AND actor_id = $2",
+          params: [Number(followedId), followerId],
         },
       ]);
 
