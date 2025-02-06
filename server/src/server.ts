@@ -27,9 +27,9 @@ import { squadRouter } from "./routes/squads/squad.routes";
 import { followersRouter } from "./routes/followers/followers.routes";
 
 const logger = pino({ name: "server start" });
-// createTable(`
+createTable(`
 
-// `);
+`);
 
 const app: Express = express();
 

@@ -257,6 +257,9 @@ class FollowersController {
                   p.author_id
               FROM posts p
               INNER JOIN user_followings u_f ON p.author_id = u_f.followed_id
+              where p.id > $3
+              ORDER BY p.id asc
+              LIMIT $2
           )
           SELECT 
               p.id,
@@ -292,10 +295,7 @@ class FollowersController {
           INNER JOIN squads p_sq 
               ON p.squad_id = p_sq.id
           INNER JOIN users u 
-              ON p.author_id = u.id
-          where p.id > $3
-          ORDER BY p.id asc
-          LIMIT $2;
+              ON p.author_id = u.id;
         `,
         [userId, pageSize ? Number(pageSize) : 8, lastId ? Number(lastId) : 0]
       );

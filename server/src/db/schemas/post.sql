@@ -112,3 +112,5 @@ CREATE TABLE squad_members (
     FOREIGN KEY (squad_id) REFERENCES squads(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE INDEX idx_squad_id ON squad_members(squad_id);

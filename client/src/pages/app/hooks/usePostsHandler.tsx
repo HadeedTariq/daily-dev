@@ -66,8 +66,6 @@ export const useGetFollowingsPosts = (initialPageSize: number = 8) => {
   const dispatch = useDispatch();
 
   const fetchPosts = async ({ pageParam = 0 }: QueryFunctionContext) => {
-    console.log(pageParam);
-
     try {
       const { data } = await followerApi.get<PostResponse>(
         `/followings-posts?pageSize=${initialPageSize}&lastId=${pageParam}`
@@ -86,7 +84,7 @@ export const useGetFollowingsPosts = (initialPageSize: number = 8) => {
   const infiniteQuery = useInfiniteQuery({
     queryKey: ["infiniteFollowingPosts", initialPageSize],
     queryFn: fetchPosts,
-    initialPageParam: 1,
+    initialPageParam: 0,
     getNextPageParam: (lastPage) => {
       const post = lastPage.posts[lastPage.posts.length - 1];
 
