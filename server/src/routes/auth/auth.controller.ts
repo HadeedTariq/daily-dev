@@ -168,33 +168,46 @@ class UserController {
     const magicLink = `${env.SERVER_DOMAIN}/auth/register?token=${token}`;
 
     try {
-      await queryDb(`INSERT INTO magicLinks (email, token) VALUES ($1, $2)`, [
-        email,
-        token,
+      const hashPassword = await this.hashPassword(password);
+
+      await runIndependentTransaction([
+        {
+          query: `INSERT INTO magicLinks (email, token) VALUES ($1, $2)`,
+          params: [email, token],
+        },
+        {
+          query:
+            "INSERT INTO users ( name, username, profession, email,user_password) VALUES ($1,$2,$3,$4,$5)",
+          params: [
+            name,
+            username.split(" ").join("-"),
+            profession,
+            email,
+            hashPassword,
+          ],
+        },
       ]);
-    } catch (error) {
-      return next({
-        message: "Already send verification email",
-        status: 400,
-      });
-    }
 
-    const hashPassword = await this.hashPassword(password);
-    await queryDb(
-      "INSERT INTO users ( name, username, profession, email,user_password) VALUES ($1,$2,$3,$4,$5)",
-      [name, username.split(" ").join("-"), profession, email, hashPassword]
-    );
-    const { error } = await this.sendMail(email, magicLink);
+      const { error } = await this.sendMail(email, magicLink);
 
-    if (error) {
-      return next({
-        message: "Failed to send verification email",
-        status: 500,
-      });
+      if (error) {
+        return next({
+          message: "Failed to send verification email",
+          status: 500,
+        });
+      }
+      return res
+        .status(200)
+        .json({ message: "Verification email sent successfully" });
+    } catch (error: any) {
+      if (error.code === "23505") {
+        return next({
+          message: "Already sent verification email",
+          status: 404,
+        });
+      }
+      return next({ message: "Something went wrong", status: 500 });
     }
-    return res
-      .status(200)
-      .json({ message: "Verification email sent successfully" });
   }
 
   async authenticate_github(req: Request, res: Response, next: NextFunction) {
@@ -395,7 +408,7 @@ class UserController {
   };
 
   hashPassword = async (password: string): Promise<string> => {
-    const hashPassword = await hash(password, 16);
+    const hashPassword = await hash(password, 10);
 
     return hashPassword;
   };
