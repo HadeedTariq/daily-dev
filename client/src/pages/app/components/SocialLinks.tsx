@@ -89,7 +89,7 @@ export function SocialLinks({
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {socialLinks.map((link, index) => (
+          {socialLinks?.map((link, index) => (
             <Button
               key={index}
               variant="outline"
