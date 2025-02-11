@@ -120,19 +120,27 @@ class ProfileController {
 
     try {
       const query = `
+      WITH actual_user AS (
+          SELECT 
+              u.name,
+              u.username,
+              u.avatar,
+              u.email,
+              u.created_at,
+              u.profession
+          FROM 
+              users a_u 
+          WHERE 
+              a_u.id = $1
+      )
         SELECT 
-          u.name,
-          u.username,
-          u.avatar,
-          u.email,
-          u.created_at,
-          u.profession,
+          *.u,
           row_to_json(ab) AS about,
           row_to_json(sl) AS social_links,
           row_to_json(ust) AS user_stats,
           row_to_json(stk) AS streaks
         FROM 
-          users u
+          actual_user u
         LEFT JOIN 
           about ab ON u.id = ab.user_id
         LEFT JOIN 
@@ -141,8 +149,6 @@ class ProfileController {
           user_stats ust ON u.id = ust.user_id
         LEFT JOIN 
           streaks stk ON u.id = stk.user_id
-        WHERE 
-          u.id = $1
   `;
 
       const { rows } = await queryDb(query, [authUser.id]);

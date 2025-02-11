@@ -48,3 +48,15 @@ CREATE TABLE streaks (
     longest_streak INTEGER DEFAULT 1,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
+
+-- Ensure only one "about" entry per user
+CREATE UNIQUE INDEX unique_about_user_id ON about (user_id);
+
+-- Ensure only one "social_links" entry per user
+CREATE UNIQUE INDEX unique_social_links_user_id ON social_links (user_id);
+
+-- Ensure only one "user_stats" entry per user
+CREATE UNIQUE INDEX unique_user_stats_user_id ON user_stats (user_id);
+
+-- Ensure only one "streaks" entry per user
+CREATE UNIQUE INDEX unique_streaks_user_id ON streaks (user_id);
