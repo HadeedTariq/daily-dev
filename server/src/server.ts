@@ -28,7 +28,6 @@ import { followersRouter } from "./routes/followers/followers.routes";
 
 const logger = pino({ name: "server start" });
 // createTable(`
-
 // `);
 
 const app: Express = express();

@@ -6,6 +6,7 @@ import { createCipheriv, createDecipheriv } from "crypto";
 import { env } from "@/common/utils/envConfig";
 import nodeMailer from "nodemailer";
 import { hash, compare } from "bcrypt";
+import { addEmailJob } from "@/queues/emailQueue";
 
 class UserController {
   constructor() {
@@ -166,35 +167,35 @@ class UserController {
     const token = this.encryptToken(signedToken);
 
     const magicLink = `${env.SERVER_DOMAIN}/auth/register?token=${token}`;
+    const hashPassword = await this.hashPassword(password);
 
     try {
-      await queryDb(`INSERT INTO magicLinks (email, token) VALUES ($1, $2)`, [
-        email,
-        token,
+      await runIndependentTransaction([
+        {
+          query: `INSERT INTO magicLinks (email, token) VALUES ($1, $2)`,
+          params: [email, token],
+        },
+        {
+          query: `INSERT INTO users (name, username, profession, email, user_password) VALUES ($1, $2, $3, $4, $5)`,
+          params: [
+            name,
+            username.split(" ").join("-"),
+            profession,
+            email,
+            hashPassword,
+          ],
+        },
       ]);
     } catch (error) {
       return next({
-        message: "Already send verification email",
+        message: "Already sent verification email or failed to create user",
         status: 400,
       });
     }
 
-    const hashPassword = await this.hashPassword(password);
-    await queryDb(
-      "INSERT INTO users ( name, username, profession, email,user_password) VALUES ($1,$2,$3,$4,$5)",
-      [name, username.split(" ").join("-"), profession, email, hashPassword]
-    );
-    const { error } = await this.sendMail(email, magicLink);
+    await addEmailJob(email, magicLink);
 
-    if (error) {
-      return next({
-        message: "Failed to send verification email",
-        status: 500,
-      });
-    }
-    return res
-      .status(200)
-      .json({ message: "Verification email sent successfully" });
+    return res.status(200).json({ message: "Verification email sent soon" });
   }
 
   async authenticate_github(req: Request, res: Response, next: NextFunction) {
@@ -255,61 +256,75 @@ class UserController {
           .redirect(`http://localhost:5173`);
       }
     }
+    const client = await pool.connect();
 
-    const { rows: authUser } = await queryDb(
-      "INSERT INTO users (name, username, email,avatar,is_verified) VALUES ($1,$2,$3,$4,$5) RETURNING id",
-      [
-        user.name,
-        user.username.split(" ").join("-"),
-        user.email,
-        user.avatar,
-        true,
-      ]
-    );
+    try {
+      await client.query("BEGIN");
 
-    user.id = authUser[0].id;
-    const { accessToken, refreshToken } =
-      this.generateAccessAndRefreshToken(user);
+      const { rows: authUser } = await client.query(
+        "INSERT INTO users (name, username, email, avatar, is_verified) VALUES ($1, $2, $3, $4, $5) RETURNING id",
+        [
+          user.name,
+          user.username.split(" ").join("-"),
+          user.email,
+          user.avatar,
+          true,
+        ]
+      );
 
-    await runIndependentTransaction([
-      {
-        query: `UPDATE users SET refresh_token = $1 WHERE email = $2`,
-        params: [refreshToken, user.email],
-      },
-      {
-        query: `INSERT INTO about (user_id, bio, company, job_title)
-                VALUES ($1, '', '', '')`,
-        params: [user.id],
-      },
-      {
-        query: `INSERT INTO social_links (user_id, github)
-                VALUES ($1, $2)`,
-        params: [user.id, `https://github.com/${user.username}`],
-      },
-      {
-        query: `INSERT INTO user_stats (user_id, followers, following, reputation, views, upvotes)
-                VALUES ($1, 0, 0, 0, 0, 0)`,
-        params: [user.id],
-      },
-      {
-        query: `INSERT INTO streaks (user_id)
-                VALUES ($1)`,
-        params: [user.id],
-      },
-    ]);
+      user.id = authUser[0].id;
 
-    return res
-      .cookie("accessToken", accessToken, {
-        secure: true,
-        httpOnly: false,
-        sameSite: "none",
-      })
-      .cookie("refreshToken", refreshToken, {
-        secure: true,
-        httpOnly: false,
-        sameSite: "none",
-      })
-      .redirect(`http://localhost:5173`);
+      const { accessToken, refreshToken } =
+        this.generateAccessAndRefreshToken(user);
+
+      const queries = [
+        {
+          query: `UPDATE users SET refresh_token = $1 WHERE email = $2`,
+          params: [refreshToken, user.email],
+        },
+        {
+          query: `INSERT INTO about (user_id, bio, company, job_title) VALUES ($1, '', '', '')`,
+          params: [user.id],
+        },
+        {
+          query: `INSERT INTO social_links (user_id, github) VALUES ($1, $2)`,
+          params: [user.id, `https://github.com/${user.username}`],
+        },
+        {
+          query: `INSERT INTO user_stats (user_id, followers, following, reputation, views, upvotes)
+                  VALUES ($1, 0, 0, 0, 0, 0)`,
+          params: [user.id],
+        },
+        {
+          query: `INSERT INTO streaks (user_id) VALUES ($1)`,
+          params: [user.id],
+        },
+      ];
+
+      await Promise.all(queries.map((q) => client.query(q.query, q.params)));
+
+      await client.query("COMMIT");
+
+      return res
+        .cookie("accessToken", accessToken, {
+          secure: true,
+          httpOnly: false,
+          sameSite: "none",
+        })
+        .cookie("refreshToken", refreshToken, {
+          secure: true,
+          httpOnly: false,
+          sameSite: "none",
+        })
+        .redirect(`http://localhost:5173`);
+    } catch (error) {
+      await client.query("ROLLBACK");
+      console.error("Transaction failed:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    } finally {
+      client.release();
+      console.log("Database client released");
+    }
   }
 
   authenticateUser(req: Request, res: Response, next: NextFunction) {
