@@ -103,7 +103,15 @@ class UserController {
       return next({ status: 404, message: "Please fill all the fields" });
     }
     const { rows } = await queryDb(
-      `SELECT * from users where email = $1 and is_verified = $2`,
+      `SELECT 
+        id,
+        name,
+        username,
+        avatar,
+        email,
+        user_password,
+        profession
+       from users where email = $1 and is_verified = $2`,
       [email, true]
     );
 
@@ -444,7 +452,6 @@ class UserController {
       return { info };
     } catch (err) {
       console.log(err);
-
       return { error: err };
     }
   };
@@ -459,6 +466,7 @@ class UserController {
         name: user.name,
         email: user.email,
         avatar: user.avatar,
+        profession: user.profession,
       },
       env.JWT_ACCESS_TOKEN_SECRET,
       { expiresIn: "2d" }

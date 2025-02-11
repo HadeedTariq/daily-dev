@@ -90,11 +90,11 @@ export const FollowersDialog = ({ isOpen, onClose }: FollowersDialogProps) => {
           ) : (
             <div className="space-y-4">
               {followers?.map((follower) => (
-                <div className="flex items-center justify-between">
-                  <div
-                    key={follower.id}
-                    className="flex items-center space-x-4 p-2 rounded-lg transition-all duration-200 ease-in-out "
-                  >
+                <div
+                  className="flex items-center justify-between"
+                  key={follower.id}
+                >
+                  <div className="flex items-center space-x-4 p-2 rounded-lg transition-all duration-200 ease-in-out ">
                     <Avatar className="h-12 w-12 border-2 border-primary transition-all duration-200 ease-in-out group-hover:border-secondary">
                       <AvatarImage src={follower.avatar} alt={follower.name} />
                       <AvatarFallback className="text-lg font-medium">

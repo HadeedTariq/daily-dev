@@ -122,19 +122,20 @@ class ProfileController {
       const query = `
       WITH actual_user AS (
           SELECT 
-              u.name,
-              u.username,
-              u.avatar,
-              u.email,
-              u.created_at,
-              u.profession
+              a_u.name,
+              a_u.id,
+              a_u.username,
+              a_u.avatar,
+              a_u.email,
+              a_u.created_at,
+              a_u.profession
           FROM 
               users a_u 
           WHERE 
               a_u.id = $1
       )
         SELECT 
-          *.u,
+          u.*,
           row_to_json(ab) AS about,
           row_to_json(sl) AS social_links,
           row_to_json(ust) AS user_stats,
@@ -238,6 +239,7 @@ class ProfileController {
   }
   async editProfile(req: Request, res: Response, next: NextFunction) {
     const {
+      user,
       username,
       avatar,
       name,
@@ -259,8 +261,14 @@ class ProfileController {
       threads,
     } = req.body;
 
-    if (username || avatar || name || email || profession) {
-      const query = `UPDATE users SET username=$1, avatar=$2, name=$3, email=$4, profession=$5 WHERE id=$6 RETURNING *`;
+    if (
+      username !== user.username ||
+      avatar !== user.avatar ||
+      name !== user.name ||
+      email !== user.email ||
+      profession !== user.profession
+    ) {
+      const query = `UPDATE users SET username=$1, avatar=$2, name=$3, email=$4, profession=$5 WHERE id=$6 RETURNING id`;
       const { rows } = await queryDb(query, [
         username,
         avatar,
@@ -287,6 +295,87 @@ class ProfileController {
       if (aboutRows.length === 0) {
         return next({ status: 404, message: "User not found" });
       }
+    }
+
+    function isValidSocialLink(type: string, url: string) {
+      const domainMap: {
+        github: string;
+        linkedin: string;
+        website: string;
+        x: string;
+        youtube: string;
+        stack_overflow: string;
+        reddit: string;
+        roadmap_sh: string;
+        codepen: string;
+        mastodon: string;
+        threads: string;
+      } = {
+        github: "github.com",
+        linkedin: "linkedin.com",
+        website: "",
+        x: "x.com",
+        youtube: "youtube.com",
+        stack_overflow: "stackoverflow.com",
+        reddit: "reddit.com",
+        roadmap_sh: "roadmap.sh",
+        codepen: "codepen.io",
+        mastodon: "mastodon.social",
+        threads: "threads.net",
+      };
+
+      try {
+        const parsedUrl = new URL(url);
+        return (
+          parsedUrl.protocol === "https:" &&
+          (domainMap[type]
+            ? parsedUrl.hostname.includes(domainMap[type])
+            : true)
+        );
+      } catch (error) {
+        return false;
+      }
+    }
+    const socialFields = {
+      github,
+      linkedin,
+      website,
+      x,
+      youtube,
+      stack_overflow,
+      reddit,
+      roadmap_sh,
+      codepen,
+      mastodon,
+      threads,
+    };
+
+    // Validate and filter out empty values
+    const validFields = Object.entries(socialFields)
+      .filter(([key, value]) => value && isValidSocialLink(key, value)) // Only keep non-empty and valid URLs
+      .map(([key, value], index) => ({
+        column: key,
+        value: value,
+        paramIndex: index + 1,
+      }));
+
+    // Proceed only if there's at least one valid field to update
+    if (validFields.length > 0) {
+      const setClause = validFields
+        .map(({ column }, index) => `${column} = $${index + 1}`)
+        .join(", ");
+
+      const values = validFields.map(({ value }) => value);
+      values.push(req.body.user.id); // Add user ID as the last parameter
+
+      const query = `
+        UPDATE social_links 
+        SET ${setClause} 
+        WHERE user_id = $${values.length} 
+        RETURNING *;
+      `;
+
+      const { rows: socialLinksRows } = await queryDb(query, values);
     }
 
     if (
@@ -321,17 +410,17 @@ class ProfileController {
         RETURNING *;
         `,
         [
-          github,
-          linkedin,
-          website,
-          x,
-          youtube,
-          stack_overflow,
-          reddit,
-          roadmap_sh,
-          codepen,
-          mastodon,
-          threads,
+          github || "",
+          linkedin || "",
+          website || "",
+          x || "",
+          youtube || "",
+          stack_overflow || "",
+          reddit || "",
+          roadmap_sh || "",
+          codepen || "",
+          mastodon || "",
+          threads || "",
           req.body.user.id,
         ]
       );
