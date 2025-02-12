@@ -3,6 +3,8 @@ import { NextFunction, Request, Response } from "express";
 import sanitizeHtml from "sanitize-html";
 
 import { DatabaseError } from "pg";
+import { sign } from "jsonwebtoken";
+import { env } from "@/common/utils/envConfig";
 
 class ProfileController {
   constructor() {
@@ -13,6 +15,7 @@ class ProfileController {
     this.updateStreak = this.updateStreak.bind(this);
     this.getMyJoinedSquads = this.getMyJoinedSquads.bind(this);
     this.getUserJoinedSquads = this.getUserJoinedSquads.bind(this);
+    this.isValidSocialLink = this.isValidSocialLink.bind(this);
   }
   async getUserProfile(req: Request, res: Response, next: NextFunction) {
     const { username } = req.params;
@@ -261,6 +264,18 @@ class ProfileController {
       threads,
     } = req.body;
 
+    let accessToken = req.cookies.accessToken;
+
+    if (website) {
+      const websiteUrl = new URL(website);
+      if (
+        websiteUrl.protocol !== "https" ||
+        websiteUrl.hostname.includes("localhost")
+      ) {
+        return res.status(400).json({ message: "Invalid website URL." });
+      }
+    }
+
     if (
       username !== user.username ||
       avatar !== user.avatar ||
@@ -278,6 +293,19 @@ class ProfileController {
         req.body.user.id,
       ]);
 
+      accessToken = sign(
+        {
+          id: user.id,
+          username: username,
+          name: name,
+          email: email,
+          avatar: avatar,
+          profession: profession,
+        },
+        env.JWT_ACCESS_TOKEN_SECRET,
+        { expiresIn: "2d" }
+      );
+
       if (rows.length === 0) {
         return next({ status: 404, message: "User not found" });
       }
@@ -286,9 +314,9 @@ class ProfileController {
     if (bio || company || job_title) {
       const query = `UPDATE about SET bio=$1, company=$2, job_title=$3 WHERE user_id=$4 RETURNING *`;
       const { rows: aboutRows } = await queryDb(query, [
-        bio,
-        company,
-        job_title,
+        String(bio),
+        String(company),
+        String(job_title),
         req.body.user.id,
       ]);
 
@@ -297,49 +325,9 @@ class ProfileController {
       }
     }
 
-    function isValidSocialLink(type: string, url: string) {
-      const domainMap: {
-        github: string;
-        linkedin: string;
-        website: string;
-        x: string;
-        youtube: string;
-        stack_overflow: string;
-        reddit: string;
-        roadmap_sh: string;
-        codepen: string;
-        mastodon: string;
-        threads: string;
-      } = {
-        github: "github.com",
-        linkedin: "linkedin.com",
-        website: "",
-        x: "x.com",
-        youtube: "youtube.com",
-        stack_overflow: "stackoverflow.com",
-        reddit: "reddit.com",
-        roadmap_sh: "roadmap.sh",
-        codepen: "codepen.io",
-        mastodon: "mastodon.social",
-        threads: "threads.net",
-      };
-
-      try {
-        const parsedUrl = new URL(url);
-        return (
-          parsedUrl.protocol === "https:" &&
-          (domainMap[type]
-            ? parsedUrl.hostname.includes(domainMap[type])
-            : true)
-        );
-      } catch (error) {
-        return false;
-      }
-    }
     const socialFields = {
       github,
       linkedin,
-      website,
       x,
       youtube,
       stack_overflow,
@@ -350,87 +338,46 @@ class ProfileController {
       threads,
     };
 
-    // Validate and filter out empty values
     const validFields = Object.entries(socialFields)
-      .filter(([key, value]) => value && isValidSocialLink(key, value)) // Only keep non-empty and valid URLs
+      .filter(([key, value]) => value && this.isValidSocialLink(key, value))
       .map(([key, value], index) => ({
         column: key,
         value: value,
         paramIndex: index + 1,
       }));
 
-    // Proceed only if there's at least one valid field to update
+    console.log(validFields);
+
     if (validFields.length > 0) {
       const setClause = validFields
         .map(({ column }, index) => `${column} = $${index + 1}`)
         .join(", ");
 
       const values = validFields.map(({ value }) => value);
-      values.push(req.body.user.id); // Add user ID as the last parameter
+      values.push(req.body.user.id);
 
       const query = `
         UPDATE social_links 
         SET ${setClause} 
         WHERE user_id = $${values.length} 
-        RETURNING *;
+        RETURNING id;
       `;
 
       const { rows: socialLinksRows } = await queryDb(query, values);
-    }
-
-    if (
-      github ||
-      linkedin ||
-      website ||
-      x ||
-      youtube ||
-      stack_overflow ||
-      reddit ||
-      roadmap_sh ||
-      codepen ||
-      mastodon ||
-      threads
-    ) {
-      const { rows: socialLinksRows } = await queryDb(
-        `
-        UPDATE social_links 
-        SET 
-          github = $1, 
-          linkedin = $2, 
-          website = $3, 
-          x = $4, 
-          youtube = $5, 
-          stack_overflow = $6, 
-          reddit = $7, 
-          roadmap_sh = $8, 
-          codepen = $9, 
-          mastodon = $10, 
-          threads = $11 
-        WHERE user_id = $12 
-        RETURNING *;
-        `,
-        [
-          github || "",
-          linkedin || "",
-          website || "",
-          x || "",
-          youtube || "",
-          stack_overflow || "",
-          reddit || "",
-          roadmap_sh || "",
-          codepen || "",
-          mastodon || "",
-          threads || "",
-          req.body.user.id,
-        ]
-      );
 
       if (socialLinksRows.length === 0) {
         return next({ status: 404, message: "User not found" });
       }
     }
 
-    res.status(200).json({ message: "Profile Updated Successfully" });
+    res
+      .status(200)
+      .cookie("accessToken", accessToken, {
+        secure: true,
+        httpOnly: false,
+        sameSite: "none",
+      })
+      .json({ message: "Profile Updated Successfully" });
   }
   async updateStreak(req: Request, res: Response, next: NextFunction) {
     const { user } = req.body;
@@ -506,6 +453,31 @@ class ProfileController {
     return res.status(201).json({
       message: "Readme successfully saved.",
     });
+  }
+
+  isValidSocialLink(type: string, url: string) {
+    const domainMap: any = {
+      github: "github.com",
+      linkedin: "linkedin.com",
+      x: "x.com",
+      youtube: "youtube.com",
+      stack_overflow: "stackoverflow.com",
+      reddit: "reddit.com",
+      roadmap_sh: "roadmap.sh",
+      codepen: "codepen.io",
+      mastodon: "mastodon.social",
+      threads: "threads.net",
+    };
+
+    try {
+      const parsedUrl = new URL(url);
+
+      return parsedUrl.protocol === "https:" && domainMap[type]
+        ? parsedUrl.hostname.includes(domainMap[type])
+        : false;
+    } catch (error) {
+      return false;
+    }
   }
 }
 
