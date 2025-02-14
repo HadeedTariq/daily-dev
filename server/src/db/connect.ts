@@ -1,5 +1,8 @@
 import { env } from "@/common/utils/envConfig";
+import Redis from "ioredis";
 import { Pool } from "pg";
+
+export const redis = new Redis(env.REDIS_URL);
 
 export const pool = new Pool({
   user: env.DATABASE_USER,

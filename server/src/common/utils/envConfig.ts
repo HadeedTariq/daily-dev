@@ -15,6 +15,7 @@ export const env = cleanEnv(process.env, {
   COMMON_RATE_LIMIT_MAX_REQUESTS: num({ devDefault: testOnly(1000) }),
   COMMON_RATE_LIMIT_WINDOW_MS: num({ devDefault: testOnly(1000) }),
   DATABASE_URL: url({ devDefault: testOnly("http://localhost:3000") }),
+  REDIS_URL: url({ devDefault: testOnly("http://localhost:5173") }),
   DATABASE_HOST: host({ devDefault: testOnly("localhost") }),
   DATABASE_PORT: port({ devDefault: testOnly(3000) }),
   DATABASE_USER: str({ devDefault: testOnly("user") }),

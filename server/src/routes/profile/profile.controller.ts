@@ -274,6 +274,21 @@ class ProfileController {
       ) {
         return res.status(400).json({ message: "Invalid website URL." });
       }
+
+      const query = `
+        UPDATE social_links 
+        SET website=$1 
+        WHERE user_id = $2 
+        RETURNING id;
+      `;
+
+      const values = [website, req.body.user.id];
+
+      const { rows: socialLinksRows } = await queryDb(query, values);
+
+      if (socialLinksRows.length === 0) {
+        return next({ status: 404, message: "User not found" });
+      }
     }
 
     if (
@@ -283,6 +298,7 @@ class ProfileController {
       email !== user.email ||
       profession !== user.profession
     ) {
+      console.log("run user profile");
       const query = `UPDATE users SET username=$1, avatar=$2, name=$3, email=$4, profession=$5 WHERE id=$6 RETURNING id`;
       const { rows } = await queryDb(query, [
         username,
@@ -312,6 +328,8 @@ class ProfileController {
     }
 
     if (bio || company || job_title) {
+      console.log("run job");
+
       const query = `UPDATE about SET bio=$1, company=$2, job_title=$3 WHERE user_id=$4 RETURNING *`;
       const { rows: aboutRows } = await queryDb(query, [
         String(bio),
@@ -349,6 +367,8 @@ class ProfileController {
     console.log(validFields);
 
     if (validFields.length > 0) {
+      console.log("run user social");
+
       const setClause = validFields
         .map(({ column }, index) => `${column} = $${index + 1}`)
         .join(", ");
