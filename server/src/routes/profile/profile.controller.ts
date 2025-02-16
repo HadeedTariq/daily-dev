@@ -1,4 +1,4 @@
-import { queryDb } from "@/db/connect";
+import { queryDb, redis } from "@/db/connect";
 import { NextFunction, Request, Response } from "express";
 import sanitizeHtml from "sanitize-html";
 
@@ -400,58 +400,85 @@ class ProfileController {
       .json({ message: "Profile Updated Successfully" });
   }
   async updateStreak(req: Request, res: Response, next: NextFunction) {
-    const { user } = req.body;
-    const currentDate = new Date();
+    try {
+      const { user } = req.body;
+      const currentDate = new Date();
+      const redisKey = `streak:${user.id}`;
 
-    const { rows } = await queryDb(
-      `SELECT updated_at, streak_length, longest_streak FROM streaks WHERE user_id = $1`,
-      [user.id]
-    );
+      let streakData: any = await redis.get(redisKey);
 
-    if (rows.length === 0) {
-      return next({ status: 404, message: "User not found" });
-    }
+      if (streakData) {
+        streakData = JSON.parse(streakData);
+      } else {
+        const { rows } = await queryDb(
+          `SELECT updated_at, streak_length, longest_streak FROM streaks WHERE user_id = $1`,
+          [user.id]
+        );
 
-    const lastUpdated = new Date(rows[0].updated_at);
-    const sameDay =
-      currentDate.toISOString().split("T")[0] ===
-      lastUpdated.toISOString().split("T")[0];
+        if (rows.length === 0) {
+          return next({ status: 404, message: "User not found" });
+        }
 
-    if (sameDay) {
-      return res.status(204).json({});
-    }
+        streakData = rows[0];
 
-    const diffDays = Math.floor(
-      (Number(currentDate) - Number(lastUpdated)) / (1000 * 60 * 60 * 24)
-    );
-    let query, values;
+        await redis.set(redisKey, JSON.stringify(streakData), "EX", 86400);
+      }
 
-    if (diffDays > 1) {
-      const longestStreak = Math.max(
-        rows[0].streak_length,
-        rows[0].longest_streak
+      const lastUpdated = new Date(streakData.updated_at);
+      const sameDay =
+        currentDate.toISOString().split("T")[0] ===
+        lastUpdated.toISOString().split("T")[0];
+
+      if (sameDay) {
+        return res.status(204).json({});
+      }
+
+      const diffDays = Math.floor(
+        (Number(currentDate) - Number(lastUpdated)) / (1000 * 60 * 60 * 24)
       );
-      query = `
-        UPDATE streaks
-        SET streak_length = $1, updated_at = $2, streak_end = $2, streak_start = $2, longest_streak = $3
-        WHERE user_id = $4
-      `;
-      values = [1, currentDate, longestStreak, user.id];
-    } else {
-      query = `
-        UPDATE streaks
-        SET streak_length = streak_length + 1, updated_at = $1
-        WHERE user_id = $2
-      `;
-      values = [currentDate, user.id];
+
+      let query, values;
+
+      if (diffDays > 1) {
+        const longestStreak = Math.max(
+          streakData.streak_length,
+          streakData.longest_streak
+        );
+
+        query = `
+          UPDATE streaks
+          SET streak_length = $1, updated_at = $2, streak_end = $2, streak_start = $2, longest_streak = $3
+          WHERE user_id = $4
+        `;
+        values = [1, currentDate, longestStreak, user.id];
+
+        streakData = {
+          streak_length: 1,
+          updated_at: currentDate,
+          longest_streak: longestStreak,
+        };
+      } else {
+        query = `
+          UPDATE streaks
+          SET streak_length = streak_length + 1, updated_at = $1
+          WHERE user_id = $2
+        `;
+        values = [currentDate, user.id];
+
+        streakData.streak_length += 1;
+        streakData.updated_at = currentDate;
+      }
+
+      await queryDb(query, values);
+
+      await redis.set(redisKey, JSON.stringify(streakData), "EX", 86400);
+
+      return res.status(201).json({ message: "Streak updated successfully" });
+    } catch (error) {
+      next(error);
     }
-
-    await queryDb(query, values);
-
-    return res.status(201).json({
-      message: "Streak updated successfully",
-    });
   }
+
   async readmeHandler(req: Request, res: Response, next: NextFunction) {
     const { readme } = req.body;
 
