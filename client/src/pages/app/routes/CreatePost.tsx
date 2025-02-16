@@ -14,11 +14,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import {
-  InvalidateQueryFilters,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 
 import { Input } from "@/components/ui/input";
 
@@ -34,7 +30,6 @@ import { postApi } from "@/lib/axios";
 import MarkdownEditor from "@uiw/react-markdown-editor";
 import axios from "axios";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
-import { useGetTags } from "../hooks/useGetTags";
 import { useGetJoinedSquads } from "../hooks/useGetJoinedSquads";
 
 const formSchema = z.object({
@@ -42,17 +37,13 @@ const formSchema = z.object({
   content: z.string().min(1, "Content is required"),
   squad: z.string(),
   thumbnail: z.string().optional(),
-  tags: z.array(z.string()).min(1, "At least one tag is required"),
 });
 
 export function CreatePost() {
-  const queryClient = useQueryClient();
   const { data: joinedSquads } = useGetJoinedSquads();
 
   const [thumbnail, setThumbnail] = useState<string>("");
   const [file, setFile] = useState<string | File>("");
-  const { isLoading, data: tags } = useGetTags();
-  const [newTag, setNewTag] = useState("");
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -60,7 +51,6 @@ export function CreatePost() {
       title: "",
       content: "",
       squad: "",
-      tags: [],
     },
   });
 
@@ -85,11 +75,7 @@ export function CreatePost() {
     },
   });
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log("dfdf");
-
     if (file) {
-      console.log("dfdsfdfdf");
-
       const formData = new FormData();
       formData.append("file", file);
       formData.append("upload_preset", "n5y4fqsf");
@@ -121,34 +107,8 @@ export function CreatePost() {
       return;
     }
 
-    const postTags = values.tags?.map((tag) => {
-      const tagData = tags?.find((t) => t.name === tag);
-      return { id: tagData?.id, name: tag };
-    });
-    values.tags = postTags as any;
-
     createPost(values);
   }
-
-  const { mutate: handleAddTag, isPending: isTagPending } = useMutation({
-    mutationKey: ["createTag"],
-    mutationFn: async () => {
-      const { data } = await postApi.post("/create-tag", { name: newTag });
-      return data;
-    },
-    onError: (err: any) => {
-      toast({
-        title: err.response.data.message || "Something went wrong",
-        variant: "destructive",
-      });
-    },
-    onSuccess: (data: any) => {
-      queryClient.invalidateQueries(["getTags"] as InvalidateQueryFilters);
-      toast({
-        title: data.message || "Tag created successfully",
-      });
-    },
-  });
 
   const handleThumbnailChange = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -163,8 +123,6 @@ export function CreatePost() {
       reader.readAsDataURL(file);
     }
   };
-
-  if (isLoading) return <h1>Loading...</h1>;
 
   return (
     <Form {...form}>
@@ -250,80 +208,6 @@ export function CreatePost() {
                 </div>
               </FormControl>
               <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="tags"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Tags</FormLabel>
-              <Select
-                onValueChange={(value) => {
-                  if (field.value.length > 2) {
-                    toast({
-                      title: "Maximum 3 tags allowed",
-                      description: "You can only select a maximum of 3 tags.",
-                      variant: "destructive",
-                      duration: 2000,
-                    });
-                    return;
-                  }
-                  if (!field.value.includes(value)) {
-                    field.onChange([...field.value, value]);
-                  }
-                }}
-                value={field.value[field.value.length - 1] || ""}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select tags" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {tags?.map((tag) => (
-                    <SelectItem key={tag.id} value={tag.name}>
-                      {tag.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormDescription>
-                Select existing tags or create a new one below.
-              </FormDescription>
-              <FormMessage />
-              <div className="flex items-center mt-2">
-                <Input
-                  placeholder="New tag"
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  className="mr-2"
-                />
-                <Button
-                  type="button"
-                  onClick={() => handleAddTag()}
-                  disabled={isTagPending}
-                >
-                  Add Tag
-                </Button>
-              </div>
-              {field.value.length > 0 && (
-                <div className="mt-2">
-                  <p>Selected tags:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {field.value.map((tag) => (
-                      <div
-                        key={tag}
-                        className="bg-primary text-primary-foreground px-2 py-1 rounded-md text-sm"
-                      >
-                        {tag}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </FormItem>
           )}
         />

@@ -24,10 +24,10 @@ export const useGetNewPosts = (
 ) => {
   const dispatch = useDispatch();
 
-  const fetchPosts = async ({ pageParam = 1 }: QueryFunctionContext) => {
+  const fetchPosts = async ({ pageParam = 0 }: QueryFunctionContext) => {
     try {
       const { data } = await postApi.get<PostResponse>(
-        `?pageSize=${initialPageSize}&pageNumber=${pageParam}&sortingOrder=${sortingOrder}`
+        `?pageSize=${initialPageSize}&cursor=${pageParam}&sortingOrder=${sortingOrder}`
       );
       if (main) {
         dispatch(addNewPosts(data.posts));
@@ -47,8 +47,10 @@ export const useGetNewPosts = (
     queryKey: [`infinitePosts_${sortingOrder}_${initialPageSize}`],
     queryFn: fetchPosts,
     initialPageParam: 1,
-    getNextPageParam: (lastPage, allPages) => {
-      return lastPage.posts.length > 0 ? allPages.length + 1 : undefined;
+    getNextPageParam: (lastPage) => {
+      const post = lastPage.posts[lastPage.posts.length - 1];
+
+      return lastPage.posts.length > 0 ? post?.id : undefined;
     },
     refetchOnWindowFocus: false,
     refetchOnMount: false,

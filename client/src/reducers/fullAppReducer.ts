@@ -4,7 +4,7 @@ export type FullAppState = {
   user: User | null;
   profile: UserProfile | null;
   currentUserProfile: UserProfile | null;
-  currentSquad: Omit<SquadDetails, "squad_posts"> | null;
+  currentSquad: SquadDetails | null;
   tags: Tag[];
   posts: PostCards[];
   sortedPosts: PostCards[];
@@ -41,10 +41,7 @@ const fullAppReducer = createSlice({
     setCurrentUserProfile: (state, { payload }: { payload: UserProfile }) => {
       state.currentUserProfile = payload;
     },
-    setCurrentSquad: (
-      state,
-      { payload }: { payload: Omit<SquadDetails, "squad_posts"> }
-    ) => {
+    setCurrentSquad: (state, { payload }: { payload: SquadDetails }) => {
       state.currentSquad = payload;
     },
     setTags: (state, { payload }: { payload: Tag[] }) => {

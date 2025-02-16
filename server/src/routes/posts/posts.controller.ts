@@ -11,10 +11,8 @@ class PostController {
     this.getPostBySlug = this.getPostBySlug.bind(this);
     this.getMyPosts = this.getMyPosts.bind(this);
     this.getUserPosts = this.getUserPosts.bind(this);
-    this.getPostsTags = this.getPostsTags.bind(this);
     this.getPostComments = this.getPostComments.bind(this);
     this.createPost = this.createPost.bind(this);
-    this.createTag = this.createTag.bind(this);
     this.editPost = this.editPost.bind(this);
     this.upvotePost = this.upvotePost.bind(this);
     this.viewPost = this.viewPost.bind(this);
@@ -28,7 +26,7 @@ class PostController {
     this.deleteCommentReply = this.deleteCommentReply.bind(this);
   }
 
-  getTags = async () => {
+  getTags = () => {
     const res = [
       "software-engineering",
       "backend-development",
@@ -83,7 +81,8 @@ class PostController {
     return res;
   };
 
-  detectTags = (content: string, predefinedTags: string[]) => {
+  detectTags = (content: string) => {
+    const predefinedTags = this.getTags();
     const doc = nlp(removeMd(content));
     const nouns = doc.nouns().out("array");
     const adjectives = doc.adjectives().out("array");
@@ -104,16 +103,8 @@ class PostController {
     }, []);
   };
 
-  async getPostsTags(req: Request, res: Response, next: NextFunction) {
-    const query = `
-        SELECT * 
-        FROM tags 
-      `;
-    const { rows } = await queryDb(query);
-    res.status(200).json({ tags: rows });
-  }
   async getPosts(req: Request, res: Response, next: NextFunction) {
-    const { pageSize, pageNumber, sortingOrder } = req.query;
+    const { pageSize, cursor, sortingOrder } = req.query;
 
     const allowedSortingOrders = ["id", "", "upvotes", "popular"];
 
@@ -132,8 +123,9 @@ class PostController {
         WITH paginated_posts AS (
             SELECT id
             FROM posts
-            ORDER BY id
-            LIMIT $2 OFFSET ($3 - 1) * $2
+            where id > $2
+            ORDER BY id ASC
+            LIMIT $3
         )
         SELECT 
             p.id,
@@ -263,8 +255,8 @@ class PostController {
 
       const { rows } = await queryDb(query, [
         req.body.user.id,
-        pageSize ? pageSize : 8,
-        pageNumber ? pageNumber : 1,
+        cursor,
+        pageSize ? pageSize : 1,
       ]);
 
       res.status(200).json({ posts: rows });
@@ -494,14 +486,10 @@ class PostController {
   }
 
   async createPost(req: Request, res: Response, next: NextFunction) {
-    const { title, content, tags, thumbnail, squad } = req.body;
+    const { title, content, thumbnail, squad } = req.body;
 
-    if (!title || !content || !thumbnail || !squad || !Array.isArray(tags)) {
+    if (!title || !content || !thumbnail || !squad) {
       return res.status(400).json({ message: "Please fill all the fields" });
-    }
-
-    if (tags.length > 3) {
-      return res.status(400).json({ message: "Maximum 3 tags are allowed." });
     }
 
     const { rows: isSquadMember } = await queryDb(
@@ -519,7 +507,7 @@ class PostController {
       allowedTags: [],
       allowedAttributes: {},
     });
-
+    const tags = this.detectTags(sanitizedContent);
     const slug = title
       .toLowerCase()
       .trim()
@@ -531,8 +519,8 @@ class PostController {
       await client.query("BEGIN");
 
       const postQuery = `
-      INSERT INTO posts (title, content, thumbnail, author_id, squad_id, slug)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO posts (title, content, thumbnail, author_id, squad_id, slug,tags)
+      VALUES ($1, $2, $3, $4, $5, $6,$7)
       RETURNING id;
   `;
 
@@ -543,20 +531,10 @@ class PostController {
         Number(req.body.user.id),
         Number(squad),
         slug,
+        tags,
       ]);
 
       const postId = postRows[0].id;
-
-      const postTagValues = tags
-        .map((tag: { id: number }) => `(${postId}, ${tag.id})`)
-        .join(", ");
-
-      const insertPostTagsQuery = `
-      INSERT INTO post_tags (post_id, tag_id)
-      VALUES ${postTagValues};
-    `;
-
-      await client.query(insertPostTagsQuery);
 
       await client.query(
         `INSERT INTO post_upvotes (post_id, upvotes) VALUES ($1, $2)`,
@@ -579,33 +557,6 @@ class PostController {
     } finally {
       client.release();
       console.log("Database client released");
-    }
-  }
-
-  async createTag(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { name } = req.body;
-
-      if (!name) {
-        return res.status(400).json({ message: "Tag name is required." });
-      }
-
-      const tagQuery = `
-        INSERT INTO tags (name)
-        VALUES ($1)
-        RETURNING id, name
-      `;
-
-      const { rows } = await queryDb(tagQuery, [name.toLowerCase()]);
-      res.status(201).json({
-        message: "Tag created successfully.",
-        newTag: rows[0],
-      });
-    } catch (error) {
-      if (error instanceof DatabaseError) {
-        error.message = "Tag Already exists";
-      }
-      next(error);
     }
   }
 

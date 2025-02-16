@@ -165,16 +165,11 @@ class SquadController {
                         'post_title', posts.title,
                         'post_thumbnail', posts.thumbnail,
                         'post_content', posts.content,
+                        'post_tags', posts.tags,
                         'post_created_at', posts.created_at,
                         'author_avatar', users.avatar,
                         'post_upvotes', COALESCE(post_upvotes.upvotes, 0),
-                        'post_views', COALESCE(post_views.views, 0),
-                        'post_tags', (
-                            SELECT JSON_AGG(tags.name) 
-                            FROM post_tags 
-                            JOIN tags ON post_tags.tag_id = tags.id
-                            WHERE post_tags.post_id = posts.id
-                        )
+                        'post_views', COALESCE(post_views.views, 0)
                     )
                 )
                 FROM posts
@@ -206,7 +201,6 @@ class SquadController {
                 INNER JOIN users ON fsm.user_id = users.id
             ) AS squad_members
         FROM selected_squad s;
-
     `;
 
     const { rows } = await queryDb(query, [squad_handle, userId]);
