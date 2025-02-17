@@ -4,22 +4,34 @@ import { Textarea } from "@/components/ui/textarea";
 import { useMutation } from "@tanstack/react-query";
 import { postApi } from "@/lib/axios";
 import { toast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { setStopFetchingPostComments } from "@/reducers/fullAppReducer";
 import CommentItem from "./CommentItem";
+import { useFullApp } from "@/store/hooks/useFullApp";
+import { useGetPostComments } from "../../hooks/usePostsHandler";
 
 type CommentSectionProps = {
   postId: number;
-  comments: Comments[];
-  isCommentsLoading: boolean;
 };
-export const CommentSection = ({
-  comments,
-  postId,
-  isCommentsLoading,
-}: CommentSectionProps) => {
+export const CommentSection = ({ postId }: CommentSectionProps) => {
   const dispatch = useDispatch();
+  const { stopFetchingPostComments, currentPostComments: comments } =
+    useFullApp();
+  const [pageNumber, setPageNumber] = useState(1);
+  const { isLoading: isCommentsLoading } = useGetPostComments(
+    postId,
+    8,
+    pageNumber
+  );
+  const handleScroll = () => {
+    if (
+      window.innerHeight + document.documentElement.scrollTop >=
+      document.documentElement.offsetHeight - 100
+    ) {
+      setPageNumber((prevPage) => prevPage + 1);
+    }
+  };
   const [newComment, setNewComment] = useState("");
   const { mutate: createComment, isPending: isCommentPending } = useMutation({
     mutationKey: [`create_comment_${postId}`],
@@ -39,6 +51,16 @@ export const CommentSection = ({
       });
     },
   });
+  useEffect(() => {
+    if (stopFetchingPostComments) {
+      window.removeEventListener("scroll", handleScroll);
+    } else {
+      window.addEventListener("scroll", handleScroll);
+    }
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [stopFetchingPostComments]);
 
   return (
     <>

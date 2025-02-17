@@ -4,11 +4,13 @@ import {
   addNewFollowingPosts,
   addNewPosts,
   addNewSortedPosts,
+  setCurrentPost,
   setStopFetchingPostComments,
 } from "@/reducers/fullAppReducer";
 import {
   QueryFunctionContext,
   useInfiniteQuery,
+  useMutation,
   useQuery,
 } from "@tanstack/react-query";
 import { useDispatch } from "react-redux";
@@ -169,7 +171,7 @@ export const useGetPostComments = (
         `/get-post-comments/${postId}?pageSize=${pageSize}&pageNumber=${pageNumber}`
       );
 
-      if (data.comments.length < 1) {
+      if (data.comments.length === 0) {
         dispatch(setStopFetchingPostComments(true));
       }
 
@@ -182,15 +184,14 @@ export const useGetPostComments = (
   return queryData;
 };
 
-export const useGetCurrentPost = (postSlug: string, isPostExists: boolean) => {
-  const queryData = useQuery({
-    queryKey: [`getCurrentPost_${postSlug}`],
-    queryFn: async () => {
-      const { data } = await postApi.get(`/post-by-slug?postSlug=${postSlug}`);
-      return data as PostCards;
+export const useGetCurrentPost = (postSlug: string) => {
+  const dispatch = useDispatch();
+  const queryData = useMutation({
+    mutationKey: [`getCurrentPost_${postSlug}`],
+    mutationFn: async (slug: string) => {
+      const { data } = await postApi.get(`/post-by-slug?postSlug=${slug}`);
+      dispatch(setCurrentPost(data));
     },
-    refetchOnWindowFocus: false,
-    enabled: !isPostExists,
   });
   return queryData;
 };

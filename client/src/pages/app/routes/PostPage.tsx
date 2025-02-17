@@ -1,69 +1,41 @@
-import { Link, useParams } from "react-router-dom";
-import { useGetPostComments } from "../hooks/usePostsHandler";
+import { Link, Navigate, useParams } from "react-router-dom";
+import { useGetCurrentPost } from "../hooks/usePostsHandler";
 import { format } from "date-fns";
 import MarkdownEditor from "@uiw/react-markdown-editor";
 
 import UpvoteButton from "../components/posts/UpvoteButton";
 
 import { useFullApp } from "@/store/hooks/useFullApp";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import {
   emptyCurrenPostComments,
   setCurrentPost,
-  setStopFetchingPostComments,
 } from "@/reducers/fullAppReducer";
 import { CommentSection } from "../components/posts/CommentSection";
 
 const PostPage = () => {
   const params = useParams();
   const dispatch = useDispatch();
-  const [pageNumber, setPageNumber] = useState(1);
 
-  const {
-    posts,
-    currentPostComments: comments,
-    stopFetchingPostComments,
-  } = useFullApp();
+  const { mutate: fetchPost } = useGetCurrentPost(params.post_slug as string);
 
-  const post = posts?.find((p) => p.slug === params.post_slug);
+  const { posts, currentPost: post } = useFullApp();
 
-  const { isLoading: isCommentsLoading } = useGetPostComments(
-    post?.id,
-    8,
-    pageNumber
-  );
-
-  const handleScroll = () => {
-    if (
-      window.innerHeight + document.documentElement.scrollTop >=
-      document.documentElement.offsetHeight - 100
-    ) {
-      setPageNumber((prevPage) => prevPage + 1);
-    }
-  };
+  const postData = posts?.find((p) => p.slug === params.post_slug);
 
   useEffect(() => {
-    if (post !== undefined) {
-      dispatch(setCurrentPost(post));
+    if (postData !== undefined) {
+      dispatch(setCurrentPost(postData));
+    } else {
+      fetchPost(params.post_slug as string);
     }
     return () => {
-      dispatch(setStopFetchingPostComments(false));
       dispatch(emptyCurrenPostComments());
     };
   }, []);
 
-  useEffect(() => {
-    if (stopFetchingPostComments) {
-      window.removeEventListener("s0croll", handleScroll);
-    } else {
-      window.addEventListener("scroll", handleScroll);
-    }
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, [stopFetchingPostComments]);
-
+  if (!params.post_slug) return <Navigate to={"/"} />;
   return (
     <>
       {post ? (
@@ -144,11 +116,7 @@ const PostPage = () => {
               ))}
             </div>
           </footer>
-          <CommentSection
-            postId={Number(post.id)}
-            comments={comments || []}
-            isCommentsLoading={isCommentsLoading}
-          />
+          <CommentSection postId={Number(post.id)} />
         </article>
       ) : (
         <h1>Loading...</h1>

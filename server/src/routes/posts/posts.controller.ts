@@ -295,14 +295,21 @@ class PostController {
     }
     try {
       const query = `
+      with required_post as(
+      select  
+          r_p.id,
+          r_p.title,
+          r_p.thumbnail,
+          r_p.content,
+          r_p.slug,
+          r_p.created_at,
+          r_p.tags,
+          r_p.squad_id,
+          r_p.author_id
+      from posts r_p where r_p.slug = $2
+      )
       SELECT 
-          p.id,
-          p.title,
-          p.thumbnail,
-          p.content,
-          p.slug,
-          p.created_at,
-          JSON_AGG(t.name) FILTER (WHERE t.id IS NOT NULL) AS tags,
+          p.*,
           p_v.upvotes AS upvotes,
           p_vw.views AS views,
           JSON_BUILD_OBJECT(
@@ -320,25 +327,20 @@ class PostController {
               WHERE u_u_v.user_id = $1 
                 AND u_u_v.post_id = p.id
           ) AS current_user_upvoted
-      FROM posts p
-      LEFT JOIN post_tags p_t ON p.id = p_t.post_id
-      LEFT JOIN tags t ON p_t.tag_id = t.id
+      FROM required_post p
       INNER JOIN post_upvotes p_v ON p.id = p_v.post_id
       INNER JOIN post_views p_vw ON p.id = p_vw.post_id
       INNER JOIN squads p_sq ON p.squad_id = p_sq.id
       INNER JOIN users u ON p.author_id = u.id
-      GROUP BY 
-          p.id, p.title, p.thumbnail, p.created_at, 
-          p_v.upvotes, p_vw.views, 
-          p_sq.thumbnail, p_sq.squad_handle, 
-          u.avatar,u.username,u.name 
-         where p.slug = $2
   `;
 
       const { rows } = await queryDb(query, [req.body.user.id, postSlug]);
 
       res.status(200).json(rows[0]);
     } catch (error) {
+      console.log("====================================");
+      console.log(error);
+      console.log("====================================");
       next(error);
     }
   }
