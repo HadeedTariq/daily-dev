@@ -5,13 +5,11 @@ import {
   addNewPosts,
   addNewSortedPosts,
   setCurrentPost,
-  setStopFetchingPostComments,
 } from "@/reducers/fullAppReducer";
 import {
   QueryFunctionContext,
   useInfiniteQuery,
   useMutation,
-  useQuery,
 } from "@tanstack/react-query";
 import { useDispatch } from "react-redux";
 
@@ -159,29 +157,46 @@ export const useGetFollowingsPosts = (initialPageSize: number = 8) => {
 
 export const useGetPostComments = (
   postId: number | undefined,
-  pageSize: number = 8,
-  pageNumber: number = 1
+  initialPageSize: number = 8
 ) => {
   const dispatch = useDispatch();
 
-  const queryData = useQuery({
-    queryKey: [`getPostComments`, pageNumber],
-    queryFn: async () => {
+  const fetchComments = async ({ pageParam = 1 }: QueryFunctionContext) => {
+    try {
       const { data } = await postApi.get(
-        `/get-post-comments/${postId}?pageSize=${pageSize}&pageNumber=${pageNumber}`
+        `/get-post-comments/${postId}?pageSize=${initialPageSize}&pageNumber=${pageParam}`
       );
 
-      if (data.comments.length === 0) {
-        dispatch(setStopFetchingPostComments(true));
-      }
-
       dispatch(addNewComments(data.comments as Comments[]));
-      return data.comments as Comments[];
+
+      return {
+        pageParam,
+        comments: data.comments,
+      };
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const infiniteQuery = useInfiniteQuery({
+    queryKey: ["infiniteComments", initialPageSize],
+    queryFn: fetchComments,
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      return lastPage.comments.length > 0
+        ? Number(lastPage.pageParam) + 1
+        : undefined;
     },
+    refetchOnMount: false,
     refetchOnWindowFocus: false,
-    enabled: postId !== undefined,
+    staleTime: 5000,
+    gcTime: 10 * 60 * 1000,
   });
-  return queryData;
+
+  return {
+    ...infiniteQuery,
+    posts: infiniteQuery.data?.pages.flatMap((page) => page.comments) || [],
+  };
 };
 
 export const useGetCurrentPost = (postSlug: string) => {

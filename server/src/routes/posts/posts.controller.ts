@@ -426,8 +426,10 @@ class PostController {
       const commentsQuery = `
       WITH current_post_comments AS (
             SELECT * 
-            FROM post_comments 
-            WHERE post_id = $1
+            FROM post_comments p_c
+            WHERE p_c.post_id = $1
+            order by p_c.id 
+            limit $3 offset ($4 - 1) * $3
         )
         SELECT 
               c.content,
@@ -491,8 +493,7 @@ class PostController {
               u.name, 
               u.username, 
               u.avatar
-          order by c.id 
-          limit $3 offset ($4 - 1) * $3;
+          order by c.id;
       `;
 
       const { rows: comments } = await queryDb(commentsQuery, [

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -179,244 +179,243 @@ function UserInfo({
   );
 }
 
-export default function CommentItem({
-  comment,
-  isReply,
-  commentId,
-  postId,
-}: CommentItemProps) {
-  const ref = useRef<HTMLDivElement | null>(null);
+const CommentItem = forwardRef<HTMLDivElement, CommentItemProps>(
+  ({ comment, isReply, commentId, postId }, parentRef) => {
+    const ref = useRef<HTMLDivElement | null>(null);
 
-  const queryClient = useQueryClient();
-  const [isReplying, setIsReplying] = useState(false);
-  const [isCommentEditing, setIsCommentEditing] = useState(false);
-  const [isReplyEditing, setIsReplyEditing] = useState(false);
-  const [replyContent, setReplyContent] = useState("");
-  const [editContent, setEditContent] = useState(comment.content);
-  const { mutate: createReply, isPending: isReplyPending } = useMutation({
-    mutationKey: [`create_reply`],
-    mutationFn: async ({
-      commentId,
-      content,
-      receiverId,
-    }: {
-      content: string;
-      commentId: number;
-      receiverId: number;
-    }) => {
-      const { data } = await postApi.post(`/reply/${commentId}`, {
-        content,
-        receiverId,
-      });
-      return data;
-    },
-    onSuccess: () => {
-      setReplyContent("");
-      setIsReplying(false);
-      queryClient.invalidateQueries([
-        "getPostComments",
-      ] as InvalidateQueryFilters);
-    },
-    onError: (err: any) => {
-      toast({
-        title: err.response.data.message || "Failed to create a reply.",
-      });
-    },
-  });
-
-  const { mutate: updateComment, isPending: isCommentUpdationPending } =
-    useMutation({
-      mutationKey: [`update_comment`],
+    const queryClient = useQueryClient();
+    const [isReplying, setIsReplying] = useState(false);
+    const [isCommentEditing, setIsCommentEditing] = useState(false);
+    const [isReplyEditing, setIsReplyEditing] = useState(false);
+    const [replyContent, setReplyContent] = useState("");
+    const [editContent, setEditContent] = useState(comment.content);
+    const { mutate: createReply, isPending: isReplyPending } = useMutation({
+      mutationKey: [`create_reply`],
       mutationFn: async ({
         commentId,
         content,
+        receiverId,
       }: {
         content: string;
         commentId: number;
+        receiverId: number;
       }) => {
-        const { data } = await postApi.put(`/update-comment`, {
+        const { data } = await postApi.post(`/reply/${commentId}`, {
           content,
-          commentId,
+          receiverId,
         });
         return data;
       },
       onSuccess: () => {
-        setIsCommentEditing(false);
-        queryClient.invalidateQueries([
-          "getPostComments",
-        ] as InvalidateQueryFilters);
-      },
-      onError: (err: any) => {
-        console.log(err);
-
-        toast({
-          title: err.response.data.message || "Failed to update a comment.",
-        });
-      },
-    });
-
-  const { mutate: updateReply, isPending: isReplyUpdationPending } =
-    useMutation({
-      mutationKey: [`update_reply`],
-      mutationFn: async ({
-        replyId,
-        content,
-      }: {
-        content: string;
-        replyId: number;
-      }) => {
-        const { data } = await postApi.put(`/update-reply`, {
-          content,
-          replyId,
-        });
-        return data;
-      },
-      onSuccess: () => {
-        setIsReplyEditing(false);
-        queryClient.invalidateQueries([
-          "getPostComments",
-        ] as InvalidateQueryFilters);
-      },
-      onError: (err: any) => {
-        toast({
-          title: err.response.data.message || "Failed to update a reply.",
-        });
-      },
-    });
-
-  const userDetails = isReply
-    ? (comment as CommentReplies).sender_details
-    : (comment as Comments).user_details;
-
-  useEffect(() => {
-    function handleClickOutside(event: any) {
-      if (ref.current && !ref.current.contains(event.target)) {
+        setReplyContent("");
         setIsReplying(false);
-      }
-    }
-    document.addEventListener("click", handleClickOutside);
-    return () => {
-      document.removeEventListener("click", handleClickOutside);
-    };
-  }, []);
+        queryClient.invalidateQueries([
+          "getPostComments",
+        ] as InvalidateQueryFilters);
+      },
+      onError: (err: any) => {
+        toast({
+          title: err.response.data.message || "Failed to create a reply.",
+        });
+      },
+    });
 
-  return (
-    <div className={`space-y-4 ${isReply ? "ml-8" : ""}`}>
-      <div className="flex flex-col space-y-2">
-        <UserInfo
-          id={comment.id}
-          isReply={isReply as boolean}
-          setIsReplying={setIsReplying}
-          setIsCommentEditing={setIsCommentEditing}
-          setIsReplyEditing={setIsReplyEditing}
-          user={userDetails}
-          createdAt={comment.created_at}
-          updatedAt={comment.updated_at}
-          edited={comment.edited}
-          parentId={isReply ? commentId : undefined}
-        />
-        {isReply ? (
-          <>
-            {isReplyEditing ? (
-              <div className="space-y-2">
-                <Textarea
-                  value={editContent}
-                  onChange={(e) => setEditContent(e.target.value)}
-                  placeholder="Update Reply"
-                  className="w-full"
-                />
-                <Button
-                  onClick={() =>
-                    updateReply({
-                      replyId: comment.id,
-                      content: editContent.trim(),
-                    })
-                  }
-                  disabled={isReplyUpdationPending}
-                >
-                  Update Reply
-                </Button>
-              </div>
-            ) : (
-              <p className="mt-2">
-                <span className="font-semibold text-blue-500">
-                  @{(comment as CommentReplies).recipient_details.username}{" "}
-                </span>
-                {comment.content}
-              </p>
-            )}
-          </>
-        ) : (
-          <>
-            {isCommentEditing ? (
-              <div className="space-y-2">
-                <Textarea
-                  value={editContent}
-                  onChange={(e) => setEditContent(e.target.value)}
-                  placeholder="Update Comment"
-                  className="w-full"
-                />
-                <Button
-                  onClick={() =>
-                    updateComment({
-                      commentId: comment.id,
-                      content: editContent.trim(),
-                    })
-                  }
-                  disabled={isCommentUpdationPending}
-                >
-                  Update Comment
-                </Button>
-              </div>
-            ) : (
-              <>
-                <p className="mt-2">{comment.content}</p>
-                <CommentsUpvoteButton
-                  postId={postId}
-                  commentId={comment.id}
-                  initialUpvotes={Number((comment as Comments).total_upvotes)}
-                  initialUserUpvoted={
-                    (comment as Comments).current_user_upvoted
-                  }
-                />
-              </>
-            )}
-          </>
-        )}
-      </div>
-      {isReplying && (
-        <div className="space-y-2" ref={ref}>
-          <Textarea
-            value={replyContent}
-            onChange={(e) => setReplyContent(e.target.value)}
-            placeholder="Write a reply..."
-            className="w-full"
+    const { mutate: updateComment, isPending: isCommentUpdationPending } =
+      useMutation({
+        mutationKey: [`update_comment`],
+        mutationFn: async ({
+          commentId,
+          content,
+        }: {
+          content: string;
+          commentId: number;
+        }) => {
+          const { data } = await postApi.put(`/update-comment`, {
+            content,
+            commentId,
+          });
+          return data;
+        },
+        onSuccess: () => {
+          setIsCommentEditing(false);
+          queryClient.invalidateQueries([
+            "getPostComments",
+          ] as InvalidateQueryFilters);
+        },
+        onError: (err: any) => {
+          console.log(err);
+
+          toast({
+            title: err.response.data.message || "Failed to update a comment.",
+          });
+        },
+      });
+
+    const { mutate: updateReply, isPending: isReplyUpdationPending } =
+      useMutation({
+        mutationKey: [`update_reply`],
+        mutationFn: async ({
+          replyId,
+          content,
+        }: {
+          content: string;
+          replyId: number;
+        }) => {
+          const { data } = await postApi.put(`/update-reply`, {
+            content,
+            replyId,
+          });
+          return data;
+        },
+        onSuccess: () => {
+          setIsReplyEditing(false);
+          queryClient.invalidateQueries([
+            "getPostComments",
+          ] as InvalidateQueryFilters);
+        },
+        onError: (err: any) => {
+          toast({
+            title: err.response.data.message || "Failed to update a reply.",
+          });
+        },
+      });
+
+    const userDetails = isReply
+      ? (comment as CommentReplies).sender_details
+      : (comment as Comments).user_details;
+
+    useEffect(() => {
+      function handleClickOutside(event: any) {
+        if (ref.current && !ref.current.contains(event.target)) {
+          setIsReplying(false);
+        }
+      }
+      document.addEventListener("click", handleClickOutside);
+      return () => {
+        document.removeEventListener("click", handleClickOutside);
+      };
+    }, []);
+
+    return (
+      <div className={`space-y-4 ${isReply ? "ml-8" : ""}`} ref={parentRef}>
+        <div className="flex flex-col space-y-2">
+          <UserInfo
+            id={comment.id}
+            isReply={isReply as boolean}
+            setIsReplying={setIsReplying}
+            setIsCommentEditing={setIsCommentEditing}
+            setIsReplyEditing={setIsReplyEditing}
+            user={userDetails}
+            createdAt={comment.created_at}
+            updatedAt={comment.updated_at}
+            edited={comment.edited}
+            parentId={isReply ? commentId : undefined}
           />
-          <Button
-            onClick={() =>
-              createReply({
-                commentId: comment.id,
-                content: replyContent.trim(),
-                receiverId: userDetails.id,
-              })
-            }
-            disabled={!replyContent.trim() || isReplyPending}
-          >
-            Post Reply
-          </Button>
+          {isReply ? (
+            <>
+              {isReplyEditing ? (
+                <div className="space-y-2">
+                  <Textarea
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    placeholder="Update Reply"
+                    className="w-full"
+                  />
+                  <Button
+                    onClick={() =>
+                      updateReply({
+                        replyId: comment.id,
+                        content: editContent.trim(),
+                      })
+                    }
+                    disabled={isReplyUpdationPending}
+                  >
+                    Update Reply
+                  </Button>
+                </div>
+              ) : (
+                <p className="mt-2">
+                  <span className="font-semibold text-blue-500">
+                    @{(comment as CommentReplies).recipient_details.username}{" "}
+                  </span>
+                  {comment.content}
+                </p>
+              )}
+            </>
+          ) : (
+            <>
+              {isCommentEditing ? (
+                <div className="space-y-2">
+                  <Textarea
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    placeholder="Update Comment"
+                    className="w-full"
+                  />
+                  <Button
+                    onClick={() =>
+                      updateComment({
+                        commentId: comment.id,
+                        content: editContent.trim(),
+                      })
+                    }
+                    disabled={isCommentUpdationPending}
+                  >
+                    Update Comment
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <p className="mt-2">{comment.content}</p>
+                  <CommentsUpvoteButton
+                    postId={postId}
+                    commentId={comment.id}
+                    initialUpvotes={Number((comment as Comments).total_upvotes)}
+                    initialUserUpvoted={
+                      (comment as Comments).current_user_upvoted
+                    }
+                  />
+                </>
+              )}
+            </>
+          )}
         </div>
-      )}
-      {!isReply &&
-        (comment as Comments).replies &&
-        (comment as Comments).replies.map((reply) => (
-          <CommentItem
-            postId={postId}
-            key={reply.id}
-            commentId={comment.id}
-            comment={reply}
-            isReply={true}
-          />
-        ))}
-    </div>
-  );
-}
+        {isReplying && (
+          <div className="space-y-2" ref={ref}>
+            <Textarea
+              value={replyContent}
+              onChange={(e) => setReplyContent(e.target.value)}
+              placeholder="Write a reply..."
+              className="w-full"
+            />
+            <Button
+              onClick={() =>
+                createReply({
+                  commentId: comment.id,
+                  content: replyContent.trim(),
+                  receiverId: userDetails.id,
+                })
+              }
+              disabled={!replyContent.trim() || isReplyPending}
+            >
+              Post Reply
+            </Button>
+          </div>
+        )}
+        {!isReply &&
+          (comment as Comments).replies &&
+          (comment as Comments).replies.map((reply) => (
+            <CommentItem
+              postId={postId}
+              key={reply.id}
+              commentId={comment.id}
+              comment={reply}
+              isReply={true}
+            />
+          ))}
+      </div>
+    );
+  }
+);
+
+export default CommentItem;

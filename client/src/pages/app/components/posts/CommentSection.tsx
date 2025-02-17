@@ -10,28 +10,26 @@ import { setStopFetchingPostComments } from "@/reducers/fullAppReducer";
 import CommentItem from "./CommentItem";
 import { useFullApp } from "@/store/hooks/useFullApp";
 import { useGetPostComments } from "../../hooks/usePostsHandler";
+import { useInView } from "react-intersection-observer";
 
 type CommentSectionProps = {
   postId: number;
 };
 export const CommentSection = ({ postId }: CommentSectionProps) => {
   const dispatch = useDispatch();
-  const { stopFetchingPostComments, currentPostComments: comments } =
-    useFullApp();
-  const [pageNumber, setPageNumber] = useState(1);
-  const { isLoading: isCommentsLoading } = useGetPostComments(
-    postId,
-    8,
-    pageNumber
-  );
-  const handleScroll = () => {
-    if (
-      window.innerHeight + document.documentElement.scrollTop >=
-      document.documentElement.offsetHeight - 100
-    ) {
-      setPageNumber((prevPage) => prevPage + 1);
-    }
-  };
+  const { currentPostComments: comments } = useFullApp();
+  const {
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isFetching,
+    isFetched,
+    isPending,
+  } = useGetPostComments(postId, 8);
+  const { ref, inView } = useInView({
+    threshold: 1,
+  });
   const [newComment, setNewComment] = useState("");
   const { mutate: createComment, isPending: isCommentPending } = useMutation({
     mutationKey: [`create_comment_${postId}`],
@@ -52,15 +50,18 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
     },
   });
   useEffect(() => {
-    if (stopFetchingPostComments) {
-      window.removeEventListener("scroll", handleScroll);
-    } else {
-      window.addEventListener("scroll", handleScroll);
+    if (
+      inView &&
+      hasNextPage &&
+      isFetched &&
+      !isFetching &&
+      !isPending &&
+      !isLoading &&
+      !isFetchingNextPage
+    ) {
+      fetchNextPage();
     }
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, [stopFetchingPostComments]);
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return (
     <>
@@ -86,11 +87,16 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
             Post Comment
           </Button>
         </form>
-        {comments?.map((comment) => (
-          <CommentItem key={comment.id} comment={comment} postId={postId} />
+        {comments?.map((comment, index) => (
+          <CommentItem
+            key={comment.id}
+            comment={comment}
+            postId={postId}
+            ref={index === comments.length - 1 ? ref : undefined}
+          />
         ))}
       </div>
-      {isCommentsLoading && <h1>Loading...</h1>}
+      {isLoading && <h1>Loading...</h1>}
     </>
   );
 };
