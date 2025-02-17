@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-type SortOption = "upvotes" | "popular";
+type SortOption = "upvotes" | "views";
 
 type SortingElementsProps = {
   activeSort: SortOption;
@@ -30,12 +30,12 @@ export default function SortingElements({
         variant="ghost"
         className={cn(
           "relative px-2",
-          activeSort === "popular" && "font-bold text-primary"
+          activeSort === "views" && "font-bold text-primary"
         )}
-        onClick={() => setActiveSort("popular")}
+        onClick={() => setActiveSort("views")}
       >
         Popular
-        {activeSort === "popular" && (
+        {activeSort === "views" && (
           <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
         )}
       </Button>

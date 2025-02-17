@@ -106,12 +106,12 @@ class PostController {
   async getPosts(req: Request, res: Response, next: NextFunction) {
     const { pageSize, cursor, sortingOrder } = req.query;
 
-    const allowedSortingOrders = ["id", "", "upvotes", "popular"];
+    const allowedSortingOrders = ["id", "", "upvotes", "views"];
 
     if (!allowedSortingOrders.includes(String(sortingOrder))) {
       return res.status(400).json({
         message:
-          "Invalid sorting order. Allowed values: 'id', '', 'upvotes', 'popular'.",
+          "Invalid sorting order. Allowed values: 'id', '', 'upvotes', 'views'.",
       });
     }
 
@@ -161,16 +161,24 @@ class PostController {
         JOIN users u ON p.author_id = u.id
         ORDER BY p.id;
     `;
+        const { rows } = await queryDb(query, [
+          req.body.user.id,
+          cursor,
+          pageSize ? pageSize : 1,
+        ]);
+
+        return res.status(200).json({ posts: rows });
       }
+
       if (sortingOrder === "upvotes") {
         query = `
          WITH paginated_posts AS (
-              SELECT DISTINCT p.id,
-              p_v.upvotes
+             SELECT p.id, p_v.upvotes
               FROM posts p
               INNER JOIN post_upvotes p_v ON p.id = p_v.post_id
-              ORDER BY p_v.upvotes DESC
-              LIMIT $2 OFFSET ($3 - 1) * $2
+              WHERE (p_v.upvotes < $2 OR (p_v.upvotes = $2 AND p.id < $3))  
+              ORDER BY p_v.upvotes DESC, p.id DESC 
+              LIMIT $4
           )
           SELECT 
               p.id,
@@ -205,18 +213,30 @@ class PostController {
           JOIN users u ON p.author_id = u.id
           ORDER BY pp.upvotes DESC;
     `;
+        const upvotes = cursor?.toString().split(",")[0].split(":")[1];
+        const postId = cursor?.toString().split(",")[1].split(":")[1];
+        const { rows } = await queryDb(query, [
+          req.body.user.id,
+          upvotes,
+          postId,
+          pageSize ? pageSize : 1,
+        ]);
+
+        return res.status(200).json({ posts: rows });
       }
-      if (sortingOrder === "popular") {
+      if (sortingOrder === "views") {
         query = `
              WITH paginated_posts AS (
-                  SELECT DISTINCT p.id,
+                  SELECT 
+                  p.id,
                   p_vw.views,
                   p_v.upvotes AS upvotes
                   FROM posts p
                   INNER JOIN post_views p_vw ON p.id = p_vw.post_id
                   JOIN post_upvotes p_v ON p.id = p_v.post_id
-                  ORDER BY p_vw.views DESC
-                  LIMIT $2 OFFSET ($3 - 1) * $2
+                  WHERE (p_vw.views < $2 OR (p_vw.views = $2 AND p.id < $3))  
+                  ORDER BY p_vw.views DESC, p.id DESC 
+                  LIMIT $4
               )
               SELECT
                   p.id,
@@ -251,15 +271,19 @@ class PostController {
               JOIN users u ON p.author_id = u.id
               ORDER BY pp.views DESC;
         `;
+
+        const views = cursor?.toString().split(",")[0].split(":")[1];
+        const postId = cursor?.toString().split(",")[1].split(":")[1];
+
+        const { rows } = await queryDb(query, [
+          req.body.user.id,
+          views,
+          postId,
+          pageSize ? pageSize : 1,
+        ]);
+
+        return res.status(200).json({ posts: rows });
       }
-
-      const { rows } = await queryDb(query, [
-        req.body.user.id,
-        cursor,
-        pageSize ? pageSize : 1,
-      ]);
-
-      res.status(200).json({ posts: rows });
     } catch (error) {
       next(error);
     }

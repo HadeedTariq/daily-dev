@@ -1,6 +1,6 @@
 import { useFullApp } from "@/store/hooks/useFullApp";
 
-import { useGetNewPosts } from "../hooks/usePostsHandler";
+import { useGetNewExplorePosts } from "../hooks/usePostsHandler";
 import { useEffect } from "react";
 import { useInView } from "react-intersection-observer";
 import SortingElements from "../components/posts/SortingOrder";
@@ -8,12 +8,21 @@ import { ExplorePostCard } from "../components/posts/ExplorePostCard";
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { emptySortedPosts } from "@/reducers/fullAppReducer";
-type SortOption = "upvotes" | "popular";
+type SortOption = "upvotes" | "views";
 const ExplorePosts = () => {
   const [activeSort, setActiveSort] = useState<SortOption>("upvotes");
   const dispatch = useDispatch();
 
-  const { sortedPosts: posts } = useFullApp();
+  const { sortedPosts } = useFullApp();
+  const uniquePosts = new Set();
+
+  const posts = sortedPosts.filter((post) => {
+    if (!uniquePosts.has(post.id)) {
+      uniquePosts.add(post.id);
+      return true;
+    }
+    return false;
+  });
 
   const {
     fetchNextPage,
@@ -23,7 +32,7 @@ const ExplorePosts = () => {
     isFetching,
     isFetched,
     isPending,
-  } = useGetNewPosts(8, activeSort, false);
+  } = useGetNewExplorePosts(8, activeSort, false);
 
   const { ref, inView } = useInView({
     threshold: 1,
