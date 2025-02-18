@@ -106,6 +106,20 @@ class PostController {
   async getPosts(req: Request, res: Response, next: NextFunction) {
     const { pageSize, cursor, sortingOrder } = req.query;
 
+    // const { rows } = await queryDb(`
+    //       SELECT
+    // indexname,
+    // indexdef
+    //   FROM
+    //       pg_indexes
+    //   WHERE
+    //       tablename = 'posts';  -- Replace 'your_table_name' with the actual table name
+    //   `);
+
+    // console.log("====================================");
+    // console.log(rows);
+    // console.log("====================================");
+
     const allowedSortingOrders = ["id", "", "upvotes", "views"];
 
     if (!allowedSortingOrders.includes(String(sortingOrder))) {
@@ -424,76 +438,72 @@ class PostController {
 
     try {
       const commentsQuery = `
-      WITH current_post_comments AS (
-            SELECT * 
-            FROM post_comments p_c
-            WHERE p_c.post_id = $1
-            order by p_c.id 
-            limit $3 offset ($4 - 1) * $3
-        )
-        SELECT 
-              c.content,
-              c.created_at,
-              c.updated_at,
-              c.edited,
-              c.id,
-              JSON_BUILD_OBJECT(
-                  'name', u.name,
-                  'username', u.username,
-                  'avatar', u.avatar,
-                  'id', u.id
-              ) AS user_details,
-              EXISTS (
-                  SELECT 1 
-                  FROM comment_upvotes c_u_v 
-                  WHERE c_u_v.user_id = $2 
-                    AND c_u_v.comment_id = c.id
-              ) AS current_user_upvoted,
-              COALESCE(
-                  (SELECT COUNT(*) 
-                  FROM comment_upvotes c_u_v_n 
-                  WHERE c_u_v_n.comment_id = c.id), 
-                  0
-              ) AS total_upvotes,
-              COALESCE(
+     WITH current_post_comments AS (
+            SELECT c.id, c.content, c.created_at, c.updated_at, c.edited, c.user_id
+            FROM post_comments c
+            WHERE c.post_id = $1
+            ORDER BY c.id
+            LIMIT $3 OFFSET ($4 - 1) * $3
+        ),
+        comment_upvotes_count AS (
+            SELECT comment_id, COUNT(*) AS total_upvotes
+            FROM comment_upvotes
+            GROUP BY comment_id
+        ),
+        comment_upvotes_user AS (
+            SELECT comment_id, 1 AS current_user_upvoted
+            FROM comment_upvotes
+            WHERE user_id = $2
+        ),
+        replies_agg AS (
+            SELECT cr.comment_id, 
                   JSON_AGG(
                       JSON_BUILD_OBJECT(
-                          'id', c_r.id,
-                          'content', c_r.content,
-                          'created_at', c_r.created_at,
-                          'updated_at', c_r.updated_at,
-                          'edited', c_r.edited,
+                          'id', cr.id,
+                          'content', cr.content,
+                          'created_at', cr.created_at,
+                          'updated_at', cr.updated_at,
+                          'edited', cr.edited,
                           'sender_details', JSON_BUILD_OBJECT(
-                              'name', s_d.name,
-                              'username', s_d.username,
-                              'avatar', s_d.avatar,
-                              'id', s_d.id
+                              'name', s.name,
+                              'username', s.username,
+                              'avatar', s.avatar,
+                              'id', s.id
                           ),
                           'recipient_details', JSON_BUILD_OBJECT(
-                              'name', r_d.name,
-                              'username', r_d.username,
-                              'avatar', r_d.avatar,
-                              'id', r_d.id
+                              'name', r.name,
+                              'username', r.username,
+                              'avatar', r.avatar,
+                              'id', r.id
                           )
                       )
-                  ) FILTER (WHERE c_r.id IS NOT NULL), '[]'
-              ) AS replies
-          FROM current_post_comments c
-          INNER JOIN users u ON u.id = c.user_id
-          LEFT JOIN comment_replies c_r ON c.id = c_r.comment_id
-          LEFT JOIN users s_d ON s_d.id = c_r.sender_id
-          LEFT JOIN users r_d ON r_d.id = c_r.recipient_id
-          GROUP BY 
-              c.id, 
-              c.content, 
-              c.created_at, 
-              c.updated_at, 
-              c.edited, 
-              u.id, 
-              u.name, 
-              u.username, 
-              u.avatar
-          order by c.id;
+                  ) AS replies
+            FROM comment_replies cr
+            LEFT JOIN users s ON s.id = cr.sender_id
+            LEFT JOIN users r ON r.id = cr.recipient_id
+            GROUP BY cr.comment_id
+        )
+        SELECT 
+            c.content,
+            c.created_at,
+            c.updated_at,
+            c.edited,
+            c.id,
+            JSON_BUILD_OBJECT(
+                'name', u.name,
+                'username', u.username,
+                'avatar', u.avatar,
+                'id', u.id
+            ) AS user_details,
+            COALESCE(cuv.current_user_upvoted, 0) AS current_user_upvoted,
+            COALESCE(cuc.total_upvotes, 0) AS total_upvotes,
+            COALESCE(ra.replies, '[]') AS replies
+        FROM current_post_comments c
+        INNER JOIN users u ON u.id = c.user_id
+        LEFT JOIN comment_upvotes_user cuv ON cuv.comment_id = c.id
+        LEFT JOIN comment_upvotes_count cuc ON cuc.comment_id = c.id
+        LEFT JOIN replies_agg ra ON ra.comment_id = c.id
+        ORDER BY c.id;
       `;
 
       const { rows: comments } = await queryDb(commentsQuery, [
@@ -587,54 +597,36 @@ class PostController {
     }
   }
 
-  // Edit a post
   async editPost(req: Request, res: Response, next: NextFunction) {
     const { postId } = req.params;
-    const { title, content, tags } = req.body;
+    const { title, content } = req.body;
 
     try {
       if (title || content) {
+        const sanitizedContent = sanitizeHtml(content, {
+          allowedTags: [],
+          allowedAttributes: {},
+        });
+        const tags = this.detectTags(sanitizedContent);
+
         const updatePostQuery = `
           UPDATE posts
           SET title = COALESCE($1, title),
-              content = COALESCE($2, content)
-          WHERE id = $3
-          RETURNING *;
+              content = COALESCE($2, content),
+              tags = COALESCE($3, tags)
+          WHERE id = $4
+          RETURNING id;
         `;
         const { rows: updatedRows } = await queryDb(updatePostQuery, [
           title,
-          content,
+          sanitizedContent,
+          tags,
           postId,
         ]);
 
         if (updatedRows.length === 0) {
           return res.status(404).json({ message: "Post not found." });
         }
-      }
-
-      if (tags && Array.isArray(tags)) {
-        const tagValues = tags.map((tag: string) => `('${tag}')`).join(", ");
-        const insertTagsQuery = `
-          INSERT INTO tags (name)
-          VALUES ${tagValues}
-          ON CONFLICT (name) DO NOTHING
-          RETURNING id, name;
-        `;
-        const { rows: tagRows } = await queryDb(insertTagsQuery);
-
-        const deleteOldTagsQuery = `
-          DELETE FROM post_tags WHERE post_id = $1;
-        `;
-        await queryDb(deleteOldTagsQuery, [postId]);
-
-        const postTagValues = tagRows
-          .map((tag: { id: number }) => `(${postId}, ${tag.id})`)
-          .join(", ");
-        const insertPostTagsQuery = `
-          INSERT INTO post_tags (post_id, tag_id)
-          VALUES ${postTagValues};
-        `;
-        await queryDb(insertPostTagsQuery);
       }
 
       res.status(200).json({ message: "Post updated successfully." });
@@ -742,11 +734,15 @@ class PostController {
 
     try {
       const userId = req.body.user.id;
+      const sanitizedContent = sanitizeHtml(content, {
+        allowedTags: [],
+        allowedAttributes: {},
+      });
 
       await queryDb(
         `INSERT INTO post_comments (post_id, user_id, content) 
          VALUES ($1, $2, $3)`,
-        [Number(postId), userId, content]
+        [Number(postId), userId, sanitizedContent]
       );
 
       return res.status(201).json({ message: "Comment added successfully." });
@@ -814,11 +810,16 @@ class PostController {
     try {
       const userId = req.body.user.id;
 
+      const sanitizedContent = sanitizeHtml(content, {
+        allowedTags: [],
+        allowedAttributes: {},
+      });
+
       const { rowCount } = await queryDb(
         `UPDATE post_comments 
          SET content = $1, updated_at = CURRENT_TIMESTAMP, edited = TRUE 
          WHERE id = $2 AND user_id = $3`,
-        [content.trim(), Number(commentId), userId]
+        [sanitizedContent, Number(commentId), userId]
       );
 
       if (rowCount === 0) {
@@ -848,11 +849,16 @@ class PostController {
     try {
       const userId = req.body.user.id;
 
+      const sanitizedContent = sanitizeHtml(content, {
+        allowedTags: [],
+        allowedAttributes: {},
+      });
+
       const { rowCount } = await queryDb(
         `UPDATE comment_replies 
          SET content = $1, updated_at = CURRENT_TIMESTAMP, edited = TRUE 
          WHERE id = $2 AND sender_id = $3`,
-        [content.trim(), Number(replyId), userId]
+        [sanitizedContent, Number(replyId), userId]
       );
 
       if (rowCount === 0) {
@@ -887,12 +893,16 @@ class PostController {
           .status(404)
           .json({ message: "You can't reply on your own comment" });
       }
-      console.log(Number(commentId), senderId, Number(receiverId), content);
+
+      const sanitizedContent = sanitizeHtml(content, {
+        allowedTags: [],
+        allowedAttributes: {},
+      });
 
       await queryDb(
         `INSERT INTO comment_replies (comment_id, sender_id, recipient_id, content) 
          VALUES ($1, $2, $3, $4)`,
-        [Number(commentId), senderId, Number(receiverId), content]
+        [Number(commentId), senderId, Number(receiverId), sanitizedContent]
       );
 
       return res.status(201).json({ message: "Reply added successfully." });
