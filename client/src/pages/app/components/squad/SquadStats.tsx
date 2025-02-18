@@ -1,10 +1,10 @@
 export function SquadStats({ squad }: { squad: SquadDetails }) {
-  const totalPosts = squad.squad_posts?.length || 0;
-  const totalUpvotes = squad.squad_posts?.reduce(
+  const totalPosts = squad.squad_posts_metadata?.length || 0;
+  const totalUpvotes = squad.squad_posts_metadata?.reduce(
     (sum, post) => sum + post.post_upvotes,
     0
   );
-  const totalViews = squad.squad_posts?.reduce(
+  const totalViews = squad.squad_posts_metadata?.reduce(
     (sum, post) => sum + post.post_views,
     0
   );

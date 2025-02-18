@@ -103,12 +103,16 @@ interface SquadPost {
   post_id: number;
   post_title: string;
   post_thumbnail: string;
-  post_content: string;
   post_created_at: string;
   author_avatar: string;
   post_upvotes: number;
   post_views: number;
   post_tags: string[];
+}
+interface SquadPostMetaData {
+  post_id: number;
+  post_views: number;
+  post_upvotes: number;
 }
 
 type SquadMember = {
@@ -137,7 +141,7 @@ type SquadDetails = {
   invitation_permission: string;
   post_approval_required: boolean;
   created_at: string;
-  squad_posts: SquadPost[];
+  squad_posts_metadata: SquadPostMetaData[];
   squad_members: SquadMember[];
 };
 

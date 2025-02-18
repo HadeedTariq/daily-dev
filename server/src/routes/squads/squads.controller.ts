@@ -22,6 +22,7 @@ class SquadController {
     this.getSquadMembers = this.getSquadMembers.bind(this);
     this.createSquad = this.createSquad.bind(this);
     this.squadDetails = this.squadDetails.bind(this);
+    this.getSquadPosts = this.getSquadPosts.bind(this);
     this.joinSquad = this.joinSquad.bind(this);
     this.leaveSquad = this.leaveSquad.bind(this);
     this.updateSquad = this.updateSquad.bind(this);
@@ -123,6 +124,46 @@ class SquadController {
     }
   }
 
+  async getSquadPosts(req: Request, res: Response, next: NextFunction) {
+    const { pageSize, cursor } = req.query;
+    const { squad_id } = req.params;
+
+    try {
+      const query = `
+        WITH paginated_posts AS (
+            SELECT id
+            FROM posts
+            where id > $1 and squad_id=$2
+            ORDER BY id ASC
+            LIMIT $3
+        )
+        SELECT 
+            p.id as post_id,
+            p.title as post_title,
+            p.tags as post_tags,
+            p.thumbnail as post_thumbnail,
+            p.created_at as post_created_at,
+            p_v.upvotes AS post_upvotes,
+            p_vw.views AS post_views,
+            u.avatar as author_avatar
+        FROM paginated_posts pp
+        JOIN posts p ON pp.id = p.id
+        JOIN post_upvotes p_v ON p.id = p_v.post_id
+        JOIN post_views p_vw ON p.id = p_vw.post_id
+        JOIN users u ON p.author_id = u.id
+        ORDER BY p.id;
+    `;
+      const { rows } = await queryDb(query, [
+        cursor,
+        Number(squad_id),
+        pageSize ? pageSize : 1,
+      ]);
+
+      return res.status(200).json({ posts: rows });
+    } catch (error) {
+      next(error);
+    }
+  }
   async squadDetails(req: Request, res: Response, next: NextFunction) {
     const { squad_handle } = req.params;
     const userId = req.body.user.id;
@@ -162,22 +203,15 @@ class SquadController {
                 SELECT JSON_AGG(
                     JSON_BUILD_OBJECT(
                         'post_id', posts.id,
-                        'post_title', posts.title,
-                        'post_thumbnail', posts.thumbnail,
-                        'post_content', posts.content,
-                        'post_tags', posts.tags,
-                        'post_created_at', posts.created_at,
-                        'author_avatar', users.avatar,
                         'post_upvotes', COALESCE(post_upvotes.upvotes, 0),
                         'post_views', COALESCE(post_views.views, 0)
                     )
                 )
                 FROM posts
-                LEFT JOIN users ON posts.author_id = users.id
                 LEFT JOIN post_upvotes ON posts.id = post_upvotes.post_id
                 LEFT JOIN post_views ON posts.id = post_views.post_id
                 WHERE posts.squad_id = s.squad_id
-            ) AS squad_posts,
+            ) AS squad_posts_metadata,
             (
                 SELECT JSON_AGG(
                     JSON_BUILD_OBJECT(
@@ -215,11 +249,7 @@ class SquadController {
             description,
             category,
             is_public,
-            post_creation_allowed_to,
-            invitation_permission,
-            post_approval_required,
-            created_at,
-            updated_at 
+            created_at
           FROM squads 
           WHERE admin_id = $1
   `;

@@ -13,6 +13,8 @@ router.get(
   "/details/:squad_handle",
   asyncHandler(squadController.squadDetails)
 );
+
+router.get("/posts/:squad_id", asyncHandler(squadController.getSquadPosts));
 router.get("/", asyncHandler(squadController.getSquads));
 router.put("/join", asyncHandler(squadController.joinSquad));
 router.put("/leave", asyncHandler(squadController.leaveSquad));

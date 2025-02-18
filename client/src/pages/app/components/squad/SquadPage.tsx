@@ -10,7 +10,7 @@ export function SquadPage({ squad }: { squad: SquadDetails }) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <h2 className="text-2xl font-bold mb-4">Recent Posts</h2>
-            {squad && <PostList posts={squad.squad_posts || []} />}
+            {squad && <PostList squadId={squad.squad_id} />}
           </div>
           <div>{squad && <SquadStats squad={squad} />}</div>
         </div>

@@ -1,9 +1,10 @@
-import { followerApi, postApi } from "@/lib/axios";
+import { followerApi, postApi, squadApi } from "@/lib/axios";
 import {
   addNewComments,
   addNewFollowingPosts,
   addNewPosts,
   addNewSortedPosts,
+  addNewSquadPosts,
   setCurrentPost,
 } from "@/reducers/fullAppReducer";
 import {
@@ -102,6 +103,47 @@ export const useGetNewExplorePosts = (
       return lastPage.posts.length > 0
         ? `${sortingOrder}:${sortOrderValue},postId:${post.id}`
         : undefined;
+    },
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    staleTime: 5000,
+    gcTime: 10 * 60 * 1000,
+  });
+
+  return {
+    ...infiniteQuery,
+    posts: infiniteQuery.data?.pages.flatMap((page) => page.posts) || [],
+  };
+};
+export const useGetNewSquadPosts = (
+  initialPageSize: number = 8,
+  squadId: number
+) => {
+  const dispatch = useDispatch();
+
+  const fetchPosts = async ({ pageParam = 0 }: QueryFunctionContext) => {
+    try {
+      const { data } = await squadApi.get(
+        `/posts/${squadId}?pageSize=${initialPageSize}&cursor=${pageParam}`
+      );
+
+      dispatch(addNewSquadPosts(data.posts));
+
+      return {
+        posts: data.posts,
+      };
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const infiniteQuery = useInfiniteQuery({
+    queryKey: [`squadPosts_${squadId}_${initialPageSize}`],
+    queryFn: fetchPosts,
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => {
+      const post = lastPage.posts[lastPage.posts.length - 1];
+      return lastPage.posts.length > 0 ? post.post_id : undefined;
     },
     refetchOnWindowFocus: false,
     refetchOnMount: false,
