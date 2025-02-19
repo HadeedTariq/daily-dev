@@ -40,12 +40,18 @@ This is a feature-rich social platform designed for developers to share posts, j
 
 ### **Posts**
 
-- **Post Creation**: Users can create and publish posts.
-- **Reading Streak**: Streak tracking for post engagement.
-- **Streak Counting**: Logic to calculate and display streaks.
-- **Tables**:
-  - **Squads**: Table for managing squads.
-  - **Squad Members**: Table for squad members.
+- **Posts Home Page**: Display all posts.
+- **Views**: Track post views.
+- **Upvotes**: Post upvoting functionality (non-scalable).
+- **Auto Tagging**: Automatically generate relevant tags for posts based on content.
+- **Comments**:
+  - **Replies**: Nested comment replies.
+  - **Upvotes**: Comment upvoting.
+  - **Deletion**: Delete comments and replies.
+  - **Cascading**: Cascading deletion for replies.
+- **Infinite Scrolling**:
+  - **Post Fetching**: Infinite scroll for posts.
+  - **Comment Fetching**: Infinite scroll for comments.
 
 ---
 
@@ -69,22 +75,6 @@ This is a feature-rich social platform designed for developers to share posts, j
 - **Dummy Data**: Added non-energy hours dummy data.
 - **Post Creation in Squads**: Users can create posts only in squads they’ve joined.
 - **Profile Integration**: Show squads a user has joined on their profile.
-
----
-
-### **Posts (Detailed)**
-
-- **Posts Home Page**: Display all posts.
-- **Views**: Track post views .
-- **Upvotes**: Post upvoting functionality (non-scalable).
-- **Comments**:
-  - **Replies**: Nested comment replies.
-  - **Upvotes**: Comment upvoting.
-  - **Deletion**: Delete comments and replies.
-  - **Cascading**: Cascading deletion for replies.
-- **Infinite Scrolling**:
-  - **Post Fetching**: Infinite scroll for posts.
-  - **Comment Fetching**: Infinite scroll for comments.
 
 ---
 
@@ -123,9 +113,7 @@ This is a feature-rich social platform designed for developers to share posts, j
 - `GET /posts/me`: Get my posts.
 - `GET /posts/user/:userId`: Get posts by a specific user.
 - `GET /posts/:slug`: Get post by slug.
-- `GET /posts/tags`: Get post tags.
 - `POST /posts`: Create a post.
-- `POST /posts/tags`: Create a tag.
 - `POST /posts/:postId/comments`: Comment on a post.
 - `POST /posts/comments/:commentId/replies`: Reply to a comment.
 - `PUT /posts/comments/:commentId`: Update a comment.
@@ -154,18 +142,22 @@ This is a feature-rich social platform designed for developers to share posts, j
 
 ### **Squads**
 
-- `POST /squads`: Create a squad.
-- `GET /squads/me`: Get my squads.
-- `GET /squads/:squadId`: Get squad details.
+- `POST /squads/create`: Create a squad.
+- `GET /squads/my`: Get my squads.
+- `GET /squads/details/:squad_handle`: Get squad details.
+- `GET /squads/posts/:squad_id`: Get posts from a squad.
 - `GET /squads`: Get all squads.
-- `POST /squads/:squadId/join`: Join a squad.
-- `POST /squads/:squadId/leave`: Leave a squad.
-- `PUT /squads/:squadId`: Edit squad (Admin).
-- `PUT /squads/:squadId/admin`: Make a squad admin (Admin).
-- `PUT /squads/:squadId/moderator`: Make a squad moderator (Admin).
-- `PUT /squads/:squadId/member`: Make a squad member (Admin).
-- `DELETE /squads/:squadId/member`: Remove a squad member (Admin).
-- `DELETE /squads/:squadId`: Delete a squad (Admin).
+- `PUT /squads/join`: Join a squad.
+- `PUT /squads/leave`: Leave a squad.
+
+#### **Squad Admin Actions**
+
+- `PUT /squads/edit/:squad_id/:squad_handle`: Edit squad (Admin).
+- `PUT /squads/:squad_id/make-admin`: Assign squad admin role (Admin).
+- `PUT /squads/:squad_id/make-moderator`: Assign squad moderator role (Admin).
+- `PUT /squads/:squad_id/make-member`: Assign squad member role (Admin).
+- `PUT /squads/:squad_id/remove-member`: Remove a squad member (Admin).
+- `DELETE /squads/:squad_id`: Delete a squad (Admin).
 
 ---
 
@@ -194,21 +186,82 @@ This is a feature-rich social platform designed for developers to share posts, j
 
 ## **Installation**
 
+### 1. Server
+
 1. Clone the repository:
    ```bash
    git clone https://github.com/HadeedTariq/daily-dev
+   ```
+2. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
+4. Set up environment variables:
+   Create a `.env` in **server** folder and add the following:
+
+```ini
+# Server Configuration
+HOST=localhost
+PORT=3000
+NODE_ENV=development
+SERVER_DOMAIN=http://localhost:3000
+
+# Rate Limiting
+COMMON_RATE_LIMIT_MAX_REQUESTS=100
+COMMON_RATE_LIMIT_WINDOW_MS=60000
+
+# CORS
+CORS_ORIGIN=http://localhost:3000
+
+# JWT Secrets
+JWT_SECRET=your_jwt_secret
+JWT_ACCESS_TOKEN_SECRET=your_access_token_secret
+JWT_REFRESH_TOKEN_SECRET=your_refresh_token_secret
+
+# GitHub OAuth
+GITHUB_CLIENT_ID=your_github_client_id
+GITHUB_CLIENT_SECRET=your_github_client_secret
+
+# Session Secret
+SESSION_SECRET=your_session_secret
+
+# Security & Hashing
+PASSWORD_SALT=10
+
+# Email Configuration (NodeMailer)
+NODE_MAILER_USER=your_email@example.com
+NODE_MAILER_PASSWORD=your_email_password
+
+# Database Configuration (Aiven PostgreSQL)
+DATABASE_URL=postgres://your_user:your_password@your_host:your_port/your_database
+DATABASE_HOST=your_host
+DATABASE_PORT=your_port
+DATABASE_USER=your_user
+DATABASE_PASSWORD=your_password
+
+# Redis Configuration (Aiven Redis)
+REDIS_URL=redis://your_redis_user:your_redis_password@your_redis_host:your_redis_port
+```
+
+⚠ **Note:** Ensure that you replace the placeholder values with your actual credentials. Never share your `.env` file publicly.
+
+---
+
+### 2. Client
+
+1. Navigate to the client directory:
+   ```bash
+   cd client
    ```
 2. Install dependencies:
    ```bash
    npm install
    ```
-3. Set up environment variables:  
-   Create a `.env` file and add required variables (e.g., database credentials, API keys).
-4. Run the server:
-   ```bash
-   npm run dev
-   ```
-5. Run the client:
+3. Start the development server:
    ```bash
    npm run dev
    ```

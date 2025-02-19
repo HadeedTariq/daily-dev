@@ -17,7 +17,6 @@ class FollowersController {
     try {
       const { followedId } = req.body;
       let { followerId } = req.body;
-      console.log(Date.now().toLocaleString());
 
       if (!followedId || isNaN(followedId)) {
         return res
@@ -249,7 +248,6 @@ class FollowersController {
                   p.id,
                   p.title,
                   p.thumbnail,
-                  p.content,
                   p.slug,
                   p.created_at,
                   p.squad_id,
@@ -265,7 +263,6 @@ class FollowersController {
               p.id,
               p.title,
               p.thumbnail,
-              p.content,
               p.tags,
               p.slug,
               p.created_at,

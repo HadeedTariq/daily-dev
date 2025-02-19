@@ -161,7 +161,6 @@ interface AuthorDetails {
 interface PostCards {
   id: number;
   title: string;
-  content: string;
   slug: string;
   thumbnail: string;
   created_at: string;

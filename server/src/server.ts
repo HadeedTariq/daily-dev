@@ -13,7 +13,7 @@ import { authRouter } from "./routes/auth/auth.routes";
 import cookieParser from "cookie-parser";
 
 import session from "express-session";
-import { createTable } from "./db/createTable";
+
 import { env } from "./common/utils/envConfig";
 import passport from "passport";
 import {
@@ -27,8 +27,6 @@ import { squadRouter } from "./routes/squads/squad.routes";
 import { followersRouter } from "./routes/followers/followers.routes";
 
 const logger = pino({ name: "server start" });
-// createTable(`
-// `);
 
 const app: Express = express();
 
