@@ -1,19 +1,17 @@
-import { useFullApp } from "@/store/hooks/useFullApp";
 import { HomePostCard } from "../components/posts/HomePostCard";
 import { useGetNewPosts } from "../hooks/usePostsHandler";
 import { useEffect } from "react";
 import { useInView } from "react-intersection-observer";
 
 const Home = () => {
-  const { posts } = useFullApp();
-
   const {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
     isLoading,
     isPending,
-  } = useGetNewPosts(8, "id", true);
+    posts,
+  } = useGetNewPosts(8, "id");
 
   const { ref, inView } = useInView({
     threshold: 1,

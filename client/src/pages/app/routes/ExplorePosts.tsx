@@ -1,28 +1,13 @@
-import { useFullApp } from "@/store/hooks/useFullApp";
-
 import { useGetNewExplorePosts } from "../hooks/usePostsHandler";
 import { useEffect } from "react";
 import { useInView } from "react-intersection-observer";
 import SortingElements from "../components/posts/SortingOrder";
 import { ExplorePostCard } from "../components/posts/ExplorePostCard";
 import { useState } from "react";
-import { useDispatch } from "react-redux";
-import { emptySortedPosts } from "@/reducers/fullAppReducer";
+
 type SortOption = "upvotes" | "views";
 const ExplorePosts = () => {
   const [activeSort, setActiveSort] = useState<SortOption>("upvotes");
-  const dispatch = useDispatch();
-
-  const { sortedPosts } = useFullApp();
-  const uniquePosts = new Set();
-
-  const posts = sortedPosts.filter((post) => {
-    if (!uniquePosts.has(post.id)) {
-      uniquePosts.add(post.id);
-      return true;
-    }
-    return false;
-  });
 
   const {
     fetchNextPage,
@@ -32,7 +17,18 @@ const ExplorePosts = () => {
     isFetching,
     isFetched,
     isPending,
-  } = useGetNewExplorePosts(8, activeSort, false);
+    posts: sortedPosts,
+  } = useGetNewExplorePosts(8, activeSort);
+
+  const uniquePosts = new Set();
+
+  const posts = sortedPosts.filter((post) => {
+    if (!uniquePosts.has(post.id)) {
+      uniquePosts.add(post.id);
+      return true;
+    }
+    return false;
+  });
 
   const { ref, inView } = useInView({
     threshold: 1,
@@ -52,7 +48,6 @@ const ExplorePosts = () => {
     }
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
   useEffect(() => {
-    dispatch(emptySortedPosts());
     return () => {
       window.scrollTo(0, 0);
     };

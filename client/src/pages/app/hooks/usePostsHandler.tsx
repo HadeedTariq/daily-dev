@@ -1,12 +1,5 @@
 import { followerApi, postApi, squadApi } from "@/lib/axios";
-import {
-  addNewComments,
-  addNewFollowingPosts,
-  addNewPosts,
-  addNewSortedPosts,
-  addNewSquadPosts,
-  setCurrentPost,
-} from "@/reducers/fullAppReducer";
+import { setCurrentPost } from "@/reducers/fullAppReducer";
 import {
   QueryFunctionContext,
   useInfiniteQuery,
@@ -20,21 +13,13 @@ interface PostResponse {
 
 export const useGetNewPosts = (
   initialPageSize: number = 8,
-  sortingOrder: string,
-  main = true
+  sortingOrder: string
 ) => {
-  const dispatch = useDispatch();
-
   const fetchPosts = async ({ pageParam = 0 }: QueryFunctionContext) => {
     try {
       const { data } = await postApi.get<PostResponse>(
         `?pageSize=${initialPageSize}&cursor=${pageParam}&sortingOrder=${sortingOrder}`
       );
-      if (main) {
-        dispatch(addNewPosts(data.posts));
-      } else {
-        dispatch(addNewSortedPosts(data.posts));
-      }
 
       return {
         posts: data.posts,
@@ -67,11 +52,8 @@ export const useGetNewPosts = (
 
 export const useGetNewExplorePosts = (
   initialPageSize: number = 8,
-  sortingOrder: string,
-  main = true
+  sortingOrder: string
 ) => {
-  const dispatch = useDispatch();
-
   const fetchPosts = async ({
     pageParam = `${sortingOrder}:${100000},postId:${0}`,
   }: QueryFunctionContext) => {
@@ -79,11 +61,6 @@ export const useGetNewExplorePosts = (
       const { data } = await postApi.get<PostResponse>(
         `?pageSize=${initialPageSize}&cursor=${pageParam}&sortingOrder=${sortingOrder}`
       );
-      if (main) {
-        dispatch(addNewPosts(data.posts));
-      } else {
-        dispatch(addNewSortedPosts(data.posts));
-      }
 
       return {
         posts: data.posts,
@@ -119,15 +96,11 @@ export const useGetNewSquadPosts = (
   initialPageSize: number = 8,
   squadId: number
 ) => {
-  const dispatch = useDispatch();
-
   const fetchPosts = async ({ pageParam = 0 }: QueryFunctionContext) => {
     try {
       const { data } = await squadApi.get(
         `/posts/${squadId}?pageSize=${initialPageSize}&cursor=${pageParam}`
       );
-
-      dispatch(addNewSquadPosts(data.posts));
 
       return {
         posts: data.posts,
@@ -158,15 +131,11 @@ export const useGetNewSquadPosts = (
 };
 
 export const useGetFollowingsPosts = (initialPageSize: number = 8) => {
-  const dispatch = useDispatch();
-
   const fetchPosts = async ({ pageParam = 0 }: QueryFunctionContext) => {
     try {
       const { data } = await followerApi.get<PostResponse>(
         `/followings-posts?pageSize=${initialPageSize}&lastId=${pageParam}`
       );
-
-      dispatch(addNewFollowingPosts(data.posts));
 
       return {
         posts: data.posts,
@@ -201,16 +170,11 @@ export const useGetPostComments = (
   postId: number | undefined,
   initialPageSize: number = 8
 ) => {
-  const dispatch = useDispatch();
-
   const fetchComments = async ({ pageParam = 1 }: QueryFunctionContext) => {
     try {
       const { data } = await postApi.get(
         `/get-post-comments/${postId}?pageSize=${initialPageSize}&pageNumber=${pageParam}`
       );
-
-      dispatch(addNewComments(data.comments as Comments[]));
-
       return {
         pageParam,
         comments: data.comments,
@@ -221,7 +185,7 @@ export const useGetPostComments = (
   };
 
   const infiniteQuery = useInfiniteQuery({
-    queryKey: ["infiniteComments", initialPageSize],
+    queryKey: [`infinite_${postId}_Comments`, initialPageSize],
     queryFn: fetchComments,
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
@@ -237,7 +201,7 @@ export const useGetPostComments = (
 
   return {
     ...infiniteQuery,
-    posts: infiniteQuery.data?.pages.flatMap((page) => page.comments) || [],
+    comments: infiniteQuery.data?.pages.flatMap((page) => page.comments) || [],
   };
 };
 

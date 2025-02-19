@@ -5,10 +5,9 @@ import { useMutation } from "@tanstack/react-query";
 import { postApi } from "@/lib/axios";
 import { toast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
-import { setStopFetchingPostComments } from "@/reducers/fullAppReducer";
+
 import CommentItem from "./CommentItem";
-import { useFullApp } from "@/store/hooks/useFullApp";
+
 import { useGetPostComments } from "../../hooks/usePostsHandler";
 import { useInView } from "react-intersection-observer";
 
@@ -16,8 +15,6 @@ type CommentSectionProps = {
   postId: number;
 };
 export const CommentSection = ({ postId }: CommentSectionProps) => {
-  const dispatch = useDispatch();
-  const { currentPostComments: comments } = useFullApp();
   const {
     fetchNextPage,
     hasNextPage,
@@ -26,6 +23,7 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
     isFetching,
     isFetched,
     isPending,
+    comments,
   } = useGetPostComments(postId, 8);
   const { ref, inView } = useInView({
     threshold: 1,
@@ -41,7 +39,6 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
     },
     onSuccess: () => {
       setNewComment("");
-      dispatch(setStopFetchingPostComments(false));
     },
     onError: (err: any) => {
       toast({

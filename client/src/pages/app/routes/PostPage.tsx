@@ -7,32 +7,18 @@ import UpvoteButton from "../components/posts/UpvoteButton";
 
 import { useFullApp } from "@/store/hooks/useFullApp";
 import { useEffect } from "react";
-import { useDispatch } from "react-redux";
-import {
-  emptyCurrenPostComments,
-  setCurrentPost,
-} from "@/reducers/fullAppReducer";
+
 import { CommentSection } from "../components/posts/CommentSection";
 
 const PostPage = () => {
   const params = useParams();
-  const dispatch = useDispatch();
 
   const { mutate: fetchPost } = useGetCurrentPost(params.post_slug as string);
 
-  const { posts, currentPost: post } = useFullApp();
-
-  const postData = posts?.find((p) => p.slug === params.post_slug);
+  const { currentPost: post } = useFullApp();
 
   useEffect(() => {
-    if (postData !== undefined) {
-      dispatch(setCurrentPost(postData));
-    } else {
-      fetchPost(params.post_slug as string);
-    }
-    return () => {
-      dispatch(emptyCurrenPostComments());
-    };
+    fetchPost(params.post_slug as string);
   }, []);
 
   if (!params.post_slug) return <Navigate to={"/"} />;
