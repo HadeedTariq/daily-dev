@@ -2973,7 +2973,13 @@ app.set("trust proxy", true);
 app.use(cookieParser());
 app.use(express3.json());
 app.use(express3.urlencoded({ extended: true }));
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "https://daily-dev-client.vercel.app"],
+    credentials: true,
+    exposedHeaders: ["Set-Cookie"]
+  })
+);
 app.use(helmet());
 app.use(
   session({
@@ -2989,7 +2995,7 @@ passport2.use(
     {
       clientID: env.GITHUB_CLIENT_ID,
       clientSecret: env.GITHUB_CLIENT_SECRET,
-      callbackURL: "http://localhost:3000/auth/github/callback"
+      callbackURL: "https://dailydev-backend.vercel.app/auth/github/callback"
     },
     (accessToken, refreshToken, profile, done) => {
       const user = {

@@ -2992,7 +2992,13 @@ app.set("trust proxy", true);
 app.use((0, import_cookie_parser.default)());
 app.use(import_express8.default.json());
 app.use(import_express8.default.urlencoded({ extended: true }));
-app.use((0, import_cors.default)({ origin: "http://localhost:5173", credentials: true }));
+app.use(
+  (0, import_cors.default)({
+    origin: ["http://localhost:5173", "https://daily-dev-client.vercel.app"],
+    credentials: true,
+    exposedHeaders: ["Set-Cookie"]
+  })
+);
 app.use((0, import_helmet.default)());
 app.use(
   (0, import_express_session.default)({
@@ -3008,7 +3014,7 @@ import_passport2.default.use(
     {
       clientID: env.GITHUB_CLIENT_ID,
       clientSecret: env.GITHUB_CLIENT_SECRET,
-      callbackURL: "http://localhost:3000/auth/github/callback"
+      callbackURL: "https://dailydev-backend.vercel.app/auth/github/callback"
     },
     (accessToken, refreshToken, profile, done) => {
       const user = {
