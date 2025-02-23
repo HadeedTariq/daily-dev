@@ -62,6 +62,8 @@ const NavBar = () => {
                   <NavDrawer />
                 </div>
               </div>
+            </div>
+            <div className="w-fit">
               <AppSidebar />
             </div>
           </header>

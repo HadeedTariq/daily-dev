@@ -4,6 +4,7 @@ import { useInView } from "react-intersection-observer";
 import SortingElements from "../components/posts/SortingOrder";
 import { ExplorePostCard } from "../components/posts/ExplorePostCard";
 import { useState } from "react";
+import { PostSkeletonCard } from "@/components/PostSkeleton";
 
 type SortOption = "upvotes" | "views";
 const ExplorePosts = () => {
@@ -66,9 +67,18 @@ const ExplorePosts = () => {
             ref={index === posts.length - 1 ? ref : undefined}
           />
         ))}
+        {(isLoading || isFetchingNextPage) && (
+          <>
+            <PostSkeletonCard />
+            <PostSkeletonCard />
+            <PostSkeletonCard />
+            <PostSkeletonCard />
+            <PostSkeletonCard />
+            <PostSkeletonCard />
+            <PostSkeletonCard />
+          </>
+        )}
       </main>
-
-      {(isLoading || isFetchingNextPage) && <div>Loading...</div>}
 
       {!hasNextPage && (
         <div className="text-center my-4">No more posts to load</div>

@@ -1,3 +1,4 @@
+import { PostSkeletonCard } from "@/components/PostSkeleton";
 import { HomePostCard } from "../components/posts/HomePostCard";
 import { useGetNewPosts } from "../hooks/usePostsHandler";
 import { useEffect } from "react";
@@ -39,9 +40,18 @@ const Home = () => {
             ref={index === posts.length - 1 ? ref : undefined}
           />
         ))}
+        {(isLoading || isFetchingNextPage) && (
+          <>
+            <PostSkeletonCard />
+            <PostSkeletonCard />
+            <PostSkeletonCard />
+            <PostSkeletonCard />
+            <PostSkeletonCard />
+            <PostSkeletonCard />
+            <PostSkeletonCard />
+          </>
+        )}
       </main>
-
-      {(isLoading || isFetchingNextPage) && <div>Loading...</div>}
 
       {!hasNextPage && (
         <div className="text-center my-4">No more posts to load</div>

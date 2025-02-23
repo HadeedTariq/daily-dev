@@ -3,6 +3,7 @@ import { HomePostCard } from "../components/posts/HomePostCard";
 import { useEffect } from "react";
 import { useInView } from "react-intersection-observer";
 import { useGetFollowingsPosts } from "../hooks/usePostsHandler";
+import { PostSkeletonCard } from "@/components/PostSkeleton";
 
 const FollowingPosts = () => {
   const {
@@ -33,9 +34,18 @@ const FollowingPosts = () => {
             ref={index === followingPosts.length - 1 ? ref : undefined}
           />
         ))}
+        {(isLoading || isFetchingNextPage) && (
+          <>
+            <PostSkeletonCard />
+            <PostSkeletonCard />
+            <PostSkeletonCard />
+            <PostSkeletonCard />
+            <PostSkeletonCard />
+            <PostSkeletonCard />
+            <PostSkeletonCard />
+          </>
+        )}
       </main>
-
-      {(isLoading || isFetchingNextPage) && <div>Loading...</div>}
 
       {!hasNextPage && <div className="text-center my-4">No posts to load</div>}
     </>

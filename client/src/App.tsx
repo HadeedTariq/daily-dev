@@ -9,7 +9,7 @@ import { authApi, profileApi } from "./lib/axios";
 import { setUser } from "./reducers/fullAppReducer";
 import { useEffect } from "react";
 import AuthProtector from "./pages/auth/components/AuthProtector";
-import NavBar from "./pages/app/components/Nabar";
+import NavBar from "./pages/app/components/Navbar";
 import Profile from "./pages/app/routes/Profile";
 import EditProfile from "./pages/app/routes/EditProfile";
 import { ReadmeHandler } from "./pages/app/routes/ReadmeHandler";
