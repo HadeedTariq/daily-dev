@@ -16,5 +16,5 @@
     "types": ["vitest/globals"]
   },
   "include": ["src/**/*", "workers"],
-  "exclude": ["node_modules", "src/db/schemas/**/*.sql"]
+  "exclude": ["node_modules", "dist", "src/db/schemas/**/*.sql"]
 }
