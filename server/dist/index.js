@@ -490,7 +490,7 @@ var UserController = class {
           secure: true,
           httpOnly: false,
           sameSite: "none"
-        }).redirect(`http://localhost:5173`);
+        }).redirect(env.CORS_ORIGIN);
       } else {
         const { accessToken, refreshToken } = this.generateAccessAndRefreshToken(rows[0]);
         await queryDb(
@@ -505,7 +505,7 @@ var UserController = class {
           secure: true,
           httpOnly: false,
           sameSite: "none"
-        }).redirect(`http://localhost:5173`);
+        }).redirect(env.CORS_ORIGIN);
       }
     }
     const client = await pool.connect();
@@ -556,7 +556,7 @@ var UserController = class {
         secure: true,
         httpOnly: false,
         sameSite: "none"
-      }).redirect(`http://localhost:5173`);
+      }).redirect(env.CORS_ORIGIN);
     } catch (error) {
       await client.query("ROLLBACK");
       console.error("Transaction failed:", error);
