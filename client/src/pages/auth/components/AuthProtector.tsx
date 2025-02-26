@@ -13,6 +13,7 @@ const AuthProtector = () => {
       return data;
     },
     refetchOnMount: false,
+    retry: false,
   });
   if (isPending) return <LoadingBar />;
   if (user) return <Navigate to={"/"} />;

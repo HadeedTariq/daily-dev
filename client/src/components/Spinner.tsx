@@ -28,7 +28,7 @@ export function Spinner({
   const variantClasses = {
     default: "text-slate-900 dark:text-slate-200",
     primary: "text-blue-600 dark:text-blue-400",
-    secondary: "text-purple-600 dark:text-purple-400",
+    secondary: "text-orange-600 dark:text-orange-400",
     success: "text-emerald-600 dark:text-emerald-400",
     warning: "text-amber-600 dark:text-amber-400",
     error: "text-rose-600 dark:text-rose-400",
