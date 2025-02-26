@@ -1,7 +1,9 @@
+import { Spinner } from "./Spinner";
+
 const LoadingBar = () => {
   return (
-    <div className="w-full  h-[100vh] flex items-center justify-center bg-white ">
-      <img src="/loading.gif" alt="" />
+    <div className="flex flex-col items-center justify-center w-full gap-2">
+      <Spinner size="lg" variant="secondary" />
     </div>
   );
 };

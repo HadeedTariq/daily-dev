@@ -12,6 +12,7 @@ const AuthProtector = () => {
       const { data } = await authApi.get("/");
       return data;
     },
+    refetchOnMount: false,
   });
   if (isPending) return <LoadingBar />;
   if (user) return <Navigate to={"/"} />;

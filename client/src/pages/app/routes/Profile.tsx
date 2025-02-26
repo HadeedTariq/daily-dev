@@ -44,32 +44,33 @@ export default function Profile() {
   if (!profile) return <div>Loading...</div>;
 
   return (
-    <div className="flex flex-row  w-full">
-      <header className="bg-background border-b w-full">
+    <div className="flex flex-col md:flex-row w-full min-h-screen">
+      <header className="bg-background border-b w-full md:w-auto md:flex-grow">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <ProfileHeader />
         </div>
         <Outlet />
       </header>
-      <div className="absolute top-10 right-0 h-full w-full max-w-md p-4 overflow-y-auto">
-        <Card className="h-full">
+      <div className="w-full md:w-[400px] lg:w-[450px] p-4 min-h-screen  md:overflow-y-auto">
+        <Card className="min-h-screen">
           <div className="flex flex-row items-center w-full gap-4 p-3">
             <h1 className="text-xl">Profile</h1>
-
             <ShareProfile />
           </div>
-          <CardHeader className="flex flex-row items-center gap-4">
+          <CardHeader className="flex flex-col sm:flex-row items-center gap-4">
             <Avatar className="h-20 w-20">
               <AvatarImage src={profile.avatar} alt={profile.name} />
               <AvatarFallback>{profile.name.charAt(0)}</AvatarFallback>
             </Avatar>
-            <div>
+            <div className="text-center sm:text-left">
               <CardTitle className="text-2xl">{profile.name}</CardTitle>
               <p className="text-sm text-muted-foreground">
                 @{profile.username}
               </p>
               {profile.profession && (
-                <Badge variant="secondary">{profile.profession}</Badge>
+                <Badge variant="secondary" className="mt-2">
+                  {profile.profession}
+                </Badge>
               )}
             </div>
           </CardHeader>
@@ -89,20 +90,14 @@ export default function Profile() {
             <div>
               <h3 className="font-semibold mb-2">Stats</h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
-                <p
-                  className="cursor-pointer"
-                  onClick={() => handleFollowersClick()}
-                >
+                <p className="cursor-pointer" onClick={handleFollowersClick}>
                   Followers: {profile.user_stats.followers}
                 </p>
                 <FollowersDialog
                   isOpen={isFollowersDialogOpen}
                   onClose={() => setIsFollowersDialogOpen(false)}
                 />
-                <p
-                  className="cursor-pointer"
-                  onClick={() => handleFollowingsClick()}
-                >
+                <p className="cursor-pointer" onClick={handleFollowingsClick}>
                   Followings: {profile.user_stats.following}
                 </p>
                 <FollowingsDialog
@@ -120,8 +115,8 @@ export default function Profile() {
                 <SocialLinks {...profile.social_links} />
               </div>
             </div>
-            <Link to={"/editProfile"} className="py-3">
-              <Button>Edit Profile</Button>
+            <Link to="/editProfile" className="block">
+              <Button className="w-full">Edit Profile</Button>
             </Link>
             <div className="text-xs mt-3 text-muted-foreground">
               Member since: {new Date(profile.created_at).toLocaleDateString()}
