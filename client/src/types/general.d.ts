@@ -107,6 +107,7 @@ interface SquadPost {
   author_avatar: string;
   post_upvotes: number;
   post_views: number;
+  post_slug: string;
   post_tags: string[];
 }
 interface SquadPostMetaData {

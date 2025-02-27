@@ -141,6 +141,7 @@ class SquadController {
             p.id as post_id,
             p.title as post_title,
             p.tags as post_tags,
+            p.slug as post_slug,
             p.thumbnail as post_thumbnail,
             p.created_at as post_created_at,
             p_v.upvotes AS post_upvotes,

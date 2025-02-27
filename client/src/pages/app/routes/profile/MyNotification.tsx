@@ -71,7 +71,7 @@ const MyNotification = () => {
   if (isLoading) return <h1>Loading...</h1>;
 
   return (
-    <div className="w-[77%]">
+    <div className="w-[77%] max-[760px]:w-full">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-2xl font-bold">Notifications</CardTitle>

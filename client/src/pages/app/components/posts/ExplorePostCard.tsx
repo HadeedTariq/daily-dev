@@ -31,7 +31,7 @@ export const ExplorePostCard = forwardRef<HTMLDivElement, PostCards>(
     ref
   ) => {
     return (
-      <Card className="w-[400px] h-[500px]" ref={ref}>
+      <Card className="w-[400px] max-[770px]:w-full h-[500px]" ref={ref}>
         <CardHeader className="relative p-0">
           <img
             src={thumbnail}

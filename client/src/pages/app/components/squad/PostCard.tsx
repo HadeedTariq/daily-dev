@@ -1,4 +1,5 @@
 import { forwardRef } from "react";
+import { Link } from "react-router-dom";
 
 export const PostCard = forwardRef<HTMLDivElement, SquadPost>(
   (
@@ -10,15 +11,16 @@ export const PostCard = forwardRef<HTMLDivElement, SquadPost>(
       post_upvotes,
       post_views,
       post_tags,
+      post_slug,
     },
     ref
   ) => {
     return (
       <div
-        className="bg-zinc-900 rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:scale-105"
+        className="bg-zinc-900 rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:scale-105 hover:cursor-pointer"
         ref={ref}
       >
-        <div className="md:flex">
+        <Link className="md:flex" to={`/posts/${post_slug}`}>
           <div className="md:flex-shrink-0">
             <img
               src={post_thumbnail}
@@ -83,7 +85,7 @@ export const PostCard = forwardRef<HTMLDivElement, SquadPost>(
               ))}
             </div>
           </div>
-        </div>
+        </Link>
       </div>
     );
   }

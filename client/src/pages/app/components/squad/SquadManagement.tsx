@@ -167,14 +167,6 @@ export default function SquadSettingsMenu({
                     Join Squad
                   </CommandItem>
                 )}
-                <CommandItem
-                  onSelect={() => {
-                    setOpen(false);
-                  }}
-                >
-                  <LeafyGreen className="mr-2 h-4 w-4" />
-                  Learn More
-                </CommandItem>
               </CommandGroup>
             )}
           </CommandList>

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { NavDrawer } from "./NavDrawer";
 import Authenticate from "./NonAuthorizer";
 import { AppSidebar } from "@/components/app-sidebar";
+import { BottomNavBar } from "@/components/bottom-sidebar";
 
 const NavBar = () => {
   const navigate = useNavigate();
@@ -65,12 +66,13 @@ const NavBar = () => {
             </div>
             <div className="w-fit">
               <AppSidebar />
+              <BottomNavBar />
             </div>
           </header>
         </div>
 
         {user ? (
-          <div className="ml-16">
+          <div className="ml-16 max-[770px]:ml-0 max-[770px]:mb-16">
             <Outlet />
           </div>
         ) : (

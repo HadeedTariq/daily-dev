@@ -10,7 +10,7 @@ import { ChevronUp, Eye } from "lucide-react";
 
 export function PostSkeletonCard() {
   return (
-    <Card className="w-[400px] h-[500px]">
+    <Card className="w-[400px] max-[770px]:w-full h-[500px]">
       <CardHeader className="relative p-0">
         <Skeleton className="w-full h-48 rounded-t-lg" />
         <div className="absolute top-2 right-2">
