@@ -7,6 +7,7 @@ import {
   RegisterValidator,
 } from "../validators/auth.validator";
 import { authApi } from "@/lib/axios";
+import { toast } from "@/hooks/use-toast";
 
 export const useRegisterForm = () => {
   const form = useForm<RegisterValidator>({
@@ -15,13 +16,21 @@ export const useRegisterForm = () => {
   const mutator = useMutation({
     mutationKey: ["verification"],
     mutationFn: async (user: RegisterValidator) => {
-      await authApi.post("/verification", user);
+      const { data } = await authApi.post("/verification", user);
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       form.reset();
+      toast({
+        title: data.message || "Verification email sent on your mail",
+        variant: "default",
+      });
     },
-    onError: (err) => {
-      console.log(err);
+    onError: (err: ErrResponse) => {
+      toast({
+        title: err.response.data.message || "Failed to send verification email",
+        variant: "destructive",
+      });
     },
   });
 

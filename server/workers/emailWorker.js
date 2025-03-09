@@ -1,13 +1,19 @@
 import { Worker } from "bullmq";
 
+import dotenv from "dotenv";
+dotenv.config();
+
 import nodeMailer from "nodemailer";
 
-const connection = { host: "127.0.0.1", port: 6379 };
+import Redis from "ioredis";
+
+const redis = new Redis(process.env.REDIS_URL, { maxRetriesPerRequest: null });
 
 export const emailWorker = new Worker(
   "emailQueue",
   async ({ data: { email, magicLink } }) => {
     console.log(`📨 Sending email to ${email}...`);
+    console.log("Worker received a job:", email);
 
     try {
       let transporter = nodeMailer.createTransport({
@@ -32,7 +38,18 @@ export const emailWorker = new Worker(
       console.log(err);
     }
   },
-  { connection }
+  { connection: redis }
 );
+emailWorker.on("completed", (job) => {
+  console.log(`✅ Job ${job.id} completed`);
+});
+
+emailWorker.on("failed", (job, err) => {
+  console.error(`❌ Job ${job.id} failed:`, err);
+});
+
+emailWorker.on("error", (err) => {
+  console.error("❌ Worker error:", err);
+});
 
 console.log("Email worker started...");

@@ -201,9 +201,31 @@ class UserController {
       });
     }
 
-    await addEmailJob(email, magicLink);
+    res.status(200).json({ message: "Verification email sent soon" });
+    setTimeout(async () => {
+      try {
+        let transporter = nodeMailer.createTransport({
+          service: "gmail",
+          auth: {
+            user: String(env.NODE_MAILER_USER),
+            pass: String(env.NODE_MAILER_PASSWORD),
+          },
+        });
 
-    return res.status(200).json({ message: "Verification email sent soon" });
+        const info = await transporter.sendMail({
+          from: "hadeedtariq12@gmail.com",
+          to: email,
+          subject: "Verification email",
+          html: `
+        <h1></h1>Please verify your registeration on daily dev by clicking the verification link below:</h1>
+        <a href="${magicLink}">${magicLink}</a>
+        `,
+        });
+        console.log(`✅ Email sent to ${email}`);
+      } catch (err) {
+        console.log(err);
+      }
+    }, 1000);
   }
 
   async authenticate_github(req: Request, res: Response, next: NextFunction) {
