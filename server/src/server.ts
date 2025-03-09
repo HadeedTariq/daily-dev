@@ -25,14 +25,10 @@ import { postRouter } from "./routes/posts/posts.routes";
 import { squadRouter } from "./routes/squads/squad.routes";
 
 import { followersRouter } from "./routes/followers/followers.routes";
-import { queryDb } from "./db/connect";
 
 const logger = pino({ name: "server start" });
 
 const app: Express = express();
-
-queryDb("delete from magicLinks where email ='hadeedgggg@gmail.com'");
-queryDb("delete from users where email ='hadeedgggg@gmail.com'");
 
 // Set the application to trust the reverse proxy
 app.set("trust proxy", true);
