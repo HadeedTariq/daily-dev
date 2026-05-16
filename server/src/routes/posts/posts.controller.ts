@@ -94,7 +94,7 @@ class PostController {
 
     return tags.reduce((acc: string[], keyword: any) => {
       const tag = predefinedTags.includes(
-        keyword.toLowerCase().split(" ").join("-")
+        keyword.toLowerCase().split(" ").join("-"),
       );
       if (tag) {
         acc.push(keyword.toLowerCase().split(" ").join("-"));
@@ -169,8 +169,8 @@ class PostController {
             ) AS current_user_upvoted
         FROM paginated_posts pp
         JOIN posts p ON pp.id = p.id
-        JOIN post_upvotes p_v ON p.id = p_v.post_id
-        JOIN post_views p_vw ON p.id = p_vw.post_id
+        LEFT JOIN post_upvotes p_v ON p.id = p_v.post_id
+        LEFT JOIN post_views p_vw ON p.id = p_vw.post_id
         JOIN squads p_sq ON p.squad_id = p_sq.id
         JOIN users u ON p.author_id = u.id
         ORDER BY p.id;
@@ -531,7 +531,7 @@ class PostController {
 
     const { rows: isSquadMember } = await queryDb(
       `SELECT 1 FROM squad_members WHERE squad_id = $1 AND user_id = $2`,
-      [Number(squad), Number(req.body.user.id)]
+      [Number(squad), Number(req.body.user.id)],
     );
 
     if (isSquadMember.length < 1) {
@@ -575,12 +575,12 @@ class PostController {
 
       await client.query(
         `INSERT INTO post_upvotes (post_id, upvotes) VALUES ($1, $2)`,
-        [postId, 0]
+        [postId, 0],
       );
 
       await client.query(
         `INSERT INTO post_views (post_id, views) VALUES ($1, $2)`,
-        [postId, 0]
+        [postId, 0],
       );
 
       await client.query("COMMIT");
@@ -647,21 +647,21 @@ class PostController {
 
       const { rows } = await queryDb(
         `SELECT 1 FROM comment_upvotes WHERE comment_id = $1 AND user_id = $2`,
-        [Number(commentId), userId]
+        [Number(commentId), userId],
       );
 
       if (rows.length > 0) {
         await queryDb(
           `DELETE FROM comment_upvotes 
            WHERE comment_id = $1 AND user_id = $2`,
-          [Number(commentId), userId]
+          [Number(commentId), userId],
         );
         return res.status(200).json({ message: "Upvote removed." });
       }
       await queryDb(
         `INSERT INTO comment_upvotes (comment_id, user_id) 
          VALUES ($1, $2)`,
-        [Number(commentId), userId]
+        [Number(commentId), userId],
       );
 
       return res.status(200).json({ message: "Comment upvoted successfully." });
@@ -684,7 +684,7 @@ class PostController {
 
       const { rows } = await queryDb(
         `SELECT 1 FROM user_upvotes WHERE post_id = $1 AND user_id = $2`,
-        [Number(postId), userId]
+        [Number(postId), userId],
       );
 
       if (rows.length > 0) {
@@ -692,12 +692,12 @@ class PostController {
           `UPDATE post_upvotes 
            SET upvotes = upvotes - 1 
            WHERE post_id = $1 AND upvotes > 0`,
-          [Number(postId)]
+          [Number(postId)],
         );
         await queryDb(
           `DELETE FROM user_upvotes 
            WHERE post_id = $1 AND user_id = $2`,
-          [Number(postId), userId]
+          [Number(postId), userId],
         );
         return res.status(200).json({ message: "Upvote removed." });
       }
@@ -706,12 +706,12 @@ class PostController {
         `UPDATE post_upvotes 
          SET upvotes = upvotes + 1 
          WHERE post_id = $1`,
-        [Number(postId)]
+        [Number(postId)],
       );
       await queryDb(
         `INSERT INTO user_upvotes (post_id, user_id) 
          VALUES ($1, $2)`,
-        [Number(postId), userId]
+        [Number(postId), userId],
       );
 
       return res.status(200).json({ message: "Post upvoted successfully." });
@@ -742,7 +742,7 @@ class PostController {
       await queryDb(
         `INSERT INTO post_comments (post_id, user_id, content) 
          VALUES ($1, $2, $3)`,
-        [Number(postId), userId, sanitizedContent]
+        [Number(postId), userId, sanitizedContent],
       );
 
       return res.status(201).json({ message: "Comment added successfully." });
@@ -764,7 +764,7 @@ class PostController {
     try {
       await queryDb(
         `DELETE FROM post_comments WHERE id = $1 AND user_id = $2`,
-        [Number(commentId), req.body.user.id]
+        [Number(commentId), req.body.user.id],
       );
 
       return res.status(200).json({ message: "Comment deleted successfully." });
@@ -787,7 +787,7 @@ class PostController {
     try {
       await queryDb(
         `DELETE FROM comment_replies WHERE id = $1 AND comment_id=$2 AND sender_id = $3`,
-        [Number(replyId), Number(commentId), req.body.user.id]
+        [Number(replyId), Number(commentId), req.body.user.id],
       );
 
       return res.status(200).json({ message: "Reply deleted successfully." });
@@ -819,7 +819,7 @@ class PostController {
         `UPDATE post_comments 
          SET content = $1, updated_at = CURRENT_TIMESTAMP, edited = TRUE 
          WHERE id = $2 AND user_id = $3`,
-        [sanitizedContent, Number(commentId), userId]
+        [sanitizedContent, Number(commentId), userId],
       );
 
       if (rowCount === 0) {
@@ -858,7 +858,7 @@ class PostController {
         `UPDATE comment_replies 
          SET content = $1, updated_at = CURRENT_TIMESTAMP, edited = TRUE 
          WHERE id = $2 AND sender_id = $3`,
-        [sanitizedContent, Number(replyId), userId]
+        [sanitizedContent, Number(replyId), userId],
       );
 
       if (rowCount === 0) {
@@ -902,7 +902,7 @@ class PostController {
       await queryDb(
         `INSERT INTO comment_replies (comment_id, sender_id, recipient_id, content) 
          VALUES ($1, $2, $3, $4)`,
-        [Number(commentId), senderId, Number(receiverId), sanitizedContent]
+        [Number(commentId), senderId, Number(receiverId), sanitizedContent],
       );
 
       return res.status(201).json({ message: "Reply added successfully." });
@@ -926,7 +926,7 @@ class PostController {
 
       const { rows } = await queryDb(
         `SELECT 1 FROM user_views WHERE post_id = $1 AND user_id = $2`,
-        [Number(postId), userId]
+        [Number(postId), userId],
       );
 
       if (rows.length > 0) {
@@ -937,12 +937,12 @@ class PostController {
         `UPDATE post_views
          SET views = views + 1 
          WHERE post_id = $1`,
-        [Number(postId)]
+        [Number(postId)],
       );
       await queryDb(
         `INSERT INTO user_views (post_id, user_id) 
          VALUES ($1, $2)`,
-        [Number(postId), userId]
+        [Number(postId), userId],
       );
 
       return res.status(200).json({ message: "Post viewed successfully." });

@@ -6,10 +6,9 @@ import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { loginValidator, LoginValidator } from "../validators/auth.validator";
 import { authApi } from "@/lib/axios";
-import { ErrResponse } from "@/types/general";
+import { toast } from "@/hooks/use-toast";
 
 export const useLogin = () => {
-  const navigate = useNavigate();
   const form = useForm<LoginValidator>({
     resolver: zodResolver(loginValidator),
   });
@@ -19,14 +18,27 @@ export const useLogin = () => {
       const { data } = await authApi.post("/login", user);
       console.log(data);
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       form.reset();
-      setTimeout(() => {
-        navigate("/");
-      }, 1200);
+
+      toast({
+        title: "Login successful",
+        description: data?.message || "You have been logged in successfully.",
+      });
+
+      window.location.reload();
     },
-    onError: (err: ErrResponse) => {
-      console.log(err);
+
+    onError: (error: ErrResponse) => {
+      toast({
+        title: "Login failed",
+        description:
+          error.response?.data?.message ||
+          "Unable to log in right now. Please try again later.",
+        variant: "destructive",
+      });
+
+      console.log(error);
     },
   });
 

@@ -5,14 +5,14 @@ import { Pool } from "pg";
 export const redis = new Redis(env.REDIS_URL);
 
 export const pool = new Pool({
-  user: env.DATABASE_USER,
-  password: env.DATABASE_PASSWORD,
-  host: env.DATABASE_HOST,
-  port: env.DATABASE_PORT,
-  database: "defaultdb",
-  ssl: {
-    rejectUnauthorized: false,
-  },
+  connectionString: env.DATABASE_URL,
+  ssl: env.NODE_ENV === "production" ? { rejectUnauthorized: true } : false,
+
+  max: 2,
+  idleTimeoutMillis: 10000,
+  connectionTimeoutMillis: 5000,
+  allowExitOnIdle: true,
+  statement_timeout: 15000,
 });
 
 export const queryDb = async (query: string, params: any[] = []) => {
@@ -47,7 +47,7 @@ export const runIndependentTransaction = async (
   queries: {
     query: string;
     params: any[];
-  }[]
+  }[],
 ) => {
   const client = await pool.connect();
 

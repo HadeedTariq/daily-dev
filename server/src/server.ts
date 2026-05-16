@@ -25,6 +25,10 @@ import { postRouter } from "./routes/posts/posts.routes";
 import { squadRouter } from "./routes/squads/squad.routes";
 
 import { followersRouter } from "./routes/followers/followers.routes";
+import { createTable } from "./db/createTable";
+import { insertDummyUsers } from "./scripts/dummy-users";
+import { seedSquads } from "./scripts/dummy-squad";
+import { seedPosts } from "./scripts/dummy-posts";
 
 const logger = pino({ name: "server start" });
 
@@ -42,7 +46,7 @@ app.use(
     origin: ["http://localhost:5173", "https://daily-dev-client.vercel.app"],
     credentials: true,
     exposedHeaders: ["Set-Cookie"],
-  })
+  }),
 );
 app.use(helmet());
 app.use(
@@ -50,7 +54,7 @@ app.use(
     secret: env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-  })
+  }),
 );
 app.use(passport.initialize());
 app.use(passport.session());
@@ -61,13 +65,16 @@ passport.use(
     {
       clientID: env.GITHUB_CLIENT_ID,
       clientSecret: env.GITHUB_CLIENT_SECRET,
-      callbackURL: "https://dailydev-backend.vercel.app/auth/github/callback",
+      callbackURL:
+        env.NODE_ENV === "development"
+          ? "http://localhost:3000/auth/github/callback"
+          : "https://dailydev-backend.vercel.app/auth/github/callback",
     },
     (
       accessToken: string,
       refreshToken: string,
       profile: GitHubProfile,
-      done: (err: any, user?: User | false) => void
+      done: (err: any, user?: User | false) => void,
     ) => {
       const user: User = {
         id: profile.id.toString(),
@@ -77,8 +84,8 @@ passport.use(
         avatar: profile.photos ? profile.photos[0].value : "",
       };
       return done(null, user);
-    }
-  )
+    },
+  ),
 );
 
 passport.serializeUser(((user: User, done: (err: any, user?: User) => void) => {
@@ -88,8 +95,21 @@ passport.serializeUser(((user: User, done: (err: any, user?: User) => void) => {
 passport.deserializeUser(
   (user: User, done: (err: any, user?: User | null) => void) => {
     done(null, user);
-  }
+  },
 );
+
+createTable(`select id from squads`);
+// insertDummyUsers().then(() => {
+//   console.log("Dummy users inserted");
+// });
+// seedSquads().then(() => {
+//   console.log("Dummy users inserted");
+// });
+// seedPosts({
+//   postsPerSquad: 20,
+// }).then(() => {
+//   console.log("Dummy users inserted");
+// });
 
 // Request logging
 app.use(requestLogger);

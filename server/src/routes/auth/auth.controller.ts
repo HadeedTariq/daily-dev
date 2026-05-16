@@ -7,6 +7,7 @@ import { env } from "@/common/utils/envConfig";
 import nodeMailer from "nodemailer";
 import { hash, compare } from "bcrypt";
 import { addEmailJob } from "@/queues/emailQueue";
+import { sendVerificationEmail } from "@/utils/emailSender";
 
 class UserController {
   constructor() {
@@ -26,8 +27,8 @@ class UserController {
     }
     try {
       const { rows } = await queryDb(
-        `SELECT email FROM magicLinks WHERE token = $1`,
-        [token]
+        `SELECT email FROM "magicLinks" WHERE token = $1`,
+        [token],
       );
       if (rows.length < 1) {
         return next({ status: 404, message: "Invalid token" });
@@ -47,7 +48,7 @@ class UserController {
 
         const { rows: userRow } = await client.query(
           `UPDATE users SET is_verified = $1 WHERE email = $2 RETURNING id`,
-          [true, user.email]
+          [true, user.email],
         );
 
         if (userRow.length < 1) {
@@ -58,7 +59,7 @@ class UserController {
 
         const queries = [
           {
-            query: `DELETE FROM magicLinks WHERE email = $1`,
+            query: `DELETE FROM "magicLinks" WHERE email = $1`,
             params: [user.email],
           },
           {
@@ -112,7 +113,7 @@ class UserController {
         user_password,
         profession
        from users where email = $1 and is_verified = $2`,
-      [email, true]
+      [email, true],
     );
 
     if (rows.length < 1) {
@@ -121,14 +122,14 @@ class UserController {
 
     const is_correct_password = await this.verifyPassword(
       password,
-      rows[0].user_password
+      rows[0].user_password,
     );
 
     if (!is_correct_password) {
       return next({ message: "Incorrect Credentials", status: 404 });
     }
     const { accessToken, refreshToken } = this.generateAccessAndRefreshToken(
-      rows[0]
+      rows[0],
     );
 
     await queryDb("update users set refresh_token = $1 where email = $2", [
@@ -180,7 +181,7 @@ class UserController {
     try {
       await runIndependentTransaction([
         {
-          query: `INSERT INTO magicLinks (email, token) VALUES ($1, $2)`,
+          query: `INSERT INTO "magicLinks" (email, token) VALUES ($1, $2)`,
           params: [email, token],
         },
         {
@@ -201,9 +202,16 @@ class UserController {
       });
     }
 
-    await addEmailJob(email, magicLink);
+    const { success, error } = await sendVerificationEmail(email, magicLink);
 
-    return res.status(200).json({ message: "Verification email sent soon" });
+    if (!success || error) {
+      return next({
+        message: error || "Verification Email Sending Failed",
+        status: 500,
+      });
+    }
+
+    return res.status(200).json({ message: "Verification email sent" });
   }
 
   async authenticate_github(req: Request, res: Response, next: NextFunction) {
@@ -216,8 +224,8 @@ class UserController {
       });
     }
     const { rows, rowCount } = await queryDb(
-      `select * from users where email=$1`,
-      [user.email]
+      `select * from users where email = $1`,
+      [user.email],
     );
     if (rowCount && rowCount > 0) {
       if (rows[0].is_verified) {
@@ -247,7 +255,7 @@ class UserController {
 
         await queryDb(
           "update users set refresh_token = $1,is_verified=$2 where email = $3",
-          [refreshToken, true, user.email]
+          [refreshToken, true, user.email],
         );
 
         return res
@@ -264,6 +272,7 @@ class UserController {
           .redirect(env.CORS_ORIGIN);
       }
     }
+
     const client = await pool.connect();
 
     try {
@@ -277,7 +286,7 @@ class UserController {
           user.email,
           user.avatar,
           true,
-        ]
+        ],
       );
 
       user.id = authUser[0].id;
@@ -344,7 +353,7 @@ class UserController {
   async authenticateByResfreshToken(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ) {
     const { refreshToken: refToken } = req.cookies;
     if (!refToken) {
@@ -362,7 +371,7 @@ class UserController {
     }
 
     const { accessToken, refreshToken } = this.generateAccessAndRefreshToken(
-      rows[0]
+      rows[0],
     );
     await queryDb(`update users set refresh_token=$1 where email=$2`, [
       refreshToken,
@@ -424,7 +433,7 @@ class UserController {
   };
   verifyPassword = async (
     password: string,
-    actual_password: string
+    actual_password: string,
   ): Promise<boolean> => {
     const is_correct_password = await compare(password, actual_password);
     return is_correct_password;
@@ -469,7 +478,7 @@ class UserController {
         profession: user.profession,
       },
       env.JWT_ACCESS_TOKEN_SECRET,
-      { expiresIn: "2d" }
+      { expiresIn: "2d" },
     );
 
     return { refreshToken, accessToken };
