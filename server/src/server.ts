@@ -29,6 +29,9 @@ import { createTable } from "./db/createTable";
 import { insertDummyUsers } from "./scripts/dummy-users";
 import { seedSquads } from "./scripts/dummy-squad";
 import { seedPosts } from "./scripts/dummy-posts";
+import { seedPostStats } from "./scripts/dummy-posts-upvotes";
+import { seedPostComments } from "./scripts/dummy-posts-comments";
+import { seedFollowers } from "./scripts/dummy-follow-following";
 
 const logger = pino({ name: "server start" });
 
@@ -98,7 +101,7 @@ passport.deserializeUser(
   },
 );
 
-createTable(`select id from squads`);
+createTable(`select id from users`);
 // insertDummyUsers().then(() => {
 //   console.log("Dummy users inserted");
 // });
@@ -108,6 +111,15 @@ createTable(`select id from squads`);
 // seedPosts({
 //   postsPerSquad: 20,
 // }).then(() => {
+//   console.log("Dummy users inserted");
+// });
+// seedPostStats().then(() => {
+//   console.log("Dummy users inserted");
+// });
+// seedPostComments().then(() => {
+//   console.log("Dummy users inserted");
+// });
+// seedFollowers().then(() => {
 //   console.log("Dummy users inserted");
 // });
 
