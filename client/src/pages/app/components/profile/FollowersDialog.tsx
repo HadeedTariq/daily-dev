@@ -46,32 +46,45 @@ export const FollowersDialog = ({ isOpen, onClose }: FollowersDialogProps) => {
       const { data } = await followerApi.put(`/unfollow`, { followedId });
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries([
         "getMyFollowings",
       ] as InvalidateQueryFilters);
+
+      toast({
+        title: data.message || "User unfollowed",
+        description: "The user has been removed from your following list.",
+      });
     },
     onError: (err: any) => {
       toast({
-        title: err.response.data.message || "Failed to unfollow a user",
+        title: err.response?.data?.message || "Failed to unfollow user",
+        description: "Something went wrong while unfollowing the user.",
         variant: "destructive",
       });
     },
   });
+
   const { mutate: followUser, isPending: isFollowingPending } = useMutation({
     mutationKey: ["followUser"],
     mutationFn: async (followedId: number) => {
       const { data } = await followerApi.put(`/follow`, { followedId });
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries([
         "getMyFollowings",
       ] as InvalidateQueryFilters);
+
+      toast({
+        title: data.message || "User followed",
+        description: "You are now following this user.",
+      });
     },
     onError: (err: any) => {
       toast({
-        title: err.response.data.message || "Failed to follow a user",
+        title: err.response?.data?.message || "Failed to follow user",
+        description: "Something went wrong while following the user.",
         variant: "destructive",
       });
     },

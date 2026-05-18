@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Github,
   Linkedin,
@@ -56,7 +55,7 @@ export function SocialLinks({
       label: "LinkedIn",
     },
     { url: website, icon: <Globe className="h-4 w-4" />, label: "Website" },
-    { url: x, icon: <Twitter className="h-4 w-4" />, label: "X (Twitter)" },
+    { url: x, icon: <Twitter className="h-4 w-4" />, label: "X" },
     { url: youtube, icon: <Youtube className="h-4 w-4" />, label: "YouTube" },
     {
       url: stack_overflow,
@@ -83,27 +82,25 @@ export function SocialLinks({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Social Links</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {socialLinks?.map((link, index) => (
-            <Button
-              key={index}
-              variant="outline"
-              asChild
-              className="w-full justify-start gap-2"
-            >
-              <Link to={link.url} target="_blank" rel="noopener noreferrer">
-                {link.icon}
-                <span className="truncate">{link.label}</span>
-              </Link>
-            </Button>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+    <div className="flex flex-wrap gap-2 w-full">
+      {socialLinks.map((link, index) => (
+        <Button
+          key={index}
+          variant="outline"
+          size="sm"
+          asChild
+          className="h-9 px-3 rounded-xl border border-border/60 bg-card/40 text-muted-foreground hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-500/30 hover:bg-indigo-500/[0.04] transition-all duration-200 group flex items-center gap-2 select-none"
+        >
+          <Link to={link.url} target="_blank" rel="noopener noreferrer">
+            <span className="transition-transform duration-200 group-hover:scale-110 text-muted-foreground/80 group-hover:text-indigo-500">
+              {link.icon}
+            </span>
+            <span className="text-xs font-medium tracking-tight truncate max-w-[120px]">
+              {link.label}
+            </span>
+          </Link>
+        </Button>
+      ))}
+    </div>
   );
 }

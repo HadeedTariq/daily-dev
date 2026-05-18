@@ -28,7 +28,7 @@ import { followersRouter } from "./routes/followers/followers.routes";
 import { createTable } from "./db/createTable";
 import { insertDummyUsers } from "./scripts/dummy-users";
 import { seedSquads } from "./scripts/dummy-squad";
-import { seedPosts } from "./scripts/dummy-posts";
+import { generatePostContent, seedPosts } from "./scripts/dummy-posts";
 import { seedPostStats } from "./scripts/dummy-posts-upvotes";
 import { seedPostComments } from "./scripts/dummy-posts-comments";
 import { seedFollowers } from "./scripts/dummy-follow-following";
@@ -101,7 +101,7 @@ passport.deserializeUser(
   },
 );
 
-createTable(`select id from users`);
+// createTable(`select email from users`);
 // insertDummyUsers().then(() => {
 //   console.log("Dummy users inserted");
 // });

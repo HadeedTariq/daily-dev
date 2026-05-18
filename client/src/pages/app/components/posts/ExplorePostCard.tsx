@@ -28,7 +28,7 @@ export const ExplorePostCard = forwardRef<HTMLDivElement, PostCards>(
       slug,
       id,
     },
-    ref
+    ref,
   ) => {
     return (
       <Card className="w-[400px] max-[770px]:w-full h-[500px]" ref={ref}>
@@ -94,5 +94,5 @@ export const ExplorePostCard = forwardRef<HTMLDivElement, PostCards>(
         </CardFooter>
       </Card>
     );
-  }
+  },
 );

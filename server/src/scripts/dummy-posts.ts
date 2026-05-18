@@ -79,7 +79,7 @@ const generateSlug = (title: string) => {
   );
 };
 
-const generatePostContent = () => {
+export const generatePostContent = () => {
   return `
 # ${faker.hacker.phrase()}
 

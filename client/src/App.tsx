@@ -29,6 +29,7 @@ import UserProfile from "./pages/app/routes/user-profile/UserProfile";
 import { UserProfileReadmeHandler } from "./pages/app/routes/user-profile/UserProfileReadmeHandler";
 import { UserPosts } from "./pages/app/routes/user-profile/UserPosts";
 import ExplorePosts from "./pages/app/routes/ExplorePosts";
+import EditPost from "./pages/app/routes/EditPost";
 
 function App() {
   const { user } = useFullApp();
@@ -88,6 +89,7 @@ function App() {
           <Route path="posts" element={<UserPosts />} />
         </Route>
         <Route path="post/create" element={<CreatePost />} />
+        <Route path="post/edit/:id" element={<EditPost />} />
         <Route path="posts/:post_slug" element={<PostPage />} />
 
         <Route path="squads">

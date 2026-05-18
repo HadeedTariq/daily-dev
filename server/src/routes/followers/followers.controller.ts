@@ -16,7 +16,7 @@ class FollowersController {
   async followUser(req: Request, res: Response, next: NextFunction) {
     try {
       const { followedId } = req.body;
-      let { followerId } = req.body;
+      let followerId = req.body.user.id;
 
       if (!followedId || isNaN(followedId)) {
         return res
@@ -35,7 +35,7 @@ class FollowersController {
 
       const { rows: existingFollow } = await queryDb(
         "SELECT 1 FROM followers WHERE follower_id = $1 AND followed_id = $2",
-        [followerId, Number(followedId)]
+        [followerId, Number(followedId)],
       );
 
       if (existingFollow.length > 0) {
@@ -76,7 +76,7 @@ class FollowersController {
       }
       if (error.code === "23503") {
         console.error(
-          "Foreign key violation: The followed user does not exist."
+          "Foreign key violation: The followed user does not exist.",
         );
 
         res.status(400).json({
@@ -108,7 +108,7 @@ class FollowersController {
 
       const { rows: existingFollow } = await queryDb(
         "SELECT 1 FROM followers WHERE follower_id = $1 AND followed_id = $2",
-        [followerId, Number(followedId)]
+        [followerId, Number(followedId)],
       );
 
       if (existingFollow.length < 1) {
@@ -182,7 +182,7 @@ class FollowersController {
           INNER JOIN users u 
               ON u.id = uf.follower_id;
         `,
-        [Number(userId), req.body.user.id]
+        [Number(userId), req.body.user.id],
       );
 
       res.status(200).json(followers);
@@ -218,9 +218,8 @@ class FollowersController {
           FROM user_followers uf
           INNER JOIN users u 
               ON u.id = uf.follower_id;
-
         `,
-        [userId]
+        [userId],
       );
 
       res.status(200).json(followers);
@@ -294,7 +293,7 @@ class FollowersController {
           INNER JOIN users u 
               ON p.author_id = u.id;
         `,
-        [userId, pageSize ? Number(pageSize) : 8, lastId ? Number(lastId) : 0]
+        [userId, pageSize ? Number(pageSize) : 8, lastId ? Number(lastId) : 0],
       );
 
       res.status(200).json({ posts: followingsPosts });
@@ -326,7 +325,7 @@ class FollowersController {
           FROM user_followings uf
           INNER JOIN users u ON u.id = uf.followed_id
         `,
-        [Number(userId), req.body.user.id]
+        [Number(userId), req.body.user.id],
       );
 
       res.status(200).json(followings);
@@ -349,7 +348,7 @@ class FollowersController {
           FROM user_followings uf
           INNER JOIN users u ON u.id = uf.followed_id
         `,
-        [userId]
+        [userId],
       );
 
       res.status(200).json(followings);
@@ -360,7 +359,7 @@ class FollowersController {
   async updateNotificationStatus(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ) {
     try {
       const userId = req.body.user.id;
@@ -410,7 +409,7 @@ class FollowersController {
           INNER JOIN users u ON u.id = n.actor_id;
 
         `,
-        [userId]
+        [userId],
       );
 
       res.status(200).json(notifications);

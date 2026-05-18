@@ -5,6 +5,7 @@ import SortingElements from "../components/posts/SortingOrder";
 import { ExplorePostCard } from "../components/posts/ExplorePostCard";
 import { useState } from "react";
 import { PostSkeletonCard } from "@/components/PostSkeleton";
+import { HomePostCard } from "../components/posts/HomePostCard";
 
 type SortOption = "upvotes" | "views";
 const ExplorePosts = () => {
@@ -61,7 +62,7 @@ const ExplorePosts = () => {
       />
       <main className="flex mx-auto px-4 py-8 flex-wrap gap-x-8 gap-y-8 justify-center">
         {posts?.map((post, index) => (
-          <ExplorePostCard
+          <HomePostCard
             key={post.id}
             {...post}
             ref={index === posts.length - 1 ? ref : undefined}

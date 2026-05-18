@@ -428,6 +428,52 @@ class PostController {
     }
   }
 
+  async getMyPostDetails(req: Request, res: Response, next: NextFunction) {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        message: "Post id is required.",
+      });
+    }
+
+    try {
+      const { rows } = await queryDb(
+        `
+        SELECT 
+          posts.id,
+          posts.title,
+          posts.slug,
+          posts.thumbnail,
+          posts.tags,
+          posts.content,
+          posts.squad_id,
+          posts.author_id,
+          posts.created_at,
+          posts.updated_at
+        FROM posts
+        WHERE posts.id = $1
+          AND posts.author_id = $2
+      `,
+        [Number(id), Number(req.body.user.id)],
+      );
+
+      if (rows.length < 1) {
+        return res.status(404).json({
+          message: "Post not found.",
+        });
+      }
+
+      return res.status(200).json(rows[0]);
+    } catch (error) {
+      console.error("Failed to fetch post details:", error);
+
+      return res.status(500).json({
+        message: "An error occurred while fetching post details.",
+      });
+    }
+  }
+
   async getPostComments(req: Request, res: Response, next: NextFunction) {
     const { postId } = req.params;
     const { pageSize, pageNumber } = req.query;
@@ -599,39 +645,101 @@ class PostController {
 
   async editPost(req: Request, res: Response, next: NextFunction) {
     const { postId } = req.params;
-    const { title, content } = req.body;
+
+    const { title, content, thumbnail, squad } = req.body;
+
+    if (!title || !content || !thumbnail || !squad) {
+      return res.status(400).json({
+        message: "Please fill all the fields",
+      });
+    }
+
+    const { rows: existingPost } = await queryDb(
+      `SELECT author_id, squad_id FROM posts WHERE id = $1`,
+      [Number(postId)],
+    );
+
+    if (existingPost.length < 1) {
+      return res.status(404).json({
+        message: "Post not found.",
+      });
+    }
+
+    if (existingPost[0].author_id !== Number(req.body.user.id)) {
+      return res.status(403).json({
+        message: "You are not authorized to edit this post.",
+      });
+    }
+
+    const { rows: isSquadMember } = await queryDb(
+      `SELECT 1 FROM squad_members WHERE squad_id = $1 AND user_id = $2`,
+      [Number(squad), Number(req.body.user.id)],
+    );
+
+    if (isSquadMember.length < 1) {
+      return res.status(403).json({
+        message: "You are not a member of this squad.",
+      });
+    }
+
+    const sanitizedContent = sanitizeHtml(content, {
+      allowedTags: [],
+      allowedAttributes: {},
+    });
+
+    const tags = this.detectTags(sanitizedContent);
+
+    const slug = title
+      .toLowerCase()
+      .trim()
+      .replace(/[\s\W-]+/g, "-");
+
+    const client = await pool.connect();
 
     try {
-      if (title || content) {
-        const sanitizedContent = sanitizeHtml(content, {
-          allowedTags: [],
-          allowedAttributes: {},
-        });
-        const tags = this.detectTags(sanitizedContent);
+      await client.query("BEGIN");
 
-        const updatePostQuery = `
-          UPDATE posts
-          SET title = COALESCE($1, title),
-              content = COALESCE($2, content),
-              tags = COALESCE($3, tags)
-          WHERE id = $4
-          RETURNING id;
-        `;
-        const { rows: updatedRows } = await queryDb(updatePostQuery, [
+      await client.query(
+        `
+        UPDATE posts
+        SET 
+          title = $1,
+          content = $2,
+          thumbnail = $3,
+          squad_id = $4,
+          slug = $5,
+          tags = $6,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = $7
+      `,
+        [
           title,
           sanitizedContent,
+          thumbnail,
+          Number(squad),
+          slug,
           tags,
-          postId,
-        ]);
+          Number(postId),
+        ],
+      );
 
-        if (updatedRows.length === 0) {
-          return res.status(404).json({ message: "Post not found." });
-        }
-      }
+      await client.query("COMMIT");
 
-      res.status(200).json({ message: "Post updated successfully." });
+      return res.status(200).json({
+        message: "Post updated successfully.",
+      });
     } catch (error) {
-      next(error);
+      await client.query("ROLLBACK");
+
+      console.error("Transaction failed and rolled back:", error);
+
+      return res.status(500).json({
+        message: "An error occurred while updating the post.",
+      });
+    } finally {
+      client.release();
+
+      console.log("Database client released");
     }
   }
 

@@ -37,6 +37,7 @@ import {
 import { squadApi } from "@/lib/axios";
 import { toast } from "@/hooks/use-toast";
 import { squadCategories } from "@/utils/data";
+import { useNavigate } from "react-router-dom";
 
 const formSchema = z.object({
   name: z
@@ -71,6 +72,7 @@ const formSchema = z.object({
 });
 
 export default function SquadCreationForm() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -104,6 +106,7 @@ export default function SquadCreationForm() {
         title: data.message || "Squad created successfully",
       });
       queryClient.invalidateQueries(["getMySquads"] as InvalidateQueryFilters);
+      navigate("/profile/squads");
     },
   });
 
