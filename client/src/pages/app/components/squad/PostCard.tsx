@@ -1,5 +1,9 @@
 import { forwardRef } from "react";
 import { Link } from "react-router-dom";
+import { ThumbsUp, Eye, Calendar, ArrowUpRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { formatSocialNumber } from "@/lib/utils";
 
 export const PostCard = forwardRef<HTMLDivElement, SquadPost>(
   (
@@ -13,80 +17,103 @@ export const PostCard = forwardRef<HTMLDivElement, SquadPost>(
       post_tags,
       post_slug,
     },
-    ref
+    ref,
   ) => {
     return (
       <div
-        className="bg-zinc-900 rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:scale-105 hover:cursor-pointer"
         ref={ref}
+        className="group relative bg-card hover:bg-accent/10 rounded-2xl border border-border/50 shadow-sm transition-all duration-300 hover:shadow-md hover:border-indigo-500/20 overflow-hidden"
       >
-        <Link className="md:flex" to={`/posts/${post_slug}`}>
-          <div className="md:flex-shrink-0">
+        <Link
+          className="flex flex-col sm:flex-row h-full w-full"
+          to={`/posts/${post_slug}`}
+        >
+          {/* Media Container with Adaptive Breakpoints */}
+          <div className="relative w-full sm:w-44 md:w-52 h-48 sm:h-auto shrink-0 overflow-hidden bg-muted">
             <img
               src={post_thumbnail}
               alt={post_title}
-              width={200}
-              height={200}
-              className="h-48 w-full object-cover md:w-48"
+              loading="lazy"
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-102"
             />
+            {/* Soft Ambient Overlay for Light Theme Contexts */}
+            <div className="absolute inset-0 bg-black/[0.02] dark:bg-transparent pointer-events-none" />
           </div>
-          <div className="p-6">
-            <h3 className="text-xl font-semibold mb-2">{post_title}</h3>
 
-            <div className="flex items-center justify-between text-sm text-gray-500">
-              <div className="flex items-center space-x-2">
-                <img
-                  src={author_avatar}
-                  alt="Author"
-                  width={24}
-                  height={24}
-                  className="rounded-full"
-                />
-                <span>{new Date(post_created_at).toLocaleDateString()}</span>
+          {/* Metadata & Typography Content Block */}
+          <div className="flex-1 p-5 sm:p-6 flex flex-col justify-between min-w-0 space-y-4">
+            <div className="space-y-2">
+              {/* Header Context Action Meta Row */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                  <Calendar className="h-3.5 w-3.5 text-muted-foreground/60" />
+                  <span>
+                    {new Date(post_created_at).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </span>
+                </div>
+
+                {/* Micro Action Visual Anchor */}
+                <ArrowUpRight className="h-4 w-4 text-muted-foreground/40 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-indigo-500" />
               </div>
-              <div className="flex items-center space-x-4">
-                <span className="flex items-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 mr-1 text-green-500"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
-                  </svg>
-                  {post_upvotes}
-                </span>
-                <span className="flex items-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 mr-1 text-blue-500"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                    <path
-                      fillRule="evenodd"
-                      d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  {post_views}
-                </span>
-              </div>
+
+              {/* Responsive Core Title Headline */}
+              <h3 className="text-lg sm:text-xl font-bold tracking-tight text-foreground/90 line-clamp-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors duration-200">
+                {post_title}
+              </h3>
             </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {post_tags.map((tag, index) => (
-                <span
-                  key={index}
-                  className="bg-gray-200 text-gray-700 text-xs font-medium px-2.5 py-0.5 rounded"
-                >
-                  {tag}
-                </span>
-              ))}
+
+            {/* Layout Footer Container Contextual Rows */}
+            <div className="space-y-4 pt-1">
+              {/* Categorization Taxonomy Badges Block */}
+              {post_tags && post_tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 max-w-full">
+                  {post_tags.slice(0, 3).map((tag, index) => (
+                    <Badge
+                      key={index}
+                      variant="outline"
+                      className="bg-secondary/40 border-border/60 text-muted-foreground hover:text-foreground text-[11px] font-medium px-2 py-0 rounded-lg select-none transition-colors"
+                    >
+                      {tag}
+                    </Badge>
+                  ))}
+                  {post_tags.length > 3 && (
+                    <span className="text-[10px] font-semibold text-muted-foreground/60 px-1 self-center">
+                      +{post_tags.length - 3}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Attribution Author Frame and Analytics Indicators Segment */}
+              <div className="flex items-center justify-between gap-4 border-t border-border/40 pt-3">
+                <Avatar className="h-6 w-6 border border-border/60 ring-2 ring-background shadow-inner">
+                  <AvatarImage src={author_avatar} alt="Post Author" />
+                  <AvatarFallback className="text-[9px] font-bold bg-muted">
+                    U
+                  </AvatarFallback>
+                </Avatar>
+
+                <div className="flex items-center gap-3.5 text-xs font-semibold text-muted-foreground/80">
+                  <div className="flex items-center gap-1.5 transition-colors group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                    <ThumbsUp className="h-3.5 w-3.5 stroke-[2]" />
+                    <span>{formatSocialNumber(post_upvotes)}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Eye className="h-3.5 w-3.5 stroke-[2]" />
+                    <span>{formatSocialNumber(post_views)}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </Link>
       </div>
     );
-  }
+  },
 );
+
+PostCard.displayName = "PostCard";

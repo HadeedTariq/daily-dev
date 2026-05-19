@@ -3,13 +3,15 @@ import { ModeratedBy } from "./ModeratedBy";
 type ModeratorsProps = {
   members: SquadMember[];
 };
+
 export default function Moderators({ members }: ModeratorsProps) {
   const moderators = members.filter(
-    (member) => member.role === "moderator" || member.role === "admin"
+    (member) => member.role === "moderator" || member.role === "admin",
   );
+
   return (
-    <main className="container mx-auto p-4">
+    <div className="w-full">
       <ModeratedBy moderators={moderators} />
-    </main>
+    </div>
   );
 }

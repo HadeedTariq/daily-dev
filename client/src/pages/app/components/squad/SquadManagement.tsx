@@ -2,10 +2,9 @@ import * as React from "react";
 import {
   EllipsisVertical,
   Settings,
-  DeleteIcon,
-  LogOutIcon,
-  LeafyGreen,
-  JoystickIcon,
+  Trash2,
+  LogOut,
+  UserPlus,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -34,6 +33,7 @@ type SquadSettingsMenuProps = {
   adminId: number;
   squad: SquadDetails;
 };
+
 export default function SquadSettingsMenu({
   adminId,
   squad,
@@ -43,7 +43,7 @@ export default function SquadSettingsMenu({
   const navigate = useNavigate();
   const { user } = useFullApp();
   const isUserMemberOfSquad = squad.squad_members?.find(
-    (member) => member.userDetails.userId === user?.id
+    (member) => member.userDetails.userId === user?.id,
   );
 
   const { mutate: leaveSquad, isPending: isLeavingPending } = useMutation({
@@ -63,13 +63,14 @@ export default function SquadSettingsMenu({
     },
     onSuccess: (data) => {
       toast({
-        title: data.message || "Successfully leaved the squad",
+        title: data.message || "Successfully left the squad",
       });
       queryClient.invalidateQueries([
         `squad-${squad.squad_handle}`,
       ] as InvalidateQueryFilters);
     },
   });
+
   const { mutate: deleteSquad, isPending: isDeletingPending } = useMutation({
     mutationKey: [`deleteSquad_${squad.squad_handle}`],
     mutationFn: async () => {
@@ -84,7 +85,7 @@ export default function SquadSettingsMenu({
     },
     onSuccess: (data) => {
       toast({
-        title: data.message || "Successfully delete the squad",
+        title: data.message || "Successfully deleted the squad",
       });
       queryClient.invalidateQueries([
         `squad-${squad.squad_handle}`,
@@ -92,6 +93,7 @@ export default function SquadSettingsMenu({
       navigate("/profile/squads");
     },
   });
+
   const { mutate: joinSquad, isPending: isJoinPending } = useMutation({
     mutationKey: [`joinSquad_${squad.squad_handle}`],
     mutationFn: async () => {
@@ -120,51 +122,74 @@ export default function SquadSettingsMenu({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="icon">
-          <EllipsisVertical className="h-4 w-4" />
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-10 w-10 hover:bg-indigo-50 dark:hover:bg-indigo-950 border-indigo-200 dark:border-indigo-800"
+        >
+          <EllipsisVertical className="h-4 w-4 text-indigo-600" />
           <span className="sr-only">Open squad settings menu</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-56 p-0">
+      <PopoverContent
+        className="w-56 p-0 shadow-lg border border-indigo-200 dark:border-indigo-800"
+        align="end"
+      >
         <Command>
           <CommandList>
             {user?.id === adminId ? (
-              <CommandGroup>
+              <CommandGroup className="overflow-hidden">
                 <CommandItem
                   onSelect={() => {
                     navigate("edit");
+                    setOpen(false);
                   }}
+                  className="gap-2 cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-950"
                 >
-                  <Settings className="mr-2 h-4 w-4" />
-                  Manage Squad
+                  <Settings className="h-4 w-4 text-indigo-600" />
+                  <span>Manage Squad</span>
                 </CommandItem>
                 <CommandItem
                   disabled={isDeletingPending}
                   onSelect={() => {
                     deleteSquad();
+                    setOpen(false);
                   }}
+                  className="gap-2 cursor-pointer text-destructive hover:bg-red-50 dark:hover:bg-red-950"
                 >
-                  <DeleteIcon className="mr-2 h-4 w-4" />
-                  Delete Squad
+                  <Trash2 className="h-4 w-4" />
+                  <span>
+                    {isDeletingPending ? "Deleting..." : "Delete Squad"}
+                  </span>
                 </CommandItem>
               </CommandGroup>
             ) : (
-              <CommandGroup>
+              <CommandGroup className="overflow-hidden">
                 {isUserMemberOfSquad ? (
                   <CommandItem
                     disabled={isLeavingPending}
-                    onSelect={() => leaveSquad()}
+                    onSelect={() => {
+                      leaveSquad();
+                      setOpen(false);
+                    }}
+                    className="gap-2 cursor-pointer text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950"
                   >
-                    <LogOutIcon className="mr-2 h-4 w-4" />
-                    Leave Squad
+                    <LogOut className="h-4 w-4" />
+                    <span>
+                      {isLeavingPending ? "Leaving..." : "Leave Squad"}
+                    </span>
                   </CommandItem>
                 ) : (
                   <CommandItem
                     disabled={isJoinPending}
-                    onSelect={() => joinSquad()}
+                    onSelect={() => {
+                      joinSquad();
+                      setOpen(false);
+                    }}
+                    className="gap-2 cursor-pointer text-green-600 hover:bg-green-50 dark:hover:bg-green-950"
                   >
-                    <JoystickIcon className="mr-2 h-4 w-4" />
-                    Join Squad
+                    <UserPlus className="h-4 w-4" />
+                    <span>{isJoinPending ? "Joining..." : "Join Squad"}</span>
                   </CommandItem>
                 )}
               </CommandGroup>

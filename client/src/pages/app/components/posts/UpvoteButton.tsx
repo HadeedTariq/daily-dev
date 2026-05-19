@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { postApi } from "@/lib/axios";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { formatSocialNumber } from "@/lib/utils";
 
 interface UpvoteButtonProps {
   postId: number;
@@ -53,7 +54,7 @@ export default function UpvoteButton({
       onClick={handleUpvote}
     >
       <ChevronUp className={`h-4 w-4 ${isUpvoted ? "fill-current" : ""}`} />
-      <span>{upvoteCount}</span>
+      <span>{formatSocialNumber(upvoteCount)}</span>
     </Button>
   );
 }

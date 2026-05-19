@@ -25,10 +25,12 @@ export function UserPosts() {
   });
   if (isLoading) return <h1>Loading...</h1>;
   return (
-    <main className="flex mx-auto px-4 py-8 flex-wrap gap-x-8 gap-y-8 justify-center">
-      {posts?.map((post) => (
-        <ProfilePostCard key={post.id} loginUser={false} {...post} />
-      ))}
+    <main className="container mx-auto px-4 py-8 max-w-7xl animate-in fade-in duration-500">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6 justify-items-center">
+        {posts?.map((post) => (
+          <ProfilePostCard key={post.id} loginUser={false} {...post} />
+        ))}
+      </div>
     </main>
   );
 }

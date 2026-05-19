@@ -87,10 +87,12 @@ export const ProfilePostCard = ({
                 align="end"
                 className="rounded-xl min-w-[140px] border-border/80"
               >
-                <DropdownMenuItem className="cursor-pointer gap-2 rounded-lg text-sm text-muted-foreground hover:text-foreground">
-                  <Edit className="h-4 w-4 stroke-[1.5]" />
-                  <span>Edit post</span>
-                </DropdownMenuItem>
+                <Link to={`/post/edit/${id}`}>
+                  <DropdownMenuItem className="cursor-pointer gap-2 rounded-lg text-sm text-muted-foreground hover:text-foreground">
+                    <Edit className="h-4 w-4 stroke-[1.5]" />
+                    <span>Edit post</span>
+                  </DropdownMenuItem>
+                </Link>
                 <DropdownMenuItem
                   onClick={() => deletePost()}
                   disabled={isPending}

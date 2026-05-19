@@ -137,7 +137,7 @@ export const MembersDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] overflow-y-scroll">
+      <DialogContent className="sm:max-w-[425px] overflow-y-scroll hide-scrollbar">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">
             Squad Members

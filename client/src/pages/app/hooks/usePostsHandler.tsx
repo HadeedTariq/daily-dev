@@ -4,6 +4,7 @@ import {
   QueryFunctionContext,
   useInfiniteQuery,
   useMutation,
+  useQuery,
 } from "@tanstack/react-query";
 import { useDispatch } from "react-redux";
 
@@ -13,12 +14,12 @@ interface PostResponse {
 
 export const useGetNewPosts = (
   initialPageSize: number = 8,
-  sortingOrder: string
+  sortingOrder: string,
 ) => {
   const fetchPosts = async ({ pageParam = 0 }: QueryFunctionContext) => {
     try {
       const { data } = await postApi.get<PostResponse>(
-        `?pageSize=${initialPageSize}&cursor=${pageParam}&sortingOrder=${sortingOrder}`
+        `?pageSize=${initialPageSize}&cursor=${pageParam}&sortingOrder=${sortingOrder}`,
       );
 
       return {
@@ -52,14 +53,14 @@ export const useGetNewPosts = (
 
 export const useGetNewExplorePosts = (
   initialPageSize: number = 8,
-  sortingOrder: string
+  sortingOrder: string,
 ) => {
   const fetchPosts = async ({
     pageParam = `${sortingOrder}:${100000},postId:${0}`,
   }: QueryFunctionContext) => {
     try {
       const { data } = await postApi.get<PostResponse>(
-        `?pageSize=${initialPageSize}&cursor=${pageParam}&sortingOrder=${sortingOrder}`
+        `?pageSize=${initialPageSize}&cursor=${pageParam}&sortingOrder=${sortingOrder}`,
       );
 
       return {
@@ -94,12 +95,12 @@ export const useGetNewExplorePosts = (
 };
 export const useGetNewSquadPosts = (
   initialPageSize: number = 8,
-  squadId: number
+  squadId: number,
 ) => {
   const fetchPosts = async ({ pageParam = 0 }: QueryFunctionContext) => {
     try {
       const { data } = await squadApi.get(
-        `/posts/${squadId}?pageSize=${initialPageSize}&cursor=${pageParam}`
+        `/posts/${squadId}?pageSize=${initialPageSize}&cursor=${pageParam}`,
       );
 
       return {
@@ -134,7 +135,7 @@ export const useGetFollowingsPosts = (initialPageSize: number = 8) => {
   const fetchPosts = async ({ pageParam = 0 }: QueryFunctionContext) => {
     try {
       const { data } = await followerApi.get<PostResponse>(
-        `/followings-posts?pageSize=${initialPageSize}&lastId=${pageParam}`
+        `/followings-posts?pageSize=${initialPageSize}&lastId=${pageParam}`,
       );
 
       return {
@@ -168,12 +169,12 @@ export const useGetFollowingsPosts = (initialPageSize: number = 8) => {
 
 export const useGetPostComments = (
   postId: number | undefined,
-  initialPageSize: number = 8
+  initialPageSize: number = 8,
 ) => {
   const fetchComments = async ({ pageParam = 1 }: QueryFunctionContext) => {
     try {
       const { data } = await postApi.get(
-        `/get-post-comments/${postId}?pageSize=${initialPageSize}&pageNumber=${pageParam}`
+        `/get-post-comments/${postId}?pageSize=${initialPageSize}&pageNumber=${pageParam}`,
       );
       return {
         pageParam,
@@ -207,12 +208,19 @@ export const useGetPostComments = (
 
 export const useGetCurrentPost = (postSlug: string) => {
   const dispatch = useDispatch();
-  const queryData = useMutation({
-    mutationKey: [`getCurrentPost_${postSlug}`],
-    mutationFn: async (slug: string) => {
-      const { data } = await postApi.get(`/post-by-slug?postSlug=${slug}`);
+  let queryKey = `getCurrentPost_${postSlug}`;
+  let url = `/post-by-slug?postSlug=${postSlug}`;
+  const result = useQuery({
+    queryKey: [queryKey],
+    queryFn: async () => {
+      const { data } = await postApi.get(url);
       dispatch(setCurrentPost(data));
+      return data as PostCards;
     },
+    refetchOnWindowFocus: false,
+    retry: 2,
+    refetchOnMount: true,
   });
-  return queryData;
+
+  return result;
 };

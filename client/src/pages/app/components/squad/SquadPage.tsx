@@ -4,7 +4,7 @@ import { SquadStats } from "./SquadStats";
 
 export function SquadPage({ squad }: { squad: SquadDetails }) {
   return (
-    <div className="min-h-screen ">
+    <div className="min-h-screen p-4">
       {squad && <SquadHeader squad={squad} />}
       <main className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

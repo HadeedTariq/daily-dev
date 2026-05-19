@@ -164,6 +164,7 @@ interface PostCards {
   title: string;
   slug: string;
   thumbnail: string;
+  content: string;
   created_at: string;
   tags: string[];
   upvotes: number;
@@ -207,4 +208,18 @@ type Comments = {
     id: number;
   };
   replies: CommentReplies[];
+};
+
+type TGetMyPostDetailsResponse = {
+  id: number;
+  title: string;
+  slug: string;
+  thumbnail: string;
+  tags: string[];
+  content: string;
+  squad_id: number;
+  author_id: number;
+  squad_name: string;
+  created_at: string;
+  updated_at: string;
 };
