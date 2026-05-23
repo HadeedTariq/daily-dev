@@ -7,7 +7,6 @@ export const redis = new Redis(env.REDIS_URL);
 export const pool = new Pool({
   connectionString: env.DATABASE_URL,
   ssl: env.NODE_ENV === "production" ? { rejectUnauthorized: true } : false,
-
   max: 2,
   idleTimeoutMillis: 10000,
   connectionTimeoutMillis: 5000,
