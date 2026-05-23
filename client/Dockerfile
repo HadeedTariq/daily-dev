@@ -1,18 +1,13 @@
-# 1. Use the official Node.js image as the base
-FROM node:20-alpine 
+FROM node:20-alpine
 
-# 2. Set working directory inside the container
-WORKDIR /src
+WORKDIR /app
 
-# 3. Copy package.json and install dependencies
-COPY package.json package-lock.json ./
-RUN npm install
+COPY package*.json ./
 
-# 4. Copy the entire project to the container
+RUN npm ci
+
 COPY . .
 
-# 8. Expose port 5173 to access the app
 EXPOSE 5173
 
-# 9. Start Nginx
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "dev", "--", "--host"]

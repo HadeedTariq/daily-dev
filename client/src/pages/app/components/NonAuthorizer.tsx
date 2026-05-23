@@ -1,35 +1,65 @@
 import { useNavigate } from "react-router-dom";
-import { LockIcon } from "lucide-react";
+import { Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 const Authenticate = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
-      <div className="absolute inset-0 bg-grid-gray-200/50 dark:bg-grid-gray-800/50 bg-[size:20px_20px] [mask-image:radial-gradient(ellipse_80%_80%_at_50%_50%,#000_70%,transparent_100%)]" />
-      <div className="relative text-center p-8 bg-white dark:bg-gray-800 shadow-xl rounded-xl max-w-md w-full mx-4 transform transition-all duration-300 ease-in-out hover:scale-105">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-orange-600 dark:bg-orange-500 rounded-full p-3 shadow-lg">
-          <LockIcon className="w-6 h-6 text-white" />
+    <div className="relative flex items-center justify-center min-h-screen px-4 py-12 bg-slate-50 dark:bg-slate-950 overflow-hidden">
+      {/* Background Subtle Grid Pattern */}
+      <div
+        className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none"
+        aria-hidden="true"
+      />
+
+      {/* Decorative Radial Glow */}
+      <div
+        className="absolute w-[500px] h-[500px] bg-indigo-500/10 dark:bg-indigo-500/5 rounded-full blur-3xl pointer-events-none top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+        aria-hidden="true"
+      />
+
+      {/* Main Authentication Card */}
+      <Card className="relative w-full max-w-md border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm shadow-xl md:shadow-2xl transition-all duration-300 hover:shadow-indigo-500/5">
+        {/* Top Floating Key Icon */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-12 h-12 rounded-full border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/50 shadow-md">
+          <Lock className="w-5 h-5 text-indigo-600 dark:text-indigo-400 animate-pulse" />
         </div>
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-6 mb-4">
-          Authentication Required
-        </h1>
-        <p className="text-gray-600 dark:text-gray-300 mb-8">
-          To access this page, please log in to your account. Your security is
-          our priority.
-        </p>
-        <button
-          className="px-6 py-3 text-white bg-orange-600 dark:bg-orange-500 rounded-lg hover:bg-orange-700 dark:hover:bg-orange-600 transition-colors duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50"
-          onClick={() => {
-            navigate("/auth/login");
-          }}
-        >
-          <span className="flex items-center justify-center">
-            <LockIcon className="w-5 h-5 mr-2" />
+
+        <CardHeader className="pt-10 text-center pb-2">
+          <CardTitle className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
+            Authentication Required
+          </CardTitle>
+          <CardDescription className="text-sm md:text-base text-slate-500 dark:text-slate-400 pt-2 max-w-sm mx-auto balance">
+            To access this page, please log in to your account. Your security
+            and privacy remain our highest priority.
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="py-4">
+          {/* Visual separator or placeholder anchor if needed later, kept clean for now */}
+          <div className="h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-800 to-transparent" />
+        </CardContent>
+
+        <CardFooter className="flex justify-center pb-8 pt-2">
+          <Button
+            size="lg"
+            className="w-full sm:w-auto px-8 py-6 font-medium text-sm shadow-lg shadow-indigo-500/20 dark:shadow-indigo-500/10 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white transition-all duration-200 ease-in-out hover:scale-[1.02] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-indigo-500"
+            onClick={() => navigate("/auth/login")}
+          >
+            <Lock className="w-4 h-4 mr-2" aria-hidden="true" />
             Authenticate
-          </span>
-        </button>
-      </div>
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
   );
 };

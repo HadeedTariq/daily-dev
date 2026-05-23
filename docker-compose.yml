@@ -5,12 +5,12 @@ services:
     image: postgres:17
     container_name: daily_dev_postgres
     restart: always
-    ports:
-      - "5432:5432"
     environment:
       POSTGRES_DB: daily-dev-db
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
+    ports:
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
 
@@ -23,6 +23,37 @@ services:
     command: redis-server --appendonly yes
     volumes:
       - redisdata:/data
+
+  server:
+    build:
+      context: ./server
+    container_name: daily_dev_server
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    env_file:
+      - ./server/.env
+
+  client:
+    build:
+      context: ./client
+    container_name: daily_dev_client
+    restart: always
+    ports:
+      - "5173:5173"
+    depends_on:
+      - server
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    env_file:
+      - ./client/.env
 
 volumes:
   pgdata:
