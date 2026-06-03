@@ -3187,7 +3187,10 @@ app.use(import_express8.default.json());
 app.use(import_express8.default.urlencoded({ extended: true }));
 app.use(
   (0, import_cors.default)({
-    origin: ["http://localhost:5173", "https://daily-dev-frontend.vercel.app"],
+    origin: [
+      "http://localhost:5173",
+      "https://daily-dev-frontend-pearl.vercel.app"
+    ],
     credentials: true,
     exposedHeaders: ["Set-Cookie"],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
