@@ -1,21 +1,14 @@
 import { queryDb } from "@/db/connect";
 import { faker } from "@faker-js/faker";
 
-const TOTAL_SQUADS = 20;
+const TOTAL_SQUADS = 3;
 
 const existingUsers = [
-  { id: 19 },
-  { id: 20 },
-  { id: 21 },
-  { id: 22 },
-  { id: 23 },
-  { id: 24 },
-  { id: 25 },
-  { id: 26 },
-  { id: 27 },
-  { id: 28 },
-  { id: 29 },
-  { id: 30 },
+  { id: 11 },
+  { id: 12 },
+  { id: 13 },
+  { id: 14 },
+  { id: 15 },
 ];
 
 const squadCategories = [
@@ -132,7 +125,7 @@ export async function seedSquads() {
           squadName,
           squadHandle,
           faker.lorem.paragraph(),
-          faker.image.urlPicsumPhotos(),
+          faker.image.urlLoremFlickr({ category: "nature" }),
           faker.helpers.arrayElement(squadCategories),
           faker.datatype.boolean(),
           admin.id,

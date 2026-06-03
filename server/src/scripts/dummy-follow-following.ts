@@ -1,20 +1,7 @@
 import { queryDb } from "@/db/connect";
 import { faker } from "@faker-js/faker";
 
-const users = [
-  { id: 19 },
-  { id: 20 },
-  { id: 21 },
-  { id: 22 },
-  { id: 23 },
-  { id: 24 },
-  { id: 25 },
-  { id: 26 },
-  { id: 27 },
-  { id: 28 },
-  { id: 29 },
-  { id: 30 },
-];
+const users = [{ id: 11 }, { id: 12 }, { id: 13 }, { id: 14 }, { id: 15 }];
 
 export async function seedFollowers() {
   console.log("Seeding followers and follow notifications...");

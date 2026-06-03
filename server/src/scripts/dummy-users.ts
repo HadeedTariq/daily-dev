@@ -2,7 +2,7 @@ import { queryDb } from "@/db/connect";
 import { faker } from "@faker-js/faker";
 import bcrypt from "bcrypt";
 
-const TOTAL_USERS = 10;
+const TOTAL_USERS = 5;
 const SALT_ROUNDS = 16;
 
 const generateUsername = (name: string) => {
@@ -106,7 +106,7 @@ export const insertDummyUsers = async () => {
 
       const hashPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
-      const avatar = faker.image.avatar();
+      const avatar = faker.image.personPortrait({ sex: "male" });
 
       const userResult = await queryDb(
         `

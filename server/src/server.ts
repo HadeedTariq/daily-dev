@@ -26,12 +26,6 @@ import { squadRouter } from "./routes/squads/squad.routes";
 
 import { followersRouter } from "./routes/followers/followers.routes";
 import { createTable } from "./db/createTable";
-import { insertDummyUsers } from "./scripts/dummy-users";
-import { seedSquads } from "./scripts/dummy-squad";
-import { generatePostContent, seedPosts } from "./scripts/dummy-posts";
-import { seedPostStats } from "./scripts/dummy-posts-upvotes";
-import { seedPostComments } from "./scripts/dummy-posts-comments";
-import { seedFollowers } from "./scripts/dummy-follow-following";
 
 const logger = pino({ name: "server start" });
 
@@ -49,6 +43,8 @@ app.use(
     origin: ["http://localhost:5173", "https://daily-dev-client.vercel.app"],
     credentials: true,
     exposedHeaders: ["Set-Cookie"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    maxAge: 86400,
   }),
 );
 app.use(helmet());
@@ -101,27 +97,7 @@ passport.deserializeUser(
   },
 );
 
-// createTable(`select email from users`);
-// insertDummyUsers().then(() => {
-//   console.log("Dummy users inserted");
-// });
-// seedSquads().then(() => {
-//   console.log("Dummy users inserted");
-// });
-// seedPosts({
-//   postsPerSquad: 20,
-// }).then(() => {
-//   console.log("Dummy users inserted");
-// });
-// seedPostStats().then(() => {
-//   console.log("Dummy users inserted");
-// });
-// seedPostComments().then(() => {
-//   console.log("Dummy users inserted");
-// });
-// seedFollowers().then(() => {
-//   console.log("Dummy users inserted");
-// });
+// createTable(`delete from users where id < 11`);
 
 // Request logging
 app.use(requestLogger);

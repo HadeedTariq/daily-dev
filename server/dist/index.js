@@ -245,14 +245,13 @@ var import_ioredis = __toESM(require("ioredis"));
 var import_pg = require("pg");
 var redis = new import_ioredis.default(env.REDIS_URL);
 var pool = new import_pg.Pool({
-  user: env.DATABASE_USER,
-  password: env.DATABASE_PASSWORD,
-  host: env.DATABASE_HOST,
-  port: env.DATABASE_PORT,
-  database: "defaultdb",
-  ssl: {
-    rejectUnauthorized: false
-  }
+  connectionString: env.DATABASE_URL,
+  ssl: env.NODE_ENV === "production" ? { rejectUnauthorized: true } : false,
+  max: 2,
+  idleTimeoutMillis: 1e4,
+  connectionTimeoutMillis: 5e3,
+  allowExitOnIdle: true,
+  statement_timeout: 15e3
 });
 var queryDb = async (query, params = []) => {
   const client = await pool.connect();
@@ -283,15 +282,111 @@ var runIndependentTransaction = async (queries) => {
 // src/routes/auth/auth.controller.ts
 var import_jsonwebtoken = require("jsonwebtoken");
 var import_crypto = require("crypto");
-var import_nodemailer = __toESM(require("nodemailer"));
+var import_nodemailer2 = __toESM(require("nodemailer"));
 var import_bcrypt = require("bcrypt");
 
-// src/queues/emailQueue.ts
-var import_bullmq = require("bullmq");
-var emailQueue = new import_bullmq.Queue("emailQueue", { connection: redis });
-async function addEmailJob(email, magicLink) {
-  await emailQueue.add("sendEmail", { email, magicLink });
-}
+// src/utils/emailSender.ts
+var import_nodemailer = __toESM(require("nodemailer"));
+var sendVerificationEmail = async (to, magicLink) => {
+  try {
+    const transporter = import_nodemailer.default.createTransport({
+      service: "gmail",
+      auth: {
+        user: String(env.NODE_MAILER_USER),
+        pass: String(env.NODE_MAILER_PASSWORD)
+      }
+    });
+    const mailOptions = {
+      from: `"Daily Dev" <${env.NODE_MAILER_USER}>`,
+      to,
+      subject: "Verify Your Daily Dev Account",
+      html: `
+      <div style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; background-color: #ffffff; border: 1px solid #ececec; border-radius: 12px; overflow: hidden;">
+        
+        <div style="padding: 32px;">
+          
+          <h1 style="margin: 0; font-size: 28px; color: #111827; font-weight: 700;">
+            Welcome to Daily Dev \u{1F680}
+          </h1>
+
+          <p style="margin-top: 18px; font-size: 15px; line-height: 1.7; color: #4b5563;">
+            Thanks for joining Daily Dev \u2014 a place where developers share ideas,
+            create squads, post content, collaborate, and grow together.
+          </p>
+
+          <p style="font-size: 15px; line-height: 1.7; color: #4b5563;">
+            To activate your account and continue, please verify your email
+            address using the button below.
+          </p>
+
+          <div style="margin: 36px 0; text-align: center;">
+            <a
+              href="${magicLink}"
+              style="
+                background-color: #111827;
+                color: #ffffff;
+                text-decoration: none;
+                padding: 14px 28px;
+                border-radius: 8px;
+                display: inline-block;
+                font-size: 15px;
+                font-weight: 600;
+              "
+            >
+              Verify Email
+            </a>
+          </div>
+
+          <p style="font-size: 14px; color: #6b7280; line-height: 1.6;">
+            If the button above does not work, copy and paste this link into
+            your browser:
+          </p>
+
+          <div
+            style="
+              background-color: #f9fafb;
+              border: 1px solid #e5e7eb;
+              border-radius: 8px;
+              padding: 14px;
+              word-break: break-word;
+              font-size: 13px;
+              color: #374151;
+            "
+          >
+            ${magicLink}
+          </div>
+
+          <p style="margin-top: 24px; font-size: 14px; color: #6b7280;">
+            This verification link will expire shortly for security reasons.
+          </p>
+
+          <hr style="margin: 32px 0; border: none; border-top: 1px solid #f3f4f6;" />
+
+          <p style="font-size: 12px; color: #9ca3af; line-height: 1.6;">
+            If you did not create an account on Daily Dev, you can safely ignore
+            this email.
+          </p>
+
+          <p style="margin-top: 20px; font-size: 13px; color: #6b7280;">
+            \u2014 Daily Dev Team <br />
+            <span style="font-style: italic;">
+              Connect. Share. Build.
+            </span>
+          </p>
+
+        </div>
+      </div>
+      `
+    };
+    await transporter.sendMail(mailOptions);
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error?.message || "Failed to send verification email"
+    };
+  }
+};
 
 // src/routes/auth/auth.controller.ts
 var UserController = class {
@@ -310,7 +405,7 @@ var UserController = class {
     }
     try {
       const { rows } = await queryDb(
-        `SELECT email FROM magicLinks WHERE token = $1`,
+        `SELECT email FROM "magicLinks" WHERE token = $1`,
         [token]
       );
       if (rows.length < 1) {
@@ -334,7 +429,7 @@ var UserController = class {
         const userId = userRow[0].id;
         const queries = [
           {
-            query: `DELETE FROM magicLinks WHERE email = $1`,
+            query: `DELETE FROM "magicLinks" WHERE email = $1`,
             params: [user.email]
           },
           {
@@ -440,7 +535,7 @@ var UserController = class {
     try {
       await runIndependentTransaction([
         {
-          query: `INSERT INTO magicLinks (email, token) VALUES ($1, $2)`,
+          query: `INSERT INTO "magicLinks" (email, token) VALUES ($1, $2)`,
           params: [email, token]
         },
         {
@@ -454,14 +549,20 @@ var UserController = class {
           ]
         }
       ]);
-    } catch (error) {
+    } catch (error2) {
       return next({
         message: "Already sent verification email or failed to create user",
         status: 400
       });
     }
-    await addEmailJob(email, magicLink);
-    return res.status(200).json({ message: "Verification email sent soon" });
+    const { success, error } = await sendVerificationEmail(email, magicLink);
+    if (!success || error) {
+      return next({
+        message: error || "Verification Email Sending Failed",
+        status: 500
+      });
+    }
+    return res.status(200).json({ message: "Verification email sent" });
   }
   async authenticate_github(req, res, next) {
     const user = req.user;
@@ -472,7 +573,7 @@ var UserController = class {
       });
     }
     const { rows, rowCount } = await queryDb(
-      `select * from users where email=$1`,
+      `select * from users where email = $1`,
       [user.email]
     );
     if (rowCount && rowCount > 0) {
@@ -636,7 +737,7 @@ var UserController = class {
   };
   sendMail = async (email, magicLink) => {
     try {
-      let transporter = import_nodemailer.default.createTransport({
+      let transporter = import_nodemailer2.default.createTransport({
         service: "gmail",
         auth: {
           user: String(env.NODE_MAILER_USER),
@@ -694,27 +795,30 @@ var import_passport = __toESM(require("passport"));
 
 // src/routes/middleware.ts
 var import_jsonwebtoken2 = __toESM(require("jsonwebtoken"));
-async function checkAuth(req, res, next) {
+function checkAuth(req, res, next) {
   try {
-    const { accessToken } = req.cookies;
-    if (!accessToken) {
+    let token;
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.split(" ")[1];
+    } else if (req.cookies?.accessToken) {
+      token = req.cookies.accessToken;
+    }
+    if (!token) {
       return next({
-        message: "Access Token not found",
-        status: 404
+        message: "Authentication required",
+        status: 401
       });
     }
-    const user = import_jsonwebtoken2.default.verify(accessToken, env.JWT_ACCESS_TOKEN_SECRET);
-    if (!user) {
-      return next({
-        message: "Invalid Access Token",
-        status: 404
-      });
+    const user = import_jsonwebtoken2.default.verify(token, env.JWT_ACCESS_TOKEN_SECRET);
+    if (req.body === void 0) {
+      req.body = {};
     }
     req.body.user = user;
     next();
   } catch (error) {
     return next({
-      message: error instanceof import_jsonwebtoken2.default.JsonWebTokenError ? "Please authenticate to perform this action" : "Authentication Error",
+      message: "Invalid or expired access token",
       status: 401
     });
   }
@@ -1360,8 +1464,8 @@ var PostController = class {
             ) AS current_user_upvoted
         FROM paginated_posts pp
         JOIN posts p ON pp.id = p.id
-        JOIN post_upvotes p_v ON p.id = p_v.post_id
-        JOIN post_views p_vw ON p.id = p_vw.post_id
+        LEFT JOIN post_upvotes p_v ON p.id = p_v.post_id
+        LEFT JOIN post_views p_vw ON p.id = p_vw.post_id
         JOIN squads p_sq ON p.squad_id = p_sq.id
         JOIN users u ON p.author_id = u.id
         ORDER BY p.id;
@@ -1605,6 +1709,46 @@ var PostController = class {
       next(error);
     }
   }
+  async getMyPostDetails(req, res, next) {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({
+        message: "Post id is required."
+      });
+    }
+    try {
+      const { rows } = await queryDb(
+        `
+        SELECT 
+          posts.id,
+          posts.title,
+          posts.slug,
+          posts.thumbnail,
+          posts.tags,
+          posts.content,
+          posts.squad_id,
+          posts.author_id,
+          posts.created_at,
+          posts.updated_at
+        FROM posts
+        WHERE posts.id = $1
+          AND posts.author_id = $2
+      `,
+        [Number(id), Number(req.body.user.id)]
+      );
+      if (rows.length < 1) {
+        return res.status(404).json({
+          message: "Post not found."
+        });
+      }
+      return res.status(200).json(rows[0]);
+    } catch (error) {
+      console.error("Failed to fetch post details:", error);
+      return res.status(500).json({
+        message: "An error occurred while fetching post details."
+      });
+    }
+  }
   async getPostComments(req, res, next) {
     const { postId } = req.params;
     const { pageSize, pageNumber } = req.query;
@@ -1749,35 +1893,80 @@ var PostController = class {
   }
   async editPost(req, res, next) {
     const { postId } = req.params;
-    const { title, content } = req.body;
+    const { title, content, thumbnail, squad } = req.body;
+    if (!title || !content || !thumbnail || !squad) {
+      return res.status(400).json({
+        message: "Please fill all the fields"
+      });
+    }
+    const { rows: existingPost } = await queryDb(
+      `SELECT author_id, squad_id FROM posts WHERE id = $1`,
+      [Number(postId)]
+    );
+    if (existingPost.length < 1) {
+      return res.status(404).json({
+        message: "Post not found."
+      });
+    }
+    if (existingPost[0].author_id !== Number(req.body.user.id)) {
+      return res.status(403).json({
+        message: "You are not authorized to edit this post."
+      });
+    }
+    const { rows: isSquadMember } = await queryDb(
+      `SELECT 1 FROM squad_members WHERE squad_id = $1 AND user_id = $2`,
+      [Number(squad), Number(req.body.user.id)]
+    );
+    if (isSquadMember.length < 1) {
+      return res.status(403).json({
+        message: "You are not a member of this squad."
+      });
+    }
+    const sanitizedContent = (0, import_sanitize_html2.default)(content, {
+      allowedTags: [],
+      allowedAttributes: {}
+    });
+    const tags = this.detectTags(sanitizedContent);
+    const slug = title.toLowerCase().trim().replace(/[\s\W-]+/g, "-");
+    const client = await pool.connect();
     try {
-      if (title || content) {
-        const sanitizedContent = (0, import_sanitize_html2.default)(content, {
-          allowedTags: [],
-          allowedAttributes: {}
-        });
-        const tags = this.detectTags(sanitizedContent);
-        const updatePostQuery = `
-          UPDATE posts
-          SET title = COALESCE($1, title),
-              content = COALESCE($2, content),
-              tags = COALESCE($3, tags)
-          WHERE id = $4
-          RETURNING id;
-        `;
-        const { rows: updatedRows } = await queryDb(updatePostQuery, [
+      await client.query("BEGIN");
+      await client.query(
+        `
+        UPDATE posts
+        SET 
+          title = $1,
+          content = $2,
+          thumbnail = $3,
+          squad_id = $4,
+          slug = $5,
+          tags = $6,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = $7
+      `,
+        [
           title,
           sanitizedContent,
+          thumbnail,
+          Number(squad),
+          slug,
           tags,
-          postId
-        ]);
-        if (updatedRows.length === 0) {
-          return res.status(404).json({ message: "Post not found." });
-        }
-      }
-      res.status(200).json({ message: "Post updated successfully." });
+          Number(postId)
+        ]
+      );
+      await client.query("COMMIT");
+      return res.status(200).json({
+        message: "Post updated successfully."
+      });
     } catch (error) {
-      next(error);
+      await client.query("ROLLBACK");
+      console.error("Transaction failed and rolled back:", error);
+      return res.status(500).json({
+        message: "An error occurred while updating the post."
+      });
+    } finally {
+      client.release();
+      console.log("Database client released");
     }
   }
   async upvoteComment(req, res, next) {
@@ -2044,6 +2233,10 @@ var router3 = (0, import_express5.Router)();
 router3.use(checkAuth);
 router3.get("/", asyncHandler(postController.getPosts));
 router3.get("/get-my-posts", asyncHandler(postController.getMyPosts));
+router3.get(
+  "/get-my-post/details/:id",
+  asyncHandler(postController.getMyPostDetails)
+);
 router3.get("/get-user-posts", asyncHandler(postController.getUserPosts));
 router3.get("/post-by-slug", asyncHandler(postController.getPostBySlug));
 router3.get(
@@ -2051,6 +2244,7 @@ router3.get(
   asyncHandler(postController.getPostComments)
 );
 router3.post("/create", asyncHandler(postController.createPost));
+router3.put("/edit/:postId", asyncHandler(postController.editPost));
 router3.post("/comment/:postId", asyncHandler(postController.commentOnPost));
 router3.post("/reply/:commentId", asyncHandler(postController.replyToComment));
 router3.put("/update-comment", asyncHandler(postController.updateComment));
@@ -2059,7 +2253,6 @@ router3.put(
   "/upvote-comment/:commentId",
   asyncHandler(postController.upvoteComment)
 );
-router3.put("/:postId", asyncHandler(postController.editPost));
 router3.put("/upvote/:postId", asyncHandler(postController.upvotePost));
 router3.put("/view/:postId", asyncHandler(postController.viewPost));
 router3.delete(
@@ -2203,6 +2396,7 @@ var SquadController = class {
             p.id as post_id,
             p.title as post_title,
             p.tags as post_tags,
+            p.slug as post_slug,
             p.thumbnail as post_thumbnail,
             p.created_at as post_created_at,
             p_v.upvotes AS post_upvotes,
@@ -2615,7 +2809,7 @@ var FollowersController = class {
   async followUser(req, res, next) {
     try {
       const { followedId } = req.body;
-      let { followerId } = req.body;
+      let followerId = req.body.user.id;
       if (!followedId || isNaN(followedId)) {
         return res.status(400).json({ message: "Valid followedId is required." });
       }
@@ -2773,7 +2967,6 @@ var FollowersController = class {
           FROM user_followers uf
           INNER JOIN users u 
               ON u.id = uf.follower_id;
-
         `,
         [userId]
       );
@@ -2996,7 +3189,9 @@ app.use(
   (0, import_cors.default)({
     origin: ["http://localhost:5173", "https://daily-dev-client.vercel.app"],
     credentials: true,
-    exposedHeaders: ["Set-Cookie"]
+    exposedHeaders: ["Set-Cookie"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    maxAge: 86400
   })
 );
 app.use((0, import_helmet.default)());
@@ -3014,7 +3209,7 @@ import_passport2.default.use(
     {
       clientID: env.GITHUB_CLIENT_ID,
       clientSecret: env.GITHUB_CLIENT_SECRET,
-      callbackURL: "https://dailydev-backend.vercel.app/auth/github/callback"
+      callbackURL: env.NODE_ENV === "development" ? "http://localhost:3000/auth/github/callback" : "https://dailydev-backend.vercel.app/auth/github/callback"
     },
     (accessToken, refreshToken, profile, done) => {
       const user = {
