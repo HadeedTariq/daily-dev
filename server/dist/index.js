@@ -3187,7 +3187,7 @@ app.use(import_express8.default.json());
 app.use(import_express8.default.urlencoded({ extended: true }));
 app.use(
   (0, import_cors.default)({
-    origin: ["http://localhost:5173", "https://daily-dev-client.vercel.app"],
+    origin: ["http://localhost:5173", "https://daily-dev-frontend.vercel.app"],
     credentials: true,
     exposedHeaders: ["Set-Cookie"],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -3209,7 +3209,7 @@ import_passport2.default.use(
     {
       clientID: env.GITHUB_CLIENT_ID,
       clientSecret: env.GITHUB_CLIENT_SECRET,
-      callbackURL: env.NODE_ENV === "development" ? "http://localhost:3000/auth/github/callback" : "https://dailydev-backend.vercel.app/auth/github/callback"
+      callbackURL: env.NODE_ENV === "development" ? "http://localhost:3000/auth/github/callback" : "https://daily-dev-server.vercel.app/auth/github/callback"
     },
     (accessToken, refreshToken, profile, done) => {
       const user = {
@@ -3232,6 +3232,11 @@ import_passport2.default.deserializeUser(
   }
 );
 app.use(requestLogger_default);
+app.get("/", (req, res) => {
+  return res.json({
+    message: "Welcome to daily dev Api"
+  });
+});
 app.use("/auth", router);
 app.use("/profile", router2);
 app.use("/posts", router3);
