@@ -1,106 +1,196 @@
-#### **Prerequisites**
+## Prerequisites
 
 Make sure you have the following installed:
 
-- [Docker](https://docs.docker.com/get-docker/)
-- [Docker Compose](https://docs.docker.com/compose/install/) (if using `docker-compose`)
+- Docker
+- Docker Compose
 
----
+Verify installation:
 
-## **🚀 Running the Project Using Docker**
-
-### **1️⃣ Build Docker Images**
-
-If you haven’t built the images yet, run:
-
-```sh
-docker build -t daily-dev-backend ./server
-docker build -t daily-dev-frontend ./client
+```bash
+docker --version
+docker compose version
 ```
 
 ---
 
-### **2️⃣ Running Containers Individually**
+# Clone the Repository
 
-Run backend and frontend separately using:
-
-```sh
-# Start backend
-docker run -p 3000:3000 --env-file .env daily-dev-backend
-
-# Start frontend
-docker run -p 5173:5173 daily-dev-frontend
+```bash
+git clone <repository-url>
+cd daily-dev
 ```
 
 ---
 
-### **3️⃣ Running with Docker Compose**
+# Environment Variables
 
-If you want to run in one command after building images, simply run:
+Create the required environment files.
 
-```sh
-docker-compose up -d
+### Server
+
+```bash
+cp server/.env.example server/.env
 ```
 
-This will start both **frontend** and **backend** containers in **detached mode** (`-d`).
+Update the values if needed.
 
----
+### Client
 
-### **4️⃣ Stopping and Removing Containers**
-
-To stop the running containers:
-
-```sh
-docker-compose down
-```
-
-To stop and **remove** all containers, networks, and volumes:
-
-```sh
-docker-compose down --volumes --remove-orphans
+```bash
+cp client/.env.example client/.env
 ```
 
 ---
 
-### **5️⃣ Checking Logs**
+# Start the Application
 
-To check logs for a specific service:
+Build and start all services:
 
-```sh
-docker-compose logs server
-docker-compose logs frontend
+```bash
+docker compose up --build
 ```
 
-For real-time logs:
+Run in detached mode:
 
-```sh
-docker-compose logs -f
+```bash
+docker compose up -d --build
+```
+
+Docker Compose will automatically start:
+
+- PostgreSQL
+- Redis
+- Backend Server
+- Frontend Client
+
+---
+
+# Access the Application
+
+| Service     | URL                                            |
+| ----------- | ---------------------------------------------- |
+| Frontend    | [http://localhost:5173](http://localhost:5173) |
+| Backend API | [http://localhost:3000](http://localhost:3000) |
+| PostgreSQL  | localhost:5432                                 |
+| Redis       | localhost:6379                                 |
+
+---
+
+# View Logs
+
+All services:
+
+```bash
+docker compose logs -f
+```
+
+Backend only:
+
+```bash
+docker compose logs -f server
+```
+
+Frontend only:
+
+```bash
+docker compose logs -f client
+```
+
+PostgreSQL:
+
+```bash
+docker compose logs -f postgres
+```
+
+Redis:
+
+```bash
+docker compose logs -f redis
 ```
 
 ---
 
-### **6️⃣ Running a Container in Interactive Mode**
+# Stop the Application
 
-To enter the backend container’s shell:
-
-```sh
-docker exec -it <backend_container_id> sh
-```
-
-To enter the frontend container’s shell:
-
-```sh
-docker exec -it <frontend_container_id> sh
+```bash
+docker compose down
 ```
 
 ---
 
-### **📌 Notes**
+# Remove Containers and Volumes
 
-- Ensure your **`.env` file is correctly configured** before running.
-- Use **`docker ps`** to list running containers.
-- If you change Docker settings, rebuild images using:
+This removes all containers and database data.
 
-  ```sh
-  docker-compose up --build
-  ```
+```bash
+docker compose down -v
+```
+
+---
+
+# Rebuild After Dependency Changes
+
+If package.json changes:
+
+```bash
+docker compose up --build
+```
+
+Or:
+
+```bash
+docker compose build
+docker compose up
+```
+
+---
+
+# Access a Container Shell
+
+Backend:
+
+```bash
+docker exec -it daily_dev_server sh
+```
+
+Frontend:
+
+```bash
+docker exec -it daily_dev_client sh
+```
+
+PostgreSQL:
+
+```bash
+docker exec -it daily_dev_postgres psql -U myuser -d daily-dev-db
+```
+
+Redis:
+
+```bash
+docker exec -it daily_dev_redis redis-cli
+```
+
+---
+
+# Common Commands
+
+### Check running containers
+
+```bash
+docker ps
+```
+
+### Restart all services
+
+```bash
+docker compose restart
+```
+
+### Recreate containers
+
+```bash
+docker compose down
+docker compose up --build
+```

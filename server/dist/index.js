@@ -246,7 +246,7 @@ var import_pg = require("pg");
 var redis = new import_ioredis.default(env.REDIS_URL);
 var pool = new import_pg.Pool({
   connectionString: env.DATABASE_URL,
-  ssl: env.NODE_ENV === "production" ? { rejectUnauthorized: true } : false,
+  ssl: env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
   max: 2,
   idleTimeoutMillis: 1e4,
   connectionTimeoutMillis: 5e3,
